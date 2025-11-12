@@ -1,0 +1,34 @@
+{
+  "name": "@leanmcp/core",
+  "version": "0.1.0",
+  "description": "Core library implementing decorators, reflection, and MCP runtime server",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.2.1",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.3.1",
+    "ajv": "^8.12.0"
+  },
+  "peerDependencies": {
+    "express": "^5.0.0",
+    "cors": "^2.8.5"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    },
+    "cors": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.0"
+  }
+}
