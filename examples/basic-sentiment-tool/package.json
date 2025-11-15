@@ -3,21 +3,22 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "start": "node --loader ts-node/esm main.ts",
-    "dev": "node --loader ts-node/esm --watch main.ts",
+    "start": "tsx main.ts",
+    "dev": "tsx watch main.ts",
     "build": "tsc"
   },
   "dependencies": {
     "@leanmcp/core": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "express": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
-    "ts-node": "^10.9.0",
-    "typescript": "^5.0.0"
+    "@types/express": "^5.0.3",
+    "@types/cors": "^2.8.19",
+    "tsx": "^4.20.3",
+    "typescript": "^5.6.3"
   }
 }

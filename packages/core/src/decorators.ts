@@ -6,31 +6,39 @@ import "reflect-metadata";
 
 export interface ToolOptions {
   description?: string;
+  inputClass?: any;  // Optional: Explicit input class for schema generation. Omit for tools with no input.
 }
 
 export interface PromptOptions {
   description?: string;
+  inputClass?: any;  // Optional: Explicit input class for schema generation
 }
 
 export interface ResourceOptions {
   description?: string;
   mimeType?: string;
+  inputClass?: any;  // Optional: Explicit input class for schema generation
 }
 
 /**
  * Marks a method as an MCP tool (callable function)
  * - Tool name is automatically derived from function name
- * - Input schema is inferred from first parameter type
- * - Output schema is inferred from return type
+ * - Input schema is explicitly defined via inputClass
  * - Full type safety at compile time
  * 
  * @example
  * class AnalyzeSentimentInput {
+ *   @SchemaConstraint({ description: 'Text to analyze' })
  *   text!: string;
+ *   
+ *   @Optional()
  *   language?: string;
  * }
  * 
- * @Tool({ description: 'Analyze sentiment of text' })
+ * @Tool({ 
+ *   description: 'Analyze sentiment of text',
+ *   inputClass: AnalyzeSentimentInput
+ * })
  * async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
  *   // Tool name will be: "analyzeSentiment"
  * }
@@ -43,18 +51,9 @@ export function Tool(options: ToolOptions = {}): MethodDecorator {
     Reflect.defineMetadata("tool:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("tool:propertyKey", propertyKey, descriptor.value!);
     
-    // TypeScript's emitDecoratorMetadata will store parameter types
-    const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);
-    const returnType = Reflect.getMetadata("design:returntype", target, propertyKey);
-    
-    // Store the input class (first parameter type)
-    if (paramTypes && paramTypes.length > 0 && paramTypes[0] !== Object) {
-      Reflect.defineMetadata("tool:inputClass", paramTypes[0], descriptor.value!);
-    }
-    
-    // Store the output class (unwrap Promise if needed)
-    if (returnType && returnType !== Promise && returnType !== Object) {
-      Reflect.defineMetadata("tool:outputClass", returnType, descriptor.value!);
+    // Store inputClass if provided
+    if (options.inputClass) {
+      Reflect.defineMetadata("tool:inputClass", options.inputClass, descriptor.value!);
     }
   };
 }
@@ -62,11 +61,19 @@ export function Tool(options: ToolOptions = {}): MethodDecorator {
 /**
  * Marks a method as an MCP prompt template
  * - Prompt name is automatically derived from function name
- * - Input schema is inferred from parameter type
+ * - Input schema can be explicitly defined via inputClass or inferred from parameter type
  * 
  * @example
- * @Prompt({ description: 'Generate sentiment analysis prompt' })
- * sentimentPrompt(args: { context?: string }) {
+ * class PromptInput {
+ *   @SchemaConstraint({ description: 'Auth token' })
+ *   token!: string;
+ * }
+ * 
+ * @Prompt({ 
+ *   description: 'Generate sentiment analysis prompt',
+ *   inputClass: PromptInput 
+ * })
+ * sentimentPrompt(args: PromptInput) {
  *   // Prompt name will be: "sentimentPrompt"
  * }
  */
@@ -78,10 +85,15 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
     Reflect.defineMetadata("prompt:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("prompt:propertyKey", propertyKey, descriptor.value!);
     
-    // Store parameter types for schema inference
-    const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);
-    if (paramTypes && paramTypes.length > 0 && paramTypes[0] !== Object) {
-      Reflect.defineMetadata("prompt:inputClass", paramTypes[0], descriptor.value!);
+    // Store inputClass if explicitly provided
+    if (options.inputClass) {
+      Reflect.defineMetadata("prompt:inputClass", options.inputClass, descriptor.value!);
+    } else {
+      // Fallback to parameter type inference
+      const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);
+      if (paramTypes && paramTypes.length > 0 && paramTypes[0] !== Object) {
+        Reflect.defineMetadata("prompt:inputClass", paramTypes[0], descriptor.value!);
+      }
     }
   };
 }
@@ -89,11 +101,20 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
 /**
  * Marks a method as an MCP resource (data source/endpoint)
  * - Resource URI is automatically derived from function name (e.g., "myservice://functionName")
- * - Can be customized with description and mimeType
+ * - Can be customized with description, mimeType, and input schema
  * 
  * @example
- * @Resource({ description: 'Service statistics', mimeType: 'application/json' })
- * getStats() {
+ * class ResourceInput {
+ *   @SchemaConstraint({ description: 'Auth token' })
+ *   token!: string;
+ * }
+ * 
+ * @Resource({ 
+ *   description: 'Service statistics', 
+ *   mimeType: 'application/json',
+ *   inputClass: ResourceInput 
+ * })
+ * getStats(args: ResourceInput) {
  *   // Resource URI will be: "servicename://getStats"
  *   return { stats: '...' };
  * }
@@ -110,6 +131,11 @@ export function Resource(options: ResourceOptions = {}): MethodDecorator {
     Reflect.defineMetadata("resource:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("resource:mimeType", options.mimeType || "application/json", descriptor.value!);
     Reflect.defineMetadata("resource:propertyKey", propertyKey, descriptor.value!);
+    
+    // Store inputClass if provided
+    if (options.inputClass) {
+      Reflect.defineMetadata("resource:inputClass", options.inputClass, descriptor.value!);
+    }
   };
 }
 

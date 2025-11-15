@@ -2,16 +2,37 @@
  * @leanmcp/utils - Utility Functions
  * 
  * This module provides helper utilities and shared functions across the LeanMCP SDK.
- * 
- * Status: Planned - Coming soon!
  */
 
 /**
- * Validate JSON against a schema
+ * Validate JSON against a schema (basic implementation)
+ * For advanced validation, use ajv or similar libraries in your project
  */
 export function validateSchema(data: any, schema: any): { valid: boolean; errors?: any[] } {
-  // TODO: Implement schema validation
-  return { valid: true };
+  const errors: any[] = [];
+  
+  if (!schema || typeof schema !== 'object') {
+    return { valid: true };
+  }
+
+  // Basic type checking
+  if (schema.type) {
+    const actualType = Array.isArray(data) ? 'array' : typeof data;
+    if (actualType !== schema.type && !(schema.type === 'integer' && typeof data === 'number')) {
+      errors.push({ message: `Expected type ${schema.type}, got ${actualType}` });
+    }
+  }
+
+  // Required properties
+  if (schema.required && Array.isArray(schema.required) && typeof data === 'object') {
+    for (const prop of schema.required) {
+      if (!(prop in data)) {
+        errors.push({ message: `Missing required property: ${prop}` });
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors: errors.length > 0 ? errors : undefined };
 }
 
 /**
@@ -173,6 +194,18 @@ export function generateId(prefix: string = ''): string {
 export function truncate(str: string, maxLength: number, suffix: string = '...'): string {
   if (str.length <= maxLength) return str;
   return str.substring(0, maxLength - suffix.length) + suffix;
+}
+
+/**
+ * Add timeout to a promise
+ */
+export function timeout<T>(promise: Promise<T>, ms: number, errorMessage: string = 'Operation timed out'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), ms)
+    )
+  ]);
 }
 
 /**

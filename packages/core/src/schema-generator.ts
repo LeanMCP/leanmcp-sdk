@@ -105,7 +105,8 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
     const constraints = Reflect.getMetadata("schema:constraints", instance, propertyName);
     const isOptional = Reflect.getMetadata("optional", instance, propertyName);
     
-    let jsonSchemaType = "any";
+    let jsonSchemaType = "string"; // Default to string when metadata is unavailable (tsx/ts-node limitation)
+    
     if (propertyType) {
       switch (propertyType.name) {
         case "String":
@@ -125,6 +126,23 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
           break;
         default:
           jsonSchemaType = "object";
+      }
+    } else if (constraints) {
+      // Infer type from constraints when design:type metadata is unavailable
+      if (constraints.minLength !== undefined || constraints.maxLength !== undefined || constraints.pattern) {
+        jsonSchemaType = "string";
+      } else if (constraints.minimum !== undefined || constraints.maximum !== undefined) {
+        jsonSchemaType = "number";
+      } else if (constraints.enum && constraints.enum.length > 0) {
+        // Infer from enum values
+        const firstValue = constraints.enum[0];
+        if (typeof firstValue === 'number') {
+          jsonSchemaType = "number";
+        } else if (typeof firstValue === 'boolean') {
+          jsonSchemaType = "boolean";
+        } else {
+          jsonSchemaType = "string";
+        }
       }
     }
     

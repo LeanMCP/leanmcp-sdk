@@ -4,9 +4,16 @@
   "description": "Helper utilities and decorators shared across modules",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@leanmcp/core": "^0.1.0"

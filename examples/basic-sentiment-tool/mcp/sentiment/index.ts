@@ -51,10 +51,13 @@ export class SentimentAnalysisService {
    * Analyze sentiment of text
    * 
    * - Tool name: "analyzeSentiment" (inferred from function name)
-   * - Input schema: Inferred from AnalyzeSentimentInput type
+   * - Input schema: Explicitly defined via AnalyzeSentimentInput class
    * - Output schema: Inferred from Promise<AnalyzeSentimentOutput> return type
    */
-  @Tool({ description: 'Analyze sentiment of text' })
+  @Tool({ 
+    description: 'Analyze sentiment of text',
+    inputClass: AnalyzeSentimentInput
+  })
   async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
     // Simple sentiment analysis logic
     const sentiment = this.detectSentiment(args.text);
@@ -69,9 +72,11 @@ export class SentimentAnalysisService {
   
   /**
    * Get sentiment statistics
-   * Simple tool with no complex input/output schemas
+   * Simple tool with no input parameters
    */
-  @Tool({ description: 'Get sentiment analysis statistics' })
+  @Tool({ 
+    description: 'Get sentiment analysis statistics'
+  })
   async getSentimentStats(): Promise<{
     totalAnalyses: number;
     avgProcessingTime: number;
@@ -89,7 +94,9 @@ export class SentimentAnalysisService {
   /**
    * Get service information
    */
-  @Tool({ description: 'Get service information' })
+  @Tool({ 
+    description: 'Get service information'
+  })
   async getServiceInfo() {
     return {
       name: "Sentiment Analysis Service",

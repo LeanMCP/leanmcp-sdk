@@ -144,7 +144,10 @@ class CalculateInput {
 }
 
 export class ExampleService {
-  @Tool({ description: "Perform arithmetic operations with automatic schema validation" })
+  @Tool({ 
+    description: "Perform arithmetic operations with automatic schema validation",
+    inputClass: CalculateInput
+  })
   async calculate(input: CalculateInput) {
     let result: number;
     
@@ -350,7 +353,10 @@ class GreetInput {
 export class ${capitalize(serviceName)}Service {
   // TOOL - Callable function
   // Tool name: "greet" (from function name)
-  @Tool({ description: "Greet a user by name" })
+  @Tool({ 
+    description: "Greet a user by name",
+    inputClass: GreetInput
+  })
   greet(args: GreetInput) {
     return { message: \`Hello, \${args.name}! from ${serviceName}\` };
   }

@@ -17,8 +17,10 @@ import Ajv from "ajv";
 export * from "./decorators";
 export * from "./schema-generator";
 export * from "./http-server";
+export * from "./logger";
 import { getMethodMetadata, getDecoratedMethods } from "./decorators";
 import { classToJsonSchemaWithConstraints } from "./schema-generator";
+import { Logger, LogLevel } from "./logger";
 
 // Schema validator
 const ajv = new Ajv();
@@ -53,6 +55,7 @@ interface RegisteredResource {
   name: string;
   description: string;
   mimeType: string;
+  inputSchema?: any;
   method: Function;
   instance: any;
   propertyKey: string;
@@ -68,9 +71,14 @@ export class MCPServer {
   private prompts: Map<string, RegisteredPrompt> = new Map();
   private resources: Map<string, RegisteredResource> = new Map();
   private logging: boolean;
+  private logger: Logger;
 
   constructor(options: { name: string; version: string; logging?: boolean }) {
     this.logging = options.logging || false;
+    this.logger = new Logger({
+      level: this.logging ? LogLevel.INFO : LogLevel.NONE,
+      prefix: 'MCPServer'
+    });
     this.server = new Server(
       {
         name: options.name,
@@ -129,7 +137,9 @@ export class MCPServer {
 
       // Execute the method
       try {
-        const result = await tool.method.call(tool.instance, request.params.arguments);
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
+        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
         
         // Format result
         let formattedResult = result;
@@ -162,17 +172,24 @@ export class MCPServer {
       }
     });
 
-    // List available resources
+    // List resources
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       const resources: any[] = [];
       
       for (const [uri, resource] of this.resources.entries()) {
-        resources.push({
+        const resourceInfo: any = {
           uri: resource.uri,
           name: resource.name,
           description: resource.description,
           mimeType: resource.mimeType,
-        });
+        };
+        
+        // Include inputSchema if it exists
+        if (resource.inputSchema) {
+          resourceInfo.inputSchema = resource.inputSchema;
+        }
+        
+        resources.push(resourceInfo);
       }
       
       return { resources };
@@ -188,7 +205,9 @@ export class MCPServer {
       }
 
       try {
-        const result = await resource.method.call(resource.instance);
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
+        const result = await resource.method.call(resource.instance, undefined, meta);
 
         return {
           contents: [
@@ -229,7 +248,9 @@ export class MCPServer {
       }
 
       try {
-        const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
+        const result = await prompt.method.call(prompt.instance, request.params.arguments || {}, meta);
         
         // If result is already in proper format, return it
         if (result && result.messages) {
@@ -285,7 +306,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        console.log(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+        this.logger.info(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
       }
     }
 
@@ -293,11 +314,21 @@ export class MCPServer {
     const promptMethods = getDecoratedMethods(cls, "prompt:name");
     for (const { method, propertyKey } of promptMethods) {
       const methodMeta = getMethodMetadata(method);
-      const promptArgs = methodMeta.inputSchema?.properties 
-        ? Object.keys(methodMeta.inputSchema.properties).map(key => ({
+      
+      // Check if this is a class-based schema (automatic type inference)
+      const inputClass = (Reflect as any).getMetadata?.("prompt:inputClass", method);
+      
+      let inputSchema = methodMeta.inputSchema;
+      if (inputClass) {
+        // Generate JSON Schema from TypeScript class
+        inputSchema = classToJsonSchemaWithConstraints(inputClass);
+      }
+      
+      const promptArgs = inputSchema?.properties 
+        ? Object.keys(inputSchema.properties).map(key => ({
             name: key,
-            description: methodMeta.inputSchema?.properties?.[key]?.description || "",
-            required: methodMeta.inputSchema?.required?.includes(key) || false,
+            description: inputSchema?.properties?.[key]?.description || "",
+            required: inputSchema?.required?.includes(key) || false,
           }))
         : [];
 
@@ -311,7 +342,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        console.log(`Registered prompt: ${methodMeta.promptName}`);
+        this.logger.info(`Registered prompt: ${methodMeta.promptName}`);
       }
     }
 
@@ -319,6 +350,15 @@ export class MCPServer {
     const resourceMethods = getDecoratedMethods(cls, "resource:uri");
     for (const { method, propertyKey } of resourceMethods) {
       const methodMeta = getMethodMetadata(method);
+      
+      // Check if this is a class-based schema (automatic type inference)
+      const inputClass = (Reflect as any).getMetadata?.("resource:inputClass", method);
+      
+      let inputSchema = methodMeta.inputSchema;
+      if (inputClass) {
+        // Generate JSON Schema from TypeScript class
+        inputSchema = classToJsonSchemaWithConstraints(inputClass);
+      }
       
       // Read mimeType from metadata (set by @Resource decorator)
       const mimeType = (Reflect as any).getMetadata?.("resource:mimeType", method) || "application/json";
@@ -328,13 +368,14 @@ export class MCPServer {
         name: methodMeta.resourceName || methodMeta.resourceUri!,
         description: methodMeta.resourceDescription || "",
         mimeType: mimeType,
+        inputSchema: inputSchema,
         method,
         instance,
         propertyKey,
       });
       
       if (this.logging) {
-        console.log(`Registered resource: ${methodMeta.resourceUri}`);
+        this.logger.info(`Registered resource: ${methodMeta.resourceUri}`);
       }
     }
   }
@@ -353,9 +394,14 @@ export class MCPServerRuntime {
   private prompts: Map<string, RegisteredPrompt> = new Map();
   private resources: Map<string, RegisteredResource> = new Map();
   private options: MCPServerOptions;
+  private logger: Logger;
 
   constructor(options: MCPServerOptions) {
     this.options = options;
+    this.logger = new Logger({
+      level: this.options.logging ? LogLevel.INFO : LogLevel.NONE,
+      prefix: 'MCPServerRuntime'
+    });
     this.server = new Server(
       {
         name: "leanmcp-server",
@@ -415,13 +461,15 @@ export class MCPServerRuntime {
       // Check authentication
       if (methodMeta.authRequired) {
         if (this.options.logging) {
-          console.log(`Auth required for ${toolName} (provider: ${methodMeta.authProvider})`);
+          this.logger.info(`Auth required for ${toolName} (provider: ${methodMeta.authProvider})`);
         }
       }
 
       // Execute the method
       try {
-        const result = await tool.method.call(tool.instance, request.params.arguments);
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
+        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
         
         // Handle elicitation
         if (result && typeof result === 'object' && result.type === 'elicitation') {
@@ -493,7 +541,9 @@ export class MCPServerRuntime {
       }
 
       try {
-        const result = await resource.method.call(resource.instance);
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
+        const result = await resource.method.call(resource.instance, undefined, meta);
 
         return {
           contents: [
@@ -534,8 +584,10 @@ export class MCPServerRuntime {
       }
 
       try {
+        // Extract _meta for authentication (MCP standard)
+        const meta = request.params._meta;
         // Call the prompt method to get the prompt template/messages
-        const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
+        const result = await prompt.method.call(prompt.instance, request.params.arguments || {}, meta);
         
         // If result is already in proper format, return it
         if (result && result.messages) {
@@ -565,7 +617,7 @@ export class MCPServerRuntime {
     const absPath = path.resolve(this.options.servicesDir);
     
     if (!fs.existsSync(absPath)) {
-      console.error(`Services directory not found: ${absPath}`);
+      this.logger.error(`Services directory not found: ${absPath}`);
       return;
     }
 
@@ -625,7 +677,7 @@ export class MCPServerRuntime {
               });
               toolCount++;
               if (this.options.logging) {
-                console.log(`Loaded tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+                this.logger.info(`Loaded tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
               }
             }
 
@@ -651,7 +703,7 @@ export class MCPServerRuntime {
               });
               promptCount++;
               if (this.options.logging) {
-                console.log(`Loaded prompt: ${methodMeta.promptName}`);
+                this.logger.info(`Loaded prompt: ${methodMeta.promptName}`);
               }
             }
 
@@ -670,21 +722,21 @@ export class MCPServerRuntime {
               });
               resourceCount++;
               if (this.options.logging) {
-                console.log(`Loaded resource: ${methodMeta.resourceUri}`);
+                this.logger.info(`Loaded resource: ${methodMeta.resourceUri}`);
               }
             }
           }
         } catch (error: any) {
-          console.error(`Failed to load from ${dir}:`, error.message || error);
+          this.logger.error(`Failed to load from ${dir}:`, error.message || error);
           if (this.options.logging) {
-            console.error('Full error:', error);
+            this.logger.error('Full error:', error);
           }
         }
       }
     }
 
     if (this.options.logging) {
-      console.log(`\nLoaded ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`);
+      this.logger.info(`\nLoaded ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`);
     }
   }
 
@@ -695,7 +747,7 @@ export class MCPServerRuntime {
     await this.server.connect(transport);
 
     if (this.options.logging) {
-      console.log("LeanMCP server running on stdio");
+      this.logger.info("LeanMCP server running on stdio");
     }
   }
 

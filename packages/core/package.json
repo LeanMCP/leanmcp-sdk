@@ -4,9 +4,16 @@
   "description": "Core library implementing decorators, reflection, and MCP runtime server",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "reflect-metadata": "^0.2.1",

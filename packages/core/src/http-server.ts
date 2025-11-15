@@ -1,5 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { randomUUID } from "node:crypto";
+import { Logger, LogLevel } from "./logger";
 
 export interface HTTPServerOptions {
   port?: number;
@@ -8,6 +9,7 @@ export interface HTTPServerOptions {
     credentials?: boolean;
   };
   logging?: boolean;
+  logger?: Logger;
   sessionTimeout?: number;
 }
 
@@ -45,6 +47,12 @@ export async function createHTTPServer(
   const app = express.default();
   const port = options.port || 3001;
   const transports: Record<string, any> = {};
+  
+  // Initialize logger
+  const logger = options.logger || new Logger({
+    level: options.logging ? LogLevel.INFO : LogLevel.NONE,
+    prefix: 'HTTP'
+  });
 
   // Middleware
   if (cors && options.cors) {
@@ -66,9 +74,7 @@ export async function createHTTPServer(
 
   app.use(express.json());
 
-  if (options.logging) {
-    console.log("Starting LeanMCP HTTP Server...");
-  }
+  logger.info("Starting LeanMCP HTTP Server...");
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
@@ -87,30 +93,22 @@ export async function createHTTPServer(
     try {
       if (sessionId && transports[sessionId]) {
         transport = transports[sessionId];
-        if (options.logging) {
-          console.log(`Reusing session: ${sessionId}`);
-        }
+        logger.debug(`Reusing session: ${sessionId}`);
       } else if (!sessionId && isInitializeRequest(req.body)) {
-        if (options.logging) {
-          console.log("Creating new MCP session...");
-        }
+        logger.info("Creating new MCP session...");
 
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (newSessionId: string) => {
             transports[newSessionId] = transport;
-            if (options.logging) {
-              console.log(`Session initialized: ${newSessionId}`);
-            }
+            logger.info(`Session initialized: ${newSessionId}`);
           }
         });
 
         transport.onclose = () => {
           if (transport.sessionId) {
             delete transports[transport.sessionId];
-            if (options.logging) {
-              console.log(`Session cleaned up: ${transport.sessionId}`);
-            }
+            logger.debug(`Session cleaned up: ${transport.sessionId}`);
           }
         };
 
@@ -127,7 +125,7 @@ export async function createHTTPServer(
 
       await transport.handleRequest(req, res, req.body);
     } catch (error: any) {
-      console.error('ERROR: Error handling MCP request:', error);
+      logger.error('Error handling MCP request:', error);
       if (!res.headersSent) {
         res.status(500).json({
           jsonrpc: '2.0',
@@ -143,20 +141,16 @@ export async function createHTTPServer(
 
   // Cleanup on shutdown
   process.on('SIGINT', () => {
-    if (options.logging) {
-      console.log('\nShutting down server...');
-    }
+    logger.info('\nShutting down server...');
     Object.values(transports).forEach(t => t.close?.());
     process.exit(0);
   });
 
   return new Promise((resolve) => {
     app.listen(port, () => {
-      if (options.logging) {
-        console.log(`Server running on http://localhost:${port}`);
-        console.log(`MCP endpoint: http://localhost:${port}/mcp`);
-        console.log(`Health check: http://localhost:${port}/health`);
-      }
+      logger.info(`Server running on http://localhost:${port}`);
+      logger.info(`MCP endpoint: http://localhost:${port}/mcp`);
+      logger.info(`Health check: http://localhost:${port}/health`);
       resolve();
     });
   });

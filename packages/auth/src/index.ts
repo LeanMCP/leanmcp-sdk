@@ -3,103 +3,116 @@ import "reflect-metadata";
 /**
  * @leanmcp/auth - Authentication Module
  * 
- * This module provides authentication providers for MCP tools.
- * Currently supports: Clerk, Stripe, and custom providers.
- * 
- * Status: Planned - Coming soon!
+ * This module provides a base class for implementing authentication providers for MCP tools.
+ * Extend AuthProviderBase to integrate with different auth providers (Clerk, Stripe, Firebase, etc.)
  */
 
-export interface AuthProvider {
-  name: string;
-  verify(token: string): Promise<boolean>;
-  getUserInfo(token: string): Promise<any>;
+/**
+ * Base class for authentication providers
+ * Extend this class to implement integrations with different auth providers
+ */
+export abstract class AuthProviderBase {
+  /**
+   * Initialize the auth provider with configuration
+   */
+  abstract init(config?: any): Promise<void>;
+
+  /**
+   * Refresh an authentication token
+   */
+  abstract refreshToken(refreshToken: string, username?: string): Promise<any>;
+
+  /**
+   * Verify if a token is valid
+   */
+  abstract verifyToken(token: string): Promise<boolean>;
+
+  /**
+   * Get user information from a token
+   */
+  abstract getUser(token: string): Promise<any>;
 }
 
-export class ClerkAuthProvider implements AuthProvider {
-  name = "clerk";
-  private apiKey: string;
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+/**
+ * Unified AuthProvider class that dynamically selects the appropriate auth provider
+ * based on the provider parameter
+ */
+export class AuthProvider extends AuthProviderBase {
+  private providerInstance: AuthProviderBase | null = null;
+  private providerType: string;
+  private config: any;
+
+  constructor(provider: string, config?: any) {
+    super();
+    this.providerType = provider.toLowerCase();
+    this.config = config;
   }
 
-  async verify(token: string): Promise<boolean> {
-    // TODO: Implement Clerk verification
-    console.warn("WARNING: Clerk auth not yet implemented");
-    return true;
+  /**
+   * Initialize the selected auth provider
+   */
+  async init(config?: any): Promise<void> {
+    const finalConfig = config || this.config;
+
+    switch (this.providerType) {
+      case 'cognito': {
+        const { AuthCognito } = await import('./providers/cognito');
+        this.providerInstance = new AuthCognito();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
+      
+      // Add more providers here in the future
+      // case 'clerk': {
+      //   const { AuthClerk } = await import('./providers/clerk');
+      //   this.providerInstance = new AuthClerk();
+      //   await this.providerInstance.init(finalConfig);
+      //   break;
+      // }
+      
+      default:
+        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito`);
+    }
   }
 
-  async getUserInfo(token: string): Promise<any> {
-    // TODO: Implement Clerk user info retrieval
-    return { userId: "placeholder" };
+  /**
+   * Refresh an authentication token
+   */
+  async refreshToken(refreshToken: string, username?: string): Promise<any> {
+    if (!this.providerInstance) {
+      throw new Error("AuthProvider not initialized. Call init() first.");
+    }
+    return this.providerInstance.refreshToken(refreshToken, username);
+  }
+
+  /**
+   * Verify if a token is valid
+   */
+  async verifyToken(token: string): Promise<boolean> {
+    if (!this.providerInstance) {
+      throw new Error("AuthProvider not initialized. Call init() first.");
+    }
+    return this.providerInstance.verifyToken(token);
+  }
+
+  /**
+   * Get user information from a token
+   */
+  async getUser(token: string): Promise<any> {
+    if (!this.providerInstance) {
+      throw new Error("AuthProvider not initialized. Call init() first.");
+    }
+    return this.providerInstance.getUser(token);
+  }
+
+  /**
+   * Get the provider type
+   */
+  getProviderType(): string {
+    return this.providerType;
   }
 }
 
-export class StripeAuthProvider implements AuthProvider {
-  name = "stripe";
-  private secretKey: string;
-
-  constructor(secretKey: string) {
-    this.secretKey = secretKey;
-  }
-
-  async verify(token: string): Promise<boolean> {
-    // TODO: Implement Stripe verification
-    console.warn("WARNING: Stripe auth not yet implemented");
-    return true;
-  }
-
-  async getUserInfo(token: string): Promise<any> {
-    // TODO: Implement Stripe customer info retrieval
-    return { customerId: "placeholder" };
-  }
-}
-
-export class CustomAuthProvider implements AuthProvider {
-  name = "custom";
-  private verifyFn: (token: string) => Promise<boolean>;
-
-  constructor(verifyFn: (token: string) => Promise<boolean>) {
-    this.verifyFn = verifyFn;
-  }
-
-  async verify(token: string): Promise<boolean> {
-    return this.verifyFn(token);
-  }
-
-  async getUserInfo(token: string): Promise<any> {
-    return { verified: await this.verify(token) };
-  }
-}
-
-// Registry for auth providers
-export class AuthProviderRegistry {
-  private static providers = new Map<string, AuthProvider>();
-
-  static register(provider: AuthProvider) {
-    this.providers.set(provider.name, provider);
-  }
-
-  static get(name: string): AuthProvider | undefined {
-    return this.providers.get(name);
-  }
-
-  static has(name: string): boolean {
-    return this.providers.has(name);
-  }
-}
-
-// Export convenience functions
-export function registerClerkAuth(apiKey: string) {
-  AuthProviderRegistry.register(new ClerkAuthProvider(apiKey));
-}
-
-export function registerStripeAuth(secretKey: string) {
-  AuthProviderRegistry.register(new StripeAuthProvider(secretKey));
-}
-
-export function registerCustomAuth(name: string, verifyFn: (token: string) => Promise<boolean>) {
-  const provider = new CustomAuthProvider(verifyFn);
-  (provider as any).name = name;
-  AuthProviderRegistry.register(provider);
-}
+// Export decorators
+export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider } from './decorators';

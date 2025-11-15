@@ -11,6 +11,15 @@
     },
     "lint": {
       "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
