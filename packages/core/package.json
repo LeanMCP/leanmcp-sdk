@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Core library implementing decorators, reflection, and MCP runtime server",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

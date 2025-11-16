@@ -138,7 +138,9 @@ export class MCPServer {
 
       // Execute the method
       try {
-        const result = await tool.method.call(tool.instance, request.params.arguments);
+        // Extract _meta for authentication (if present) - it's at params level, not arguments level
+        const meta = request.params._meta;
+        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
         
         // Format result
         let formattedResult = result;
@@ -462,7 +464,9 @@ export class MCPServerRuntime {
 
       // Execute the method
       try {
-        const result = await tool.method.call(tool.instance, request.params.arguments);
+        // Extract _meta for authentication (if present) - it's at params level, not arguments level
+        const meta = request.params._meta;
+        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
         
         // Handle elicitation
         if (result && typeof result === 'object' && result.type === 'elicitation') {
