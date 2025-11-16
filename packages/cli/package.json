@@ -1,13 +1,14 @@
 {
   "name": "@leanmcp/cli",
   "version": "0.1.0",
+  "type": "module",
   "bin": {
     "leanmcp": "dist/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts"
+    "build": "tsup src/index.ts --format esm --dts"
   },
   "dependencies": {
     "chalk": "^5.3.0",
@@ -16,6 +17,8 @@
     "ora": "^8.1.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.4"
+    "@types/fs-extra": "^11.0.4",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
   }
 }
