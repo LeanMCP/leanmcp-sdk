@@ -18,6 +18,7 @@ export * from "./decorators";
 export * from "./schema-generator";
 export * from "./http-server";
 export * from "./logger";
+export * from "./validation";
 import { getMethodMetadata, getDecoratedMethods } from "./decorators";
 import { classToJsonSchemaWithConstraints } from "./schema-generator";
 import { Logger, LogLevel } from "./logger";
@@ -137,9 +138,7 @@ export class MCPServer {
 
       // Execute the method
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
-        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
+        const result = await tool.method.call(tool.instance, request.params.arguments);
         
         // Format result
         let formattedResult = result;
@@ -205,9 +204,7 @@ export class MCPServer {
       }
 
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
-        const result = await resource.method.call(resource.instance, undefined, meta);
+        const result = await resource.method.call(resource.instance);
 
         return {
           contents: [
@@ -248,9 +245,7 @@ export class MCPServer {
       }
 
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
-        const result = await prompt.method.call(prompt.instance, request.params.arguments || {}, meta);
+        const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
         
         // If result is already in proper format, return it
         if (result && result.messages) {
@@ -467,9 +462,7 @@ export class MCPServerRuntime {
 
       // Execute the method
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
-        const result = await tool.method.call(tool.instance, request.params.arguments, meta);
+        const result = await tool.method.call(tool.instance, request.params.arguments);
         
         // Handle elicitation
         if (result && typeof result === 'object' && result.type === 'elicitation') {
@@ -541,9 +534,7 @@ export class MCPServerRuntime {
       }
 
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
-        const result = await resource.method.call(resource.instance, undefined, meta);
+        const result = await resource.method.call(resource.instance);
 
         return {
           contents: [
@@ -584,10 +575,8 @@ export class MCPServerRuntime {
       }
 
       try {
-        // Extract _meta for authentication (MCP standard)
-        const meta = request.params._meta;
         // Call the prompt method to get the prompt template/messages
-        const result = await prompt.method.call(prompt.instance, request.params.arguments || {}, meta);
+        const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
         
         // If result is already in proper format, return it
         if (result && result.messages) {

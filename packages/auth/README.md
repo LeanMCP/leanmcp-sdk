@@ -4,12 +4,12 @@ Authentication module for LeanMCP providing token-based authentication decorator
 
 ## Features
 
-- 🔐 **@Authenticated decorator** - Protect MCP tools, prompts, and resources with token authentication
-- 🔌 **Multi-provider support** - AWS Cognito (more providers coming soon)
-- 🛡️ **Method or class-level protection** - Apply to individual methods or entire services
-- ✅ **Automatic token validation** - Validates tokens before method execution
-- 🚫 **Custom error handling** - Detailed error codes for different auth failures
-- 🎯 **Type-safe** - Full TypeScript support with type inference
+- **@Authenticated decorator** - Protect MCP tools, prompts, and resources with token authentication
+- **Multi-provider support** - AWS Cognito (more providers coming soon)
+- **Method or class-level protection** - Apply to individual methods or entire services
+- **Automatic token validation** - Validates tokens before method execution
+- **Custom error handling** - Detailed error codes for different auth failures
+- **Type-safe** - Full TypeScript support with type inference
 
 ## Installation
 
@@ -290,10 +290,10 @@ await createHTTPServer(serverFactory, { port: 3000 });
 6. **Response returns** to client
 
 **Key Benefits:**
-- ✅ **Clean separation** - Authentication metadata separate from business data
-- ✅ **MCP compliant** - Follows standard `_meta` pattern
-- ✅ **Type-safe** - Input classes don't need token fields
-- ✅ **Reusable** - Same input classes work for authenticated and public methods
+- **Clean separation** - Authentication metadata separate from business data
+- **MCP compliant** - Follows standard `_meta` pattern
+- **Type-safe** - Input classes don't need token fields
+- **Reusable** - Same input classes work for authenticated and public methods
 
 ## Best Practices
 

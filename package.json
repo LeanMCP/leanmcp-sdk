@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "LeanMCP monorepo — base for @leanmcp SDK packages",
   "packageManager": "npm@9.0.0",
+  "files": [
+    "README.md",
+    "LICENSE"
+  ],
   "workspaces": [
     "packages/*",
     "examples/*"

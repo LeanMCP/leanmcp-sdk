@@ -1,6 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { randomUUID } from "node:crypto";
 import { Logger, LogLevel } from "./logger";
+import { validatePort } from "./validation";
 
 export interface HTTPServerOptions {
   port?: number;
@@ -46,6 +47,10 @@ export async function createHTTPServer(
 
   const app = express.default();
   const port = options.port || 3001;
+  
+  // Validate port number
+  validatePort(port);
+  
   const transports: Record<string, any> = {};
   
   // Initialize logger
@@ -57,19 +62,17 @@ export async function createHTTPServer(
   // Middleware
   if (cors && options.cors) {
     const corsOptions = typeof options.cors === 'object' ? {
-      origin: options.cors.origin || "*",
+      origin: options.cors.origin || false, // No wildcard - must be explicitly configured
       methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
       exposedHeaders: ['mcp-session-id'],
-      credentials: options.cors.credentials ?? true
-    } : {
-      origin: "*",
-      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
-      exposedHeaders: ['mcp-session-id'],
-      credentials: true
-    };
-    app.use(cors.default(corsOptions));
+      credentials: options.cors.credentials ?? false, // Default false for security
+      maxAge: 86400
+    } : false;
+    
+    if (corsOptions) {
+      app.use(cors.default(corsOptions));
+    }
   }
 
   app.use(express.json());

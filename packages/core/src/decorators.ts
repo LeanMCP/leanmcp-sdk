@@ -234,32 +234,6 @@ export function Render(format: 'markdown' | 'html' | 'json' | 'chart' | 'table' 
 // ============================================================================
 
 /**
- * Defines an elicitation step to refine user intent
- */
-export function Elicitation(): MethodDecorator {
-  return (target, propertyKey, descriptor) => {
-    Reflect.defineMetadata("workflow:elicitation", true, descriptor.value!);
-    
-    // Wrap the original method to handle elicitation
-    const originalMethod = descriptor.value as Function;
-    
-    descriptor.value = async function(this: any, ...args: any[]) {
-      const result = await originalMethod.apply(this, args);
-      
-      // Check if result indicates need for elicitation
-      if (result && typeof result === 'object' && result.needsElicitation) {
-        return {
-          type: 'elicitation',
-          ...result
-        };
-      }
-      
-      return result;
-    } as any;
-  };
-}
-
-/**
  * Marks a tool, prompt, or resource as deprecated
  * @param message - Optional deprecation message
  */
@@ -316,7 +290,6 @@ export function getMethodMetadata(method: Function) {
     authRequired: Reflect.getMetadata("auth:required", method),
     uiComponent: Reflect.getMetadata("ui:component", method),
     renderFormat: Reflect.getMetadata("render:format", method),
-    elicitation: Reflect.getMetadata("workflow:elicitation", method),
     deprecated: Reflect.getMetadata("deprecated:true", method),
     deprecationMessage: Reflect.getMetadata("deprecated:message", method),
   };

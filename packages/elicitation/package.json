@@ -1,7 +1,7 @@
 {
-  "name": "@leanmcp/utils",
+  "name": "@leanmcp/elicitation",
   "version": "0.1.0",
-  "description": "Helper utilities and decorators shared across modules",
+  "description": "Elicitation support for LeanMCP - structured user input collection",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -18,34 +18,38 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "lint": "eslint src"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.1.0"
+    "reflect-metadata": "^0.2.0"
   },
-  "devDependencies": {
-    "@types/node": "^20.0.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
-    "directory": "packages/utils"
-  },
-  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
-  "bugs": {
-    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  "peerDependencies": {
+    "@leanmcp/core": "*"
   },
   "keywords": [
     "mcp",
     "model-context-protocol",
     "typescript",
-    "utilities",
-    "helpers",
-    "validation"
+    "decorators",
+    "elicitation",
+    "forms",
+    "validation",
+    "user-input",
+    "leanmcp"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/elicitation"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
   "author": "LeanMCP <admin@leanmcp.com>",
   "license": "MIT",
   "publishConfig": {
