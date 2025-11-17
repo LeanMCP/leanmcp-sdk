@@ -1,0 +1,237 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in LeanMCP
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug! Please fill out the information below to help us diagnose and fix the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: When I try to..., I expect..., but instead...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Install @leanmcp/cli version X.X.X
+        2. Run command: `leanmcp create my-server`
+        3. Execute: `npm run dev`
+        4. Observe error: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: The server should start successfully and listen on port 3001
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Include error messages if applicable.
+      placeholder: |
+        Error: ECONNREFUSED
+        at ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which LeanMCP component is affected?
+      options:
+        - "@leanmcp/cli - CLI tool"
+        - "@leanmcp/core - Core server functionality"
+        - "@leanmcp/auth - Authentication"
+        - "Documentation"
+        - "Other (specify in description)"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: LeanMCP Version
+      description: What version of LeanMCP are you using?
+      placeholder: "e.g., @leanmcp/cli@0.1.0, @leanmcp/core@0.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mcp-protocol
+    attributes:
+      label: MCP Protocol Version
+      description: Which MCP protocol version are you using?
+      options:
+        - "2025-06-18 (Current)"
+        - "2025-03-26"
+        - "2024-11-05"
+        - "Don't know / Not sure"
+        - "Other (specify in additional context)"
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Output of `node --version`
+      placeholder: "e.g., v20.16.0"
+    validations:
+      required: true
+
+  - type: input
+    id: npm-version
+    attributes:
+      label: npm Version
+      description: Output of `npm --version`
+      placeholder: "e.g., 10.8.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running?
+      options:
+        - "macOS (Apple Silicon)"
+        - "macOS (Intel)"
+        - "Windows 11"
+        - "Windows 10"
+        - "Linux (Ubuntu/Debian)"
+        - "Linux (RHEL/CentOS/Fedora)"
+        - "Linux (Arch)"
+        - "Linux (Other)"
+        - "WSL2 (Ubuntu)"
+        - "WSL2 (Other)"
+        - "Docker"
+        - "Other (specify in additional context)"
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version
+      description: Specific OS version
+      placeholder: "e.g., macOS 14.5, Ubuntu 22.04, Windows 11 23H2"
+
+  - type: dropdown
+    id: mcp-client
+    attributes:
+      label: MCP Client (if applicable)
+      description: Which MCP client are you using to connect to the server?
+      options:
+        - "Not applicable (CLI/Server issue)"
+        - "Claude Desktop App"
+        - "Claude.ai (web)"
+        - "Claude Code"
+        - "Cline (VS Code)"
+        - "Continue (VS Code/JetBrains)"
+        - "Cursor"
+        - "Windsurf"
+        - "Zed"
+        - "Custom client"
+        - "MCP Inspector"
+        - "Other (specify below)"
+
+  - type: input
+    id: mcp-client-version
+    attributes:
+      label: MCP Client Version
+      description: Version of the MCP client (if applicable)
+      placeholder: "e.g., Claude Desktop 0.7.2, Cline v3.1.0"
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport Type
+      description: How is the MCP server being accessed?
+      options:
+        - "HTTP (Streamable HTTP)"
+        - "stdio"
+        - "SSE (Server-Sent Events)"
+        - "Not sure"
+        - "Other (specify below)"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Stack Trace
+      description: Please paste any relevant error logs or stack traces
+      placeholder: |
+        ```
+        [Paste error logs here]
+        ```
+      render: shell
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration Files
+      description: Relevant configuration (package.json, tsconfig.json, .env, etc.). **Remove sensitive data!**
+      placeholder: |
+        ```json
+        {
+          "name": "my-mcp-server",
+          "dependencies": {
+            "@leanmcp/core": "^0.1.0"
+          }
+        }
+        ```
+      render: json
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / Videos
+      description: If applicable, add screenshots or videos to help explain the problem
+      placeholder: Drag and drop images here or paste URLs
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround (if found)
+      description: Have you found any workaround for this issue?
+      placeholder: Describe any temporary solutions you've discovered
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem
+      placeholder: |
+        - This started happening after upgrading from version X to Y
+        - Works fine on macOS but fails on Windows
+        - Only happens when using specific tools/resources
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues to ensure this is not a duplicate
+          required: true
+        - label: I have provided all required information above
+          required: true
+        - label: I have removed any sensitive information (API keys, tokens, etc.)
+          required: true
+        - label: I have tested with the latest version of LeanMCP
+          required: false

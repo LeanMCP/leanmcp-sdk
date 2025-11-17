@@ -1,0 +1,109 @@
+name: 📚 Documentation Issue
+description: Report issues or suggest improvements to documentation
+title: "[Docs]: "
+labels: ["documentation", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve LeanMCP documentation! Report errors, unclear sections, or suggest new content.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Issue Type
+      description: What kind of documentation issue is this?
+      options:
+        - "Error/Mistake in documentation"
+        - "Unclear or confusing explanation"
+        - "Missing documentation"
+        - "Outdated documentation"
+        - "Broken link"
+        - "Code example doesn't work"
+        - "Typo or grammar"
+        - "Suggestion for improvement"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the issue located?
+      options:
+        - "README.md"
+        - "packages/cli/README.md"
+        - "packages/core/README.md"
+        - "packages/auth/README.md"
+        - "API documentation"
+        - "Code comments/JSDoc"
+        - "Examples"
+        - "GitHub Discussions"
+        - "Other (specify below)"
+    validations:
+      required: true
+
+  - type: input
+    id: page-url
+    attributes:
+      label: Page URL or File Path
+      description: Link or path to the specific documentation
+      placeholder: "https://github.com/LeanMCP/leanmcp-sdk/blob/main/packages/cli/README.md#installation"
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: Description of Issue
+      description: What's wrong or what's missing?
+      placeholder: |
+        The installation instructions don't mention that...
+        The example code on line X produces an error...
+        There's no documentation for how to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Documentation (if applicable)
+      description: Quote the current text that needs to be changed
+      placeholder: |
+        > Current text: "Run npm install @leanmcp/cli"
+
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested Improvement
+      description: How should it be fixed or what should be added?
+      placeholder: |
+        Suggested: "Run npm install -g @leanmcp/cli --registry=https://npm.pkg.github.com"
+        
+        Or add a new section explaining...
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: |
+        - This confused me because...
+        - Other frameworks document this as...
+        - Related to MCP protocol feature X
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR to fix this documentation issue
+          required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have checked the latest version of the documentation
+          required: true
+        - label: I have searched existing issues
+          required: true
