@@ -5,12 +5,13 @@ A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type
 ## Features
 
 - **Type-safe decorators** - Full TypeScript support with compile-time validation
-- **Automatic schema inference** - Generate JSON Schema from TypeScript types and class-based validators
+- **Declarative schema definition** - Define JSON Schema using `@SchemaConstraint` decorators on class properties
 - **Clean API** - Function names become tool/prompt/resource names automatically
 - **MCP compliant** - Built on official @modelcontextprotocol/sdk
 - **Streamable HTTP** - Production-ready HTTP server with session management
+- **Authentication** - Built-in `@Authenticated` decorator with multi-provider support (AWS Cognito, more coming)
 - **Quick start** - CLI tool for instant project scaffolding
-- **Class-based validation** - Use `@SchemaConstraint` decorators for elegant input validation
+- **Built-in validation** - Automatic input validation using defined schemas
 
 ## Table of Contents
 
@@ -99,7 +100,10 @@ class AnalyzeSentimentOutput {
 }
 
 export class SentimentService {
-  @Tool({ description: 'Analyze sentiment of text' })
+  @Tool({ 
+    description: 'Analyze sentiment of text',
+    inputClass: AnalyzeSentimentInput
+  })
   async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
     const sentiment = this.detectSentiment(args.text);
     
@@ -145,8 +149,19 @@ Your MCP server starts on `http://localhost:8080` with:
 Callable functions that perform actions (like API endpoints).
 
 ```typescript
-@Tool({ description: 'Calculate sum of two numbers' })
-async add(input: { a: number; b: number }): Promise<{ result: number }> {
+class AddInput {
+  @SchemaConstraint({ description: 'First number' })
+  a!: number;
+  
+  @SchemaConstraint({ description: 'Second number' })
+  b!: number;
+}
+
+@Tool({ 
+  description: 'Calculate sum of two numbers',
+  inputClass: AddInput
+})
+async add(input: AddInput): Promise<{ result: number }> {
   return { result: input.a + input.b };
 }
 // Tool name: "add" (from function name)
@@ -254,7 +269,7 @@ export class WeatherService {
 
 | Decorator | Purpose | Usage |
 |-----------|---------|-------|
-| `@Tool` | Callable function | `@Tool({ description?: string })` |
+| `@Tool` | Callable function | `@Tool({ description?: string, inputClass?: Class })` |
 | `@Prompt` | Prompt template | `@Prompt({ description?: string })` |
 | `@Resource` | Data endpoint | `@Resource({ description?: string })` |
 
@@ -320,9 +335,17 @@ createHTTPServer(serverFactory, {
 ```typescript
 import { Tool, Prompt, Resource } from "@leanmcp/core";
 
+class ToolInput {
+  @SchemaConstraint({ description: 'Input parameter' })
+  param!: string;
+}
+
 export class ServiceName {
-  @Tool({ description: 'Tool description' })
-  async toolMethod(args: { param: string }) {
+  @Tool({ 
+    description: 'Tool description',
+    inputClass: ToolInput
+  })
+  async toolMethod(args: ToolInput) {
     // Tool implementation
     return { result: 'success' };
   }
@@ -429,7 +452,10 @@ class WeatherOutput {
 }
 
 export class WeatherService {
-  @Tool({ description: 'Get current weather for a city' })
+  @Tool({ 
+    description: 'Get current weather for a city',
+    inputClass: WeatherInput
+  })
   async getCurrentWeather(args: WeatherInput): Promise<WeatherOutput> {
     // Simulate API call
     return {
@@ -489,22 +515,34 @@ class CalculatorOutput {
 }
 
 export class CalculatorService {
-  @Tool({ description: 'Add two numbers' })
+  @Tool({ 
+    description: 'Add two numbers',
+    inputClass: CalculatorInput
+  })
   async add(args: CalculatorInput): Promise<CalculatorOutput> {
     return { result: args.a + args.b };
   }
 
-  @Tool({ description: 'Subtract two numbers' })
+  @Tool({ 
+    description: 'Subtract two numbers',
+    inputClass: CalculatorInput
+  })
   async subtract(args: CalculatorInput): Promise<CalculatorOutput> {
     return { result: args.a - args.b };
   }
 
-  @Tool({ description: 'Multiply two numbers' })
+  @Tool({ 
+    description: 'Multiply two numbers',
+    inputClass: CalculatorInput
+  })
   async multiply(args: CalculatorInput): Promise<CalculatorOutput> {
     return { result: args.a * args.b };
   }
 
-  @Tool({ description: 'Divide two numbers' })
+  @Tool({ 
+    description: 'Divide two numbers',
+    inputClass: CalculatorInput
+  })
   async divide(args: CalculatorInput): Promise<CalculatorOutput> {
     if (args.b === 0) {
       throw new Error('Division by zero');
@@ -513,6 +551,74 @@ export class CalculatorService {
   }
 }
 ```
+
+### Authenticated Service with AWS Cognito
+
+```typescript
+import { Tool, SchemaConstraint } from "@leanmcp/core";
+import { AuthProvider, Authenticated } from "@leanmcp/auth";
+
+// Initialize auth provider
+const authProvider = new AuthProvider('cognito', {
+  region: process.env.AWS_REGION,
+  userPoolId: process.env.COGNITO_USER_POOL_ID,
+  clientId: process.env.COGNITO_CLIENT_ID
+});
+await authProvider.init();
+
+// Input class - no token field needed
+class SendMessageInput {
+  @SchemaConstraint({
+    description: 'Channel to send message to',
+    minLength: 1
+  })
+  channel!: string;
+
+  @SchemaConstraint({
+    description: 'Message text',
+    minLength: 1
+  })
+  text!: string;
+}
+
+// Protect entire service with authentication
+@Authenticated(authProvider)
+export class SlackService {
+  @Tool({ 
+    description: 'Send message to Slack channel',
+    inputClass: SendMessageInput
+  })
+  async sendMessage(args: SendMessageInput) {
+    // Token automatically validated from _meta.authorization.token
+    // Only business arguments are passed here
+    return {
+      success: true,
+      channel: args.channel,
+      timestamp: Date.now().toString()
+    };
+  }
+}
+```
+
+**Client Usage:**
+```typescript
+// Call with authentication
+await mcpClient.callTool({
+  name: "sendMessage",
+  arguments: {
+    channel: "#general",
+    text: "Hello world"
+  },
+  _meta: {
+    authorization: {
+      type: "bearer",
+      token: "your-jwt-token"
+    }
+  }
+});
+```
+
+See [examples/slack-with-auth](./examples/slack-with-auth) for a complete working example.
 
 ## Development
 
@@ -540,7 +646,7 @@ leanmcp-sdk/
 └── packages/
     ├── cli/                 # @leanmcp/cli - CLI binary
     ├── core/                # @leanmcp/core - Core decorators & runtime
-    ├── auth/                # @leanmcp/auth - Authentication (planned)
+    ├── auth/                # @leanmcp/auth - Authentication with @Authenticated decorator
     └── utils/               # @leanmcp/utils - Utilities (planned)
 ```
 

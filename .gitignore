@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -13,6 +12,7 @@ build/
 .env
 .env.local
 .env.*.local
+.npmrc
 
 # IDE
 .vscode/

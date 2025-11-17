@@ -3,28 +3,81 @@
   "version": "0.1.0",
   "description": "Authentication and identity module supporting multiple providers",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@leanmcp/core": "^0.1.0",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/jest": "^29.5.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/jwk-to-pem": "^2.0.3",
+    "@types/node": "^20.0.0",
+    "dotenv": "^17.2.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0"
   },
   "peerDependencies": {
-    "@clerk/clerk-sdk-node": "^4.0.0",
-    "stripe": "^14.0.0"
+    "@aws-sdk/client-cognito-identity-provider": "^3.0.0",
+    "axios": "^1.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "jwk-to-pem": "^2.0.0"
   },
   "peerDependenciesMeta": {
-    "@clerk/clerk-sdk-node": {
+    "@aws-sdk/client-cognito-identity-provider": {
       "optional": true
     },
-    "stripe": {
+    "axios": {
+      "optional": true
+    },
+    "jsonwebtoken": {
+      "optional": true
+    },
+    "jwk-to-pem": {
       "optional": true
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/auth"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "decorators",
+    "authentication",
+    "auth",
+    "cognito",
+    "jwt"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   }
 }

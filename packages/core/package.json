@@ -1,12 +1,27 @@
 {
   "name": "@leanmcp/core",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Core library implementing decorators, reflection, and MCP runtime server",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "reflect-metadata": "^0.2.1",
@@ -30,5 +45,27 @@
     "@types/node": "^20.0.0",
     "@types/express": "^5.0.0",
     "@types/cors": "^2.8.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "decorators",
+    "server",
+    "runtime"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   }
 }

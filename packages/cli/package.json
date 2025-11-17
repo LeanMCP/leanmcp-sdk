@@ -1,13 +1,29 @@
 {
   "name": "@leanmcp/cli",
   "version": "0.1.0",
+  "description": "Command-line interface for scaffolding LeanMCP projects",
   "bin": {
     "leanmcp": "dist/index.js"
   },
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts"
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "echo \"No tests yet\" && exit 0"
   },
   "dependencies": {
     "chalk": "^5.3.0",
@@ -17,5 +33,27 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "scaffolding",
+    "generator",
+    "typescript"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   }
 }

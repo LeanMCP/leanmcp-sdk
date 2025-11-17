@@ -3,15 +3,52 @@
   "version": "0.1.0",
   "description": "Helper utilities and decorators shared across modules",
   "main": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "@leanmcp/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/utils"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "utilities",
+    "helpers",
+    "validation"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   }
 }

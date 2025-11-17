@@ -4,12 +4,12 @@ A complete working example demonstrating LeanMCP's HTTP server with type-safe sc
 
 ## Features Demonstrated
 
-- ✅ HTTP server with Streamable HTTP transport
-- ✅ Type-safe input/output schemas using TypeScript classes
-- ✅ Schema constraints with validation rules
-- ✅ Optional parameters with `@Optional()` decorator
-- ✅ Multiple tools in one service class
-- ✅ Automatic tool registration
+- HTTP server with Streamable HTTP transport
+- Type-safe input/output schemas using TypeScript classes
+- Schema constraints with validation rules
+- Optional parameters with `@Optional()` decorator
+- Multiple tools in one service class
+- Automatic tool registration
 
 ## Installation
 
@@ -207,28 +207,6 @@ basic-sentiment-tool/
     └── sentiment/
         └── index.ts     # Sentiment analysis service
 ```
-
-## What's Different from Old API
-
-**Old Way (Verbose):**
-```typescript
-@Tool('analyzeSentiment', 'Analyze sentiment')
-@InputSchema({ type: 'object', properties: { text: { type: 'string' } } })
-@OutputSchema({ type: 'object', properties: { sentiment: { type: 'string' } } })
-async analyzeSentiment(args: { text: string }): Promise<{ sentiment: string }> { }
-```
-
-**New Way (Clean):**
-```typescript
-@Tool({ description: 'Analyze sentiment' })
-async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> { }
-```
-
-Benefits:
-- 70% less boilerplate
-- Type-safe - TypeScript catches errors
-- Single source of truth
-- Better refactoring support
 
 ## Next Steps
 

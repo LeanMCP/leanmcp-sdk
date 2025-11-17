@@ -1,0 +1,64 @@
+{
+  "name": "@leanmcp/elicitation",
+  "version": "0.1.0",
+  "description": "Elicitation support for LeanMCP - structured user input collection",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "clean": "rm -rf dist",
+    "test": "jest --passWithNoTests",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0"
+  },
+  "peerDependencies": {
+    "@leanmcp/core": "*"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "decorators",
+    "elicitation",
+    "forms",
+    "validation",
+    "user-input",
+    "leanmcp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/elicitation"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}
