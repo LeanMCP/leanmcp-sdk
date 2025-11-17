@@ -1,0 +1,7 @@
+# Configure npm to use GitHub Packages for @leanmcp scope
+@leanmcp:registry=https://npm.pkg.github.com
+
+# Authenticate with GitHub (replace TOKEN with your GitHub Personal Access Token)
+# Generate token at: https://github.com/settings/tokens
+# Required scopes: read:packages
+//npm.pkg.github.com/:_authToken=TOKEN
