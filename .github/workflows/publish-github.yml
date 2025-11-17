@@ -1,12 +1,16 @@
-name: Publish to npm
+name: Publish to GitHub Packages
 
 on:
   workflow_dispatch:
   release:
     types: [published]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  publish-npm:
+  publish-github:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,14 +18,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@leanmcp'
       
       - name: Install & Build
         working-directory: ./packages/cli
         run: npm install && npm run build
       
-      - name: Publish to npm
+      - name: Publish to GitHub Packages
         working-directory: ./packages/cli
         run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
