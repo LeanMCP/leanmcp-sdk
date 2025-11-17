@@ -1,15 +1,9 @@
-name: Publish CLI to GitHub Packages
+name: Publish CLI
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/cli/**'
-      - '.github/workflows/publish-cli.yml'
+  workflow_dispatch:
   release:
     types: [published]
-  workflow_dispatch: # Allows manual trigger
 
 permissions:
   contents: read
@@ -18,38 +12,13 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@leanmcp'
-
-      - name: Install dependencies
-        working-directory: ./packages/cli
-        run: npm ci || npm install
-
-      - name: Build package
-        working-directory: ./packages/cli
-        run: npm run build
-
-      - name: Configure npm for GitHub Packages
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
-          echo "@leanmcp:registry=https://npm.pkg.github.com" >> ~/.npmrc
-
-      - name: Publish to GitHub Packages
-        working-directory: ./packages/cli
-        run: npm publish
+      - working-directory: ./packages/cli
+        run: npm install && npm run build && npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Summary
-        run: |
-          echo "✅ Published @leanmcp/cli to GitHub Packages" >> $GITHUB_STEP_SUMMARY
-          echo "Install with: \`npm install @leanmcp/cli --registry=https://npm.pkg.github.com\`" >> $GITHUB_STEP_SUMMARY
