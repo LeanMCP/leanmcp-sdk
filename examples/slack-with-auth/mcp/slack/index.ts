@@ -1,5 +1,6 @@
 import { Tool, Prompt, Resource, SchemaConstraint, Optional } from "@leanmcp/core";
-import { Authenticated, AuthProvider } from "@leanmcp/auth";
+import { Authenticated } from "@leanmcp/auth";
+import { authProvider } from "../config.js";
 
 // ============================================================================
 // Input/Output Types
@@ -191,16 +192,6 @@ class ChannelDescriptionPromptInput {
   channelPurpose!: string;
 }
 
-// Initialize authentication provider
-const authProvider = new AuthProvider('cognito', {
-  region: process.env.AWS_REGION || 'us-east-1',
-  userPoolId: process.env.COGNITO_USER_POOL_ID,
-  clientId: process.env.COGNITO_CLIENT_ID,
-  clientSecret: process.env.COGNITO_CLIENT_SECRET
-});
-
-await authProvider.init();
-
 /**
  * Slack Service
  * 
@@ -249,8 +240,9 @@ await authProvider.init();
 export class SlackService {
   private slackToken: string;
 
-  constructor(slackToken: string) {
-    this.slackToken = slackToken;
+  constructor() {
+    // Initialize from environment variables
+    this.slackToken = process.env.SLACK_BOT_TOKEN || 'simulated-token';
   }
 
   // ============================================================================

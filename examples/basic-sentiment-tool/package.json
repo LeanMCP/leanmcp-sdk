@@ -8,16 +8,10 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.1.0",
-    "@modelcontextprotocol/sdk": "^1.0.4",
-    "express": "^5.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.5.0"
+    "@leanmcp/core": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
-    "@types/express": "^5.0.3",
-    "@types/cors": "^2.8.19",
     "tsx": "^4.20.3",
     "typescript": "^5.6.3"
   }

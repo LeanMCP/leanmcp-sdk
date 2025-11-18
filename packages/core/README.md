@@ -75,6 +75,55 @@ export class SentimentService {
 
 ### 2. Create and Start Server
 
+#### Option A: Zero-Config Auto-Discovery (Recommended)
+
+Automatically discover and register all services from the `./mcp` directory:
+
+```typescript
+import { createHTTPServer, MCPServer } from "@leanmcp/core";
+
+// Create MCP server with auto-discovery
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-mcp-server",
+    version: "1.0.0",
+    logging: true
+  });
+
+  // Initialize and auto-discover services from ./mcp directory
+  await server.init();
+
+  return server.getServer();
+};
+
+// Start HTTP server
+await createHTTPServer(serverFactory, {
+  port: 3000,
+  cors: true
+});
+
+console.log('\nMCP Server running');
+console.log('HTTP endpoint: http://localhost:3000/mcp');
+console.log('Health check: http://localhost:3000/health');
+```
+
+**Directory Structure:**
+```
+your-project/
+├── main.ts
+└── mcp/
+    ├── sentiment/
+    │   └── index.ts    # export class SentimentService
+    ├── weather/
+    │   └── index.ts    # export class WeatherService
+    └── database/
+        └── index.ts    # export class DatabaseService
+```
+
+#### Option B: Manual Registration
+
+Manually import and register each service:
+
 ```typescript
 import { createHTTPServer, MCPServer } from "@leanmcp/core";
 import { SentimentService } from "./services/sentiment";
@@ -87,7 +136,7 @@ const serverFactory = () => {
     logging: true
   });
 
-  // Register services
+  // Register services manually
   server.registerService(new SentimentService());
 
   return server.getServer();
@@ -225,8 +274,114 @@ const server = new MCPServer({
   logging?: boolean;   // Enable logging (default: false)
 });
 
+// Manual registration
 server.registerService(instance: any): void;
-server.getServer(): Server;  // Get underlying MCP SDK server
+
+// Initialize and auto-discover services
+await server.init(): Promise<void>;
+
+// Get underlying MCP SDK server
+server.getServer(): Server;
+```
+
+#### Zero-Config Auto-Discovery
+
+The `init()` method automatically discovers and registers all services from the `./mcp` directory:
+
+**Basic Usage:**
+```typescript
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-server",
+    version: "1.0.0",
+    logging: true
+  });
+
+  // Initialize and auto-discover services from ./mcp directory
+  await server.init();
+
+  return server.getServer();
+};
+```
+
+**With Shared Dependencies:**
+
+For services that need shared dependencies, create a `config.ts` file in your `mcp` directory:
+
+```typescript
+// mcp/config.ts
+import { AuthProvider } from "@leanmcp/auth";
+
+if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
+  throw new Error('Missing required Cognito configuration');
+}
+
+export const authProvider = new AuthProvider('cognito', {
+  region: process.env.AWS_REGION || 'us-east-1',
+  userPoolId: process.env.COGNITO_USER_POOL_ID,
+  clientId: process.env.COGNITO_CLIENT_ID,
+  clientSecret: process.env.COGNITO_CLIENT_SECRET
+});
+
+await authProvider.init();
+```
+
+Then import in your services:
+
+```typescript
+// mcp/slack/index.ts
+import { Tool } from "@leanmcp/core";
+import { Authenticated } from "@leanmcp/auth";
+import { authProvider } from "../config.js";
+
+@Authenticated(authProvider)
+export class SlackService {
+  constructor() {
+    // No parameters needed - use environment or imported config
+  }
+
+  @Tool({ description: 'Send a message' })
+  async sendMessage(args: any) {
+    // Implementation
+  }
+}
+```
+
+Your main file stays clean:
+
+```typescript
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-server",
+    version: "1.0.0",
+    logging: true
+  });
+
+  await server.init();
+
+  return server.getServer();
+};
+```
+
+**How It Works:**
+- Automatically detects the caller's directory and looks for a `./mcp` subdirectory
+- Recursively scans for `index.ts` or `index.js` files
+- Dynamically imports each file and looks for exported classes
+- Instantiates services with no-args constructors
+- Automatically registers all discovered services with their decorated methods
+
+**Directory Structure:**
+```
+your-project/
+├── main.ts
+└── mcp/
+    ├── config.ts      # Optional: shared dependencies
+    ├── slack/
+    │   └── index.ts   # export class SlackService
+    ├── database/
+    │   └── index.ts   # export class DatabaseService
+    └── auth/
+        └── index.ts   # export class AuthService
 ```
 
 ### createHTTPServer

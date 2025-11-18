@@ -24,7 +24,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.1.0",
+    "@leanmcp/core": "^0.2.0",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {

@@ -25,11 +25,12 @@ function isInitializeRequest(body: any): boolean {
 
 /**
  * Create an HTTP server for MCP with Streamable HTTP transport
+ * Returns the HTTP server instance to keep the process alive
  */
 export async function createHTTPServer(
   serverFactory: MCPServerFactory,
   options: HTTPServerOptions = {}
-): Promise<void> {
+): Promise<any> {
   // Dynamic imports for optional peer dependencies
   // @ts-ignore - Express is a peer dependency
   const [express, { StreamableHTTPServerTransport }, cors] = await Promise.all([
@@ -142,19 +143,40 @@ export async function createHTTPServer(
   app.post('/mcp', handleMCPRequest);
   app.delete('/mcp', handleMCPRequest);
 
-  // Cleanup on shutdown
-  process.on('SIGINT', () => {
-    logger.info('\nShutting down server...');
-    Object.values(transports).forEach(t => t.close?.());
-    process.exit(0);
-  });
-
-  return new Promise((resolve) => {
-    app.listen(port, () => {
+  return new Promise((resolve, reject) => {
+    const listener = app.listen(port, () => {
       logger.info(`Server running on http://localhost:${port}`);
       logger.info(`MCP endpoint: http://localhost:${port}/mcp`);
       logger.info(`Health check: http://localhost:${port}/health`);
-      resolve();
+      resolve(listener); // Return listener to keep process alive
     });
+    
+    listener.on('error', (error) => {
+      logger.error(`Server error: ${error.message}`);
+      reject(error);
+    });
+
+    // Cleanup on shutdown
+    const cleanup = () => {
+      logger.info('\nShutting down server...');
+      
+      // Close all MCP transports
+      Object.values(transports).forEach(t => t.close?.());
+      
+      // Close the HTTP server
+      listener.close(() => {
+        logger.info('Server closed');
+        process.exit(0);
+      });
+      
+      // Force exit after 5 seconds if graceful shutdown fails
+      setTimeout(() => {
+        logger.warn('Forcing shutdown...');
+        process.exit(1);
+      }, 5000);
+    };
+
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
   });
 }

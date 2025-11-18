@@ -1,9 +1,8 @@
 {
   "name": "slack-with-auth-example",
   "version": "1.0.0",
-  "description": "Slack MCP Server with Cognito Authentication",
   "type": "module",
-  "main": "main.ts",
+  "description": "Slack MCP Server with Cognito Authentication",
   "scripts": {
     "start": "tsx main.ts",
     "dev": "tsx watch main.ts",
@@ -19,16 +18,16 @@
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.932.0",
     "@leanmcp/auth": "^0.1.0",
-    "@leanmcp/core": "^0.1.0",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "cors": "^2.8.5"
+    "@leanmcp/core": "^0.2.0",
+    "axios": "^1.7.0",
+    "jsonwebtoken": "^9.0.2",
+    "jwk-to-pem": "^2.0.6",
+    "dotenv": "^16.5.0"
   },
   "devDependencies": {
-    "@swc/core": "^1.15.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/jwk-to-pem": "^2.0.3",
     "@types/node": "^20.0.0",
-    "@types/express": "^5.0.3",
-    "@types/cors": "^2.8.19",
     "tsx": "^4.20.3",
     "typescript": "^5.6.3"
   }
