@@ -87,19 +87,18 @@ const serverFactory = async () => {
   const server = new MCPServer({
     name: "my-mcp-server",
     version: "1.0.0",
-    logging: true
+    logging: true  // Enable HTTP server logs
   });
 
-  // Initialize and auto-discover services from ./mcp directory
-  await server.init();
-
+  // Services are automatically discovered and registered from ./mcp directory
   return server.getServer();
 };
 
 // Start HTTP server
 await createHTTPServer(serverFactory, {
   port: 3000,
-  cors: true
+  cors: true,
+  logging: true  // Log HTTP requests
 });
 
 console.log('\nMCP Server running');
@@ -129,11 +128,12 @@ import { createHTTPServer, MCPServer } from "@leanmcp/core";
 import { SentimentService } from "./services/sentiment";
 
 // Create MCP server
-const serverFactory = () => {
+const serverFactory = async () => {
   const server = new MCPServer({
     name: "my-mcp-server",
     version: "1.0.0",
-    logging: true
+    logging: true,
+    autoDiscover: false  // Disable auto-discovery for manual registration
   });
 
   // Register services manually
@@ -146,7 +146,7 @@ const serverFactory = () => {
 await createHTTPServer(serverFactory, {
   port: 3000,
   cors: true,
-  logging: true
+  logging: true  // Log HTTP requests
 });
 ```
 
@@ -269,24 +269,31 @@ Main server class for registering services.
 
 ```typescript
 const server = new MCPServer({
-  name: string;        // Server name
-  version: string;     // Server version
-  logging?: boolean;   // Enable logging (default: false)
+  name: string;           // Server name
+  version: string;        // Server version
+  logging?: boolean;      // Enable logging (default: false)
+  debug?: boolean;        // Enable verbose debug logs (default: false)
+  autoDiscover?: boolean; // Enable auto-discovery (default: true)
+  mcpDir?: string;        // Custom mcp directory path (optional)
 });
 
 // Manual registration
 server.registerService(instance: any): void;
 
-// Initialize and auto-discover services
-await server.init(): Promise<void>;
-
 // Get underlying MCP SDK server
 server.getServer(): Server;
 ```
 
+**Options:**
+
+- **`logging`**: Enable basic logging for server operations
+- **`debug`**: Enable verbose debug logs showing detailed service registration (requires `logging: true`)
+- **`autoDiscover`**: Automatically discover and register services from `./mcp` directory (default: `true`)
+- **`mcpDir`**: Custom path to the mcp directory (default: auto-detected `./mcp`)
+
 #### Zero-Config Auto-Discovery
 
-The `init()` method automatically discovers and registers all services from the `./mcp` directory:
+Services are automatically discovered and registered from the `./mcp` directory when the server is created:
 
 **Basic Usage:**
 ```typescript
@@ -294,11 +301,23 @@ const serverFactory = async () => {
   const server = new MCPServer({
     name: "my-server",
     version: "1.0.0",
-    logging: true
+    logging: true  // Enable logging
   });
 
-  // Initialize and auto-discover services from ./mcp directory
-  await server.init();
+  // Services are automatically discovered and registered
+  return server.getServer();
+};
+```
+
+**With Debug Logging:**
+```typescript
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-server",
+    version: "1.0.0",
+    logging: true,
+    debug: true  // Show detailed service registration logs
+  });
 
   return server.getServer();
 };
@@ -306,7 +325,7 @@ const serverFactory = async () => {
 
 **With Shared Dependencies:**
 
-For services that need shared dependencies, create a `config.ts` file in your `mcp` directory:
+For services that need shared dependencies, create a `config.ts` (example) file in your `mcp` directory:
 
 ```typescript
 // mcp/config.ts
@@ -357,18 +376,17 @@ const serverFactory = async () => {
     logging: true
   });
 
-  await server.init();
-
+  // Services are automatically discovered and registered
   return server.getServer();
 };
 ```
 
 **How It Works:**
-- Automatically detects the caller's directory and looks for a `./mcp` subdirectory
+- Automatically discovers and registers services from the `./mcp` directory during server initialization
 - Recursively scans for `index.ts` or `index.js` files
 - Dynamically imports each file and looks for exported classes
 - Instantiates services with no-args constructors
-- Automatically registers all discovered services with their decorated methods
+- Registers all discovered services with their decorated methods
 
 **Directory Structure:**
 ```
@@ -390,11 +408,11 @@ Create and start an HTTP server with streamable transport.
 
 ```typescript
 await createHTTPServer(
-  serverFactory: () => Server,
+  serverFactory: () => Server | Promise<Server>,
   options: {
     port?: number;      // Port number (default: 3000)
     cors?: boolean;     // Enable CORS (default: false)
-    logging?: boolean;  // Enable logging (default: true)
+    logging?: boolean;  // Enable HTTP request logging (default: false)
   }
 );
 ```
