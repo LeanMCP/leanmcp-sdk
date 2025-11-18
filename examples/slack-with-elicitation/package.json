@@ -1,22 +1,22 @@
 {
   "name": "slack-with-elicitation-example",
   "version": "0.1.0",
-  "private": true,
+  "type": "module",
   "description": "Example MCP server with Slack integration and elicitation",
-  "main": "dist/main.js",
   "scripts": {
-    "build": "tsup main.ts --format cjs",
-    "dev": "tsup main.ts --format cjs --watch --onSuccess \"node dist/main.js\"",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "dev": "tsx watch main.ts",
+    "build": "tsc"
   },
   "dependencies": {
-    "@leanmcp/core": "*",
+    "@leanmcp/core": "^0.2.0",
     "@leanmcp/elicitation": "*",
     "@slack/web-api": "^7.0.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.5.0"
   },
   "devDependencies": {
-    "tsup": "^8.0.1",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.20.3",
     "typescript": "^5.6.3"
   }
 }

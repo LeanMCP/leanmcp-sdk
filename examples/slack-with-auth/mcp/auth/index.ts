@@ -1,5 +1,6 @@
 import { Tool, SchemaConstraint } from "@leanmcp/core";
 import { AuthProvider } from "@leanmcp/auth";
+import { authProvider } from "../config.js";
 
 /**
  * Input for refreshing authentication token
@@ -48,7 +49,8 @@ class RefreshTokenOutput {
 export class AuthService {
   private authProvider: AuthProvider;
 
-  constructor(authProvider: AuthProvider) {
+  constructor() {
+    // Use the module-level authProvider
     this.authProvider = authProvider;
   }
 

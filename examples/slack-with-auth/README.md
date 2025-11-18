@@ -222,13 +222,14 @@ Note: For resources, the token should be passed in the request context/headers.
 
 ```
 slack-with-auth/
-├── index.ts                 # Main server entry point
+├── main.ts                  # Main server entry point
 ├── package.json             # Dependencies and scripts
 ├── tsconfig.json            # TypeScript configuration
 ├── .env.example             # Environment template
 ├── .env                     # Your configuration (gitignored)
 ├── README.md                # This file
 └── mcp/
+    ├── config.ts            # Shared configuration (authProvider)
     ├── slack/
     │   └── index.ts         # Slack service implementation
     └── auth/
@@ -250,19 +251,45 @@ export class SlackService {
 }
 ```
 
-### 2. Environment-Based Configuration
+### 2. Shared Configuration
 
 ```typescript
-const config = {
-  aws: {
-    region: process.env.AWS_REGION || 'us-east-1',
-    userPoolId: process.env.COGNITO_USER_POOL_ID,
-    clientId: process.env.COGNITO_CLIENT_ID
-  }
-};
+// mcp/config.ts
+import { AuthProvider } from "@leanmcp/auth";
+
+export const authProvider = new AuthProvider('cognito', {
+  region: process.env.AWS_REGION || 'us-east-1',
+  userPoolId: process.env.COGNITO_USER_POOL_ID!,
+  clientId: process.env.COGNITO_CLIENT_ID!,
+  clientSecret: process.env.COGNITO_CLIENT_SECRET
+});
+
+await authProvider.init();
 ```
 
-### 3. Mixed Public/Private APIs
+### 3. Auto-Discovery with Zero Config
+
+```typescript
+// main.ts
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: 'slack-with-auth',
+    version: '1.0.0',
+    logging: true
+  });
+
+  // Services are automatically discovered and registered from ./mcp
+  return server.getServer();
+};
+
+await createHTTPServer(serverFactory, {
+  port: parseInt(process.env.PORT || '3000'),
+  cors: true,
+  logging: true  // Log HTTP requests
+});
+```
+
+### 4. Mixed Public/Private APIs
 
 ```typescript
 // Protected service
@@ -273,7 +300,7 @@ export class SlackService { }
 export class PublicSlackService { }
 ```
 
-### 4. Token Management
+### 5. Token Management
 
 ```typescript
 export class AuthService {
@@ -300,13 +327,14 @@ The example works without a real Slack token - it simulates API calls for testin
 
 ## Best Practices Demonstrated
 
-1. **Environment-based configuration** - No hardcoded credentials
-2. **Class-level authentication** - DRY principle for protected services
-3. **Separate public/private services** - Clear access control
-4. **Token refresh capability** - Handle expired tokens gracefully
-5. **Comprehensive error handling** - Clear error messages
-6. **Type-safe inputs/outputs** - Full TypeScript support
-7. **Proper service separation** - Auth logic separate from business logic
+1. **Zero-config auto-discovery** - Services automatically registered from `./mcp` directory
+2. **Shared configuration** - `config.ts` for dependencies used across services
+3. **Environment-based configuration** - No hardcoded credentials
+4. **Class-level authentication** - DRY principle for protected services
+5. **Separate public/private services** - Clear access control
+6. **Token refresh capability** - Handle expired tokens gracefully
+7. **Comprehensive error handling** - Clear error messages
+8. **Type-safe inputs/outputs** - Full TypeScript support
 
 ## Troubleshooting
 
@@ -323,8 +351,9 @@ The example works without a real Slack token - it simulates API calls for testin
 - Ensure token hasn't expired
 
 ### Decorator errors during development
-- Run `npm run build` in the auth package
-- Ensure `@leanmcp/auth` is properly installed
+- Run `npm run build` in the core and auth packages
+- Ensure `@leanmcp/core@^0.2.0` and `@leanmcp/auth` are properly installed
+- Check that services are exported from `mcp/*/index.ts` files
 
 ## Next Steps
 

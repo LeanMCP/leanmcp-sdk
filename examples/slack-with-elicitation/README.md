@@ -327,12 +327,12 @@ curl -X POST http://localhost:3000/mcp \
 
 ## Key Features
 
-- ✅ **Automatic interception** - Decorator wraps methods to check for missing fields
-- ✅ **Multiple strategies** - Form, multi-step, and conditional elicitation
-- ✅ **Type-safe** - Full TypeScript support with decorators
-- ✅ **Simulated mode** - Test without real Slack credentials
-- ✅ **Hot reload** - Watch mode for rapid development
-- ✅ **MCP compliant** - Follows MCP elicitation protocol
+- **Automatic interception** - Decorator wraps methods to check for missing fields
+- **Multiple strategies** - Form, multi-step, and conditional elicitation
+- **Type-safe** - Full TypeScript support with decorators
+- **Simulated mode** - Test without real Slack credentials
+- **Hot reload** - Watch mode for rapid development
+- **MCP compliant** - Follows MCP elicitation protocol
 
 ## Code Examples
 

@@ -30,7 +30,7 @@ program
     }
 
     await fs.mkdirp(targetDir);
-    await fs.mkdirp(path.join(targetDir, "mcp"));
+    await fs.mkdirp(path.join(targetDir, "mcp", "example"));
 
     // --- Package.json ---
     const pkg = {
@@ -49,15 +49,10 @@ program
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.1.0",
-        "@modelcontextprotocol/sdk": "^1.0.0",
-        "cors": "^2.8.5",
-        "dotenv": "^16.5.0",
-        "express": "^5.1.0"
+        "@leanmcp/core": "^0.2.0",
+        "dotenv": "^16.5.0"
       },
       devDependencies: {
-        "@types/cors": "^2.8.19",
-        "@types/express": "^5.0.3",
         "@types/node": "^20.0.0",
         "tsx": "^4.20.3",
         "typescript": "^5.6.3"
@@ -86,7 +81,6 @@ program
     // --- Main Entry Point (main.ts) ---
     const mainTs = `import dotenv from "dotenv";
 import { createHTTPServer, MCPServer } from "@leanmcp/core";
-import { ExampleService } from "./mcp/example.js";
 
 // Load environment variables
 dotenv.config();
@@ -95,25 +89,29 @@ const PORT = Number(process.env.PORT) || 3001;
 
 /**
  * Create and configure the MCP server
+ * Services are automatically discovered from ./mcp directory
  */
-function createMCPServer() {
+const serverFactory = async () => {
   const server = new MCPServer({ 
     name: "${projectName}", 
-    version: "1.0.0" 
+    version: "1.0.0",
+    logging: true
   });
 
-  // Register your services here
-  server.registerService(new ExampleService());
-
+  // Services are automatically discovered and registered from ./mcp
   return server.getServer();
-}
+};
 
 // Start the HTTP server
-await createHTTPServer(createMCPServer, {
+await createHTTPServer(serverFactory, {
   port: PORT,
   cors: true,
-  logging: true
+  logging: true  // Log HTTP requests
 });
+
+console.log(\`\\n${projectName} MCP Server\`);
+console.log(\`HTTP endpoint: http://localhost:\${PORT}/mcp\`);
+console.log(\`Health check: http://localhost:\${PORT}/health\`);
 `;
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
@@ -223,7 +221,7 @@ export class ExampleService {
   }
 }
 `;
-    await fs.writeFile(path.join(targetDir, "mcp", "example.ts"), exampleServiceTs);
+    await fs.writeFile(path.join(targetDir, "mcp", "example", "index.ts"), exampleServiceTs);
 
     const gitignore = `node_modules\ndist\n.env\n.env.local\n*.log\n`;
     const env = `# Server Configuration\nPORT=3001\nNODE_ENV=development\n\n# Add your environment variables here\n`;
@@ -257,22 +255,36 @@ npm start
 \`\`\`
 ${projectName}/
 ├── main.ts              # Server entry point
-├── mcp/
-│   └── example.ts       # Example service
+├── mcp/                 # Services directory (auto-discovered)
+│   └── example/
+│       └── index.ts     # Example service
 ├── .env                 # Environment variables
 └── package.json
 \`\`\`
 
 ## Adding New Services
 
-Create a new service file in \`mcp/\`:
+Create a new service directory in \`mcp/\`:
 
 \`\`\`typescript
-import { Tool } from "@leanmcp/core";
+// mcp/myservice/index.ts
+import { Tool, SchemaConstraint } from "@leanmcp/core";
+
+// Define input schema
+class MyToolInput {
+  @SchemaConstraint({ 
+    description: "Message to process",
+    minLength: 1
+  })
+  message!: string;
+}
 
 export class MyService {
-  @Tool({ description: "My awesome tool" })
-  async myTool(input: { message: string }) {
+  @Tool({ 
+    description: "My awesome tool",
+    inputClass: MyToolInput
+  })
+  async myTool(input: MyToolInput) {
     return {
       content: [{
         type: "text",
@@ -283,12 +295,15 @@ export class MyService {
 }
 \`\`\`
 
-Then register it in \`main.ts\`:
+Services are automatically discovered and registered - no need to modify \`main.ts\`!
 
-\`\`\`typescript
-import { MyService } from "./mcp/my-service.js";
-server.registerService(new MyService());
-\`\`\`
+## Features
+
+- **Zero-config auto-discovery** - Services automatically registered from \`./mcp\` directory
+- **Type-safe decorators** - \`@Tool\`, \`@Prompt\`, \`@Resource\` with full TypeScript support
+- **Schema validation** - Automatic input validation with \`@SchemaConstraint\`
+- **HTTP transport** - Production-ready HTTP server with session management
+- **Hot reload** - Development mode with automatic restart on file changes
 
 ## Testing with MCP Inspector
 
@@ -323,13 +338,15 @@ program
       process.exit(1);
     }
 
-    await fs.mkdirp(mcpDir);
-    const serviceFile = path.join(mcpDir, `${serviceName}.ts`);
+    const serviceDir = path.join(mcpDir, serviceName);
+    const serviceFile = path.join(serviceDir, "index.ts");
     
-    if (fs.existsSync(serviceFile)) {
+    if (fs.existsSync(serviceDir)) {
       console.error(chalk.red(`ERROR: Service ${serviceName} already exists.`));
       process.exit(1);
     }
+
+    await fs.mkdirp(serviceDir);
 
     const indexTs = `import { Tool, Resource, Prompt, Optional, SchemaConstraint } from "@leanmcp/core";
 
@@ -392,46 +409,12 @@ export class ${capitalize(serviceName)}Service {
 `;
     await fs.writeFile(serviceFile, indexTs);
     
-    // Auto-register the service in main.ts
-    const mainTsPath = path.join(cwd, "main.ts");
-    let mainTsContent = await fs.readFile(mainTsPath, "utf-8");
-    
-    const serviceClassName = `${capitalize(serviceName)}Service`;
-    const importStatement = `import { ${serviceClassName} } from "./mcp/${serviceName}.js";`;
-    const registerStatement = `  server.registerService(new ${serviceClassName}());`;
-    
-    // Add import after the last import statement
-    const lastImportMatch = mainTsContent.match(/import .* from .*;\n/g);
-    if (lastImportMatch) {
-      const lastImport = lastImportMatch[lastImportMatch.length - 1];
-      const lastImportIndex = mainTsContent.lastIndexOf(lastImport);
-      const afterLastImport = lastImportIndex + lastImport.length;
-      mainTsContent = 
-        mainTsContent.slice(0, afterLastImport) + 
-        importStatement + "\n" + 
-        mainTsContent.slice(afterLastImport);
-    }
-    
-    // Add registration after existing registerService calls
-    const registerPattern = /server\.registerService\(new \w+\(\)\);/g;
-    const matches = [...mainTsContent.matchAll(registerPattern)];
-    if (matches.length > 0) {
-      const lastMatch = matches[matches.length - 1];
-      const insertPosition = lastMatch.index! + lastMatch[0].length;
-      mainTsContent = 
-        mainTsContent.slice(0, insertPosition) + 
-        "\n" + registerStatement + 
-        mainTsContent.slice(insertPosition);
-    }
-    
-    await fs.writeFile(mainTsPath, mainTsContent);
-    
     console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
-    console.log(chalk.gray(`   File: mcp/${serviceName}.ts`));
+    console.log(chalk.gray(`   File: mcp/${serviceName}/index.ts`));
     console.log(chalk.gray(`   Tool: greet`));
     console.log(chalk.gray(`   Prompt: welcomePrompt`));
     console.log(chalk.gray(`   Resource: getStatus`));
-    console.log(chalk.green(`\\nService automatically registered in main.ts!`));
+    console.log(chalk.green(`\\nService will be automatically discovered on next server start!`));
   });
 
 program.parse();

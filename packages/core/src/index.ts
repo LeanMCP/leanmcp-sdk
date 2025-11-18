@@ -33,6 +33,16 @@ export interface MCPServerOptions {
   logging?: boolean;
 }
 
+export interface MCPServerConstructorOptions {
+  name: string;
+  version: string;
+  logging?: boolean;
+  debug?: boolean;         // Enable detailed debug logs (default: false)
+  autoDiscover?: boolean;  // Enable automatic service discovery (default: true)
+  mcpDir?: string;         // Custom mcp directory path (optional)
+  serviceFactories?: Record<string, () => any>;  // Dependency injection factories
+}
+
 interface RegisteredTool {
   name: string;
   description: string;
@@ -73,13 +83,25 @@ export class MCPServer {
   private resources: Map<string, RegisteredResource> = new Map();
   private logging: boolean;
   private logger: Logger;
+  private options: MCPServerConstructorOptions;
+  private initPromise: Promise<void>;
+  private autoDiscovered: boolean = false;
 
-  constructor(options: { name: string; version: string; logging?: boolean }) {
+  constructor(options: MCPServerConstructorOptions) {
+    this.options = options;
     this.logging = options.logging || false;
+    
+    // Determine log level based on logging and debug flags
+    let logLevel = LogLevel.NONE;
+    if (options.logging) {
+      logLevel = options.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    }
+    
     this.logger = new Logger({
-      level: this.logging ? LogLevel.INFO : LogLevel.NONE,
+      level: logLevel,
       prefix: 'MCPServer'
     });
+
     this.server = new Server(
       {
         name: options.name,
@@ -88,13 +110,115 @@ export class MCPServer {
       {
         capabilities: {
           tools: {},
-          resources: {},
           prompts: {},
+          resources: {},
         },
       }
     );
 
     this.setupHandlers();
+    
+    // Start auto-discovery immediately
+    this.initPromise = this.autoInit();
+  }
+
+  /**
+   * Internal initialization - runs automatically in constructor
+   */
+  private async autoInit() {
+    const options = this.options;
+    
+    if (options.autoDiscover !== false) {
+      await this.autoDiscoverServices(options.mcpDir, options.serviceFactories);
+    }
+  }
+
+  /**
+   * Wait for initialization to complete
+   * This is called internally by createHTTPServer
+   */
+  async waitForInit(): Promise<void> {
+    await this.initPromise;
+  }
+  
+  /**
+   * Automatically discover and register services from the mcp directory
+   * Called by init() unless autoDiscover is set to false
+   */
+  private async autoDiscoverServices(
+    customMcpDir?: string,
+    serviceFactories?: Record<string, () => any>
+  ) {
+    if (this.autoDiscovered) return;
+    this.autoDiscovered = true;
+    
+    try {
+      // Determine the mcp directory location
+      let mcpDir: string;
+      
+      if (customMcpDir) {
+        // Use custom directory if provided
+        mcpDir = customMcpDir;
+      } else {
+        // Auto-detect: Look for mcp directory relative to the main entry point
+        // Get the directory of the file that called new MCPServer()
+        const callerFile = this.getCallerFile();
+        if (callerFile) {
+          const callerDir = path.dirname(callerFile);
+          mcpDir = path.join(callerDir, 'mcp');
+        } else {
+          // Fallback to current working directory
+          mcpDir = path.join(process.cwd(), 'mcp');
+        }
+      }
+      
+      // Only auto-register if the directory exists
+      if (fs.existsSync(mcpDir)) {
+        this.logger.debug(`Auto-discovering services from: ${mcpDir}`);
+        await this.autoRegisterServices(mcpDir, serviceFactories);
+      } else {
+        this.logger.debug(`MCP directory not found at ${mcpDir}, skipping auto-discovery`);
+      }
+    } catch (error: any) {
+      this.logger.warn(`Auto-discovery failed: ${error.message}`);
+    }
+  }
+  
+  /**
+   * Get the file path of the caller (the file that instantiated MCPServer)
+   */
+  private getCallerFile(): string | null {
+    const originalPrepareStackTrace = Error.prepareStackTrace;
+    try {
+      const err = new Error();
+      Error.prepareStackTrace = (_, stack) => stack;
+      const stack = err.stack as any;
+      
+      // Find the first stack frame that's not from the @leanmcp/core package
+      for (let i = 0; i < stack.length; i++) {
+        let fileName = stack[i].getFileName();
+        if (fileName && 
+            !fileName.includes('@leanmcp') && 
+            !fileName.includes('leanmcp-sdk\\packages\\core') &&
+            !fileName.includes('leanmcp-sdk/packages/core') &&
+            (fileName.endsWith('.ts') || fileName.endsWith('.js') || fileName.endsWith('.mjs'))) {
+          
+          // Convert file:// URL to regular path
+          if (fileName.startsWith('file://')) {
+            fileName = fileName.replace('file:///', '').replace('file://', '');
+            // On Windows, remove leading slash if present
+            if (process.platform === 'win32' && fileName.startsWith('/')) {
+              fileName = fileName.substring(1);
+            }
+          }
+          
+          return fileName;
+        }
+      }
+      return null;
+    } finally {
+      Error.prepareStackTrace = originalPrepareStackTrace;
+    }
   }
 
   private setupHandlers() {
@@ -274,6 +398,118 @@ export class MCPServer {
   }
 
   /**
+   * Auto-register all services from the mcp directory
+   * Scans the directory recursively and registers all exported classes
+   * 
+   * @param mcpDir - Path to the mcp directory containing service files
+   * @param serviceFactories - Optional map of service class names to factory functions for dependency injection
+   * 
+   * @example
+   * // Auto-register services with no dependencies
+   * await server.autoRegisterServices('./mcp');
+   * 
+   * @example
+   * // Auto-register with dependency injection
+   * await server.autoRegisterServices('./mcp', {
+   *   SlackService: () => new SlackService(process.env.SLACK_TOKEN),
+   *   AuthService: () => new AuthService(authProvider)
+   * });
+   */
+  async autoRegisterServices(
+    mcpDir: string, 
+    serviceFactories?: Record<string, () => any>
+  ) {
+    this.logger.debug(`Auto-registering services from: ${mcpDir}`);
+    
+    if (!fs.existsSync(mcpDir)) {
+      this.logger.warn(`MCP directory not found: ${mcpDir}`);
+      return;
+    }
+
+    const serviceFiles = this.findServiceFiles(mcpDir);
+    this.logger.debug(`Found ${serviceFiles.length} service file(s)`);
+
+    for (const filePath of serviceFiles) {
+      try {
+        await this.loadAndRegisterService(filePath, serviceFactories);
+      } catch (error: any) {
+        this.logger.error(`Failed to load service from ${filePath}: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Recursively find all index.ts/index.js files in the mcp directory
+   */
+  private findServiceFiles(dir: string): string[] {
+    const files: string[] = [];
+    
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        // Recursively search subdirectories
+        files.push(...this.findServiceFiles(fullPath));
+      } else if (entry.isFile()) {
+        // Look for index.ts or index.js files
+        if (entry.name === 'index.ts' || entry.name === 'index.js') {
+          files.push(fullPath);
+        }
+      }
+    }
+    
+    return files;
+  }
+
+  /**
+   * Load a service file and register all exported classes
+   */
+  private async loadAndRegisterService(
+    filePath: string,
+    serviceFactories?: Record<string, () => any>
+  ) {
+    this.logger.debug(`Loading service from: ${filePath}`);
+    
+    // Convert to file URL for dynamic import
+    const fileUrl = pathToFileURL(filePath).href;
+    
+    // Dynamic import the module
+    const module = await import(fileUrl);
+    
+    // Find all exported classes
+    let registeredCount = 0;
+    for (const [exportName, exportValue] of Object.entries(module)) {
+      // Check if it's a class (constructor function)
+      if (typeof exportValue === 'function' && exportValue.prototype) {
+        try {
+          let instance: any;
+          
+          // Check if a factory function is provided for this service
+          if (serviceFactories && serviceFactories[exportName]) {
+            instance = serviceFactories[exportName]();
+            this.logger.info(`Using factory for service: ${exportName}`);
+          } else {
+            // Try to instantiate with no-args constructor
+            instance = new (exportValue as any)();
+          }
+          
+          this.registerService(instance);
+          registeredCount++;
+          this.logger.debug(`Registered service: ${exportName} from ${path.basename(filePath)}`);
+        } catch (error: any) {
+          this.logger.warn(`Skipped ${exportName}: ${error.message}`);
+        }
+      }
+    }
+    
+    if (registeredCount === 0) {
+      this.logger.warn(`No services registered from ${filePath}`);
+    }
+  }
+
+  /**
    * Register a service instance with decorated methods
    */
   registerService(instance: any) {
@@ -303,7 +539,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+        this.logger.debug(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
       }
     }
 
@@ -339,7 +575,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered prompt: ${methodMeta.promptName}`);
+        this.logger.debug(`Registered prompt: ${methodMeta.promptName}`);
       }
     }
 
@@ -372,15 +608,18 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered resource: ${methodMeta.resourceUri}`);
+        this.logger.debug(`Registered resource: ${methodMeta.resourceUri}`);
       }
     }
   }
 
   /**
    * Get the underlying MCP SDK Server instance
+   * Attaches waitForInit method for HTTP server initialization
    */
   getServer() {
+    // Attach waitForInit to the server instance for HTTP server to use
+    (this.server as any).waitForInit = () => this.waitForInit();
     return this.server;
   }
 }
