@@ -53,6 +53,7 @@ export async function createHTTPServer(
   validatePort(port);
   
   const transports: Record<string, any> = {};
+  let mcpServer: Server | null = null; // Store the MCP server instance
   
   // Initialize logger
   const logger = options.logger || new Logger({
@@ -94,6 +95,25 @@ export async function createHTTPServer(
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let transport: any;
 
+    // Log incoming request with tool/resource/prompt name if available
+    const method = req.body?.method || 'unknown';
+    const params = req.body?.params;
+    let logMessage = `${req.method} /mcp - ${method}`;
+    
+    // Add name for tools/resources/prompts
+    if (params?.name) {
+      logMessage += ` [${params.name}]`;
+    } else if (params?.uri) {
+      logMessage += ` [${params.uri}]`;
+    }
+    
+    // Add session info
+    if (sessionId) {
+      logMessage += ` (session: ${sessionId.substring(0, 8)}...)`;
+    }
+    
+    logger.info(logMessage);
+
     try {
       if (sessionId && transports[sessionId]) {
         transport = transports[sessionId];
@@ -116,8 +136,11 @@ export async function createHTTPServer(
           }
         };
 
-        const server = await serverFactory();
-        await server.connect(transport);
+        // Use the pre-initialized server instance
+        if (!mcpServer) {
+          throw new Error('MCP server not initialized');
+        }
+        await (mcpServer as Server).connect(transport);
       } else {
         res.status(400).json({
           jsonrpc: '2.0',
@@ -143,40 +166,53 @@ export async function createHTTPServer(
   app.post('/mcp', handleMCPRequest);
   app.delete('/mcp', handleMCPRequest);
 
-  return new Promise((resolve, reject) => {
-    const listener = app.listen(port, () => {
-      logger.info(`Server running on http://localhost:${port}`);
-      logger.info(`MCP endpoint: http://localhost:${port}/mcp`);
-      logger.info(`Health check: http://localhost:${port}/health`);
-      resolve(listener); // Return listener to keep process alive
-    });
-    
-    listener.on('error', (error) => {
-      logger.error(`Server error: ${error.message}`);
-      reject(error);
-    });
-
-    // Cleanup on shutdown
-    const cleanup = () => {
-      logger.info('\nShutting down server...');
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Initialize the MCP server and wait for auto-discovery to complete
+      mcpServer = await serverFactory();
       
-      // Close all MCP transports
-      Object.values(transports).forEach(t => t.close?.());
+      // If the server has a waitForInit method (from MCPServer wrapper), wait for it
+      if (mcpServer && typeof (mcpServer as any).waitForInit === 'function') {
+        await (mcpServer as any).waitForInit();
+      }
       
-      // Close the HTTP server
-      listener.close(() => {
-        logger.info('Server closed');
-        process.exit(0);
+      // Now start the HTTP listener - all services are discovered and ready
+      const listener = app.listen(port, () => {
+        logger.info(`Server running on http://localhost:${port}`);
+        logger.info(`MCP endpoint: http://localhost:${port}/mcp`);
+        logger.info(`Health check: http://localhost:${port}/health`);
+        resolve(listener); // Return listener to keep process alive
       });
       
-      // Force exit after 5 seconds if graceful shutdown fails
-      setTimeout(() => {
-        logger.warn('Forcing shutdown...');
-        process.exit(1);
-      }, 5000);
-    };
+      listener.on('error', (error) => {
+        logger.error(`Server error: ${error.message}`);
+        reject(error);
+      });
 
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
+      // Cleanup on shutdown
+      const cleanup = () => {
+        logger.info('\nShutting down server...');
+        
+        // Close all MCP transports
+        Object.values(transports).forEach(t => t.close?.());
+        
+        // Close the HTTP server
+        listener.close(() => {
+          logger.info('Server closed');
+          process.exit(0);
+        });
+        
+        // Force exit after 5 seconds if graceful shutdown fails
+        setTimeout(() => {
+          logger.warn('Forcing shutdown...');
+          process.exit(1);
+        }, 5000);
+      };
+
+      process.on('SIGINT', cleanup);
+      process.on('SIGTERM', cleanup);
+    } catch (error) {
+      reject(error);
+    }
   });
 }

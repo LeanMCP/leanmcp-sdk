@@ -8,15 +8,13 @@ const serverFactory = async () => {
     logging: true
   });
 
-  // Initialize and auto-discover services
-  await server.init();
-
   return server.getServer();
 };
 
 await createHTTPServer(serverFactory, {
   port: 8080,
-  cors: true
+  cors: true,
+  // logging: true // use to log HTTP requests
 });
 
 console.log("\nSentiment Analysis MCP Server");

@@ -37,6 +37,7 @@ export interface MCPServerConstructorOptions {
   name: string;
   version: string;
   logging?: boolean;
+  debug?: boolean;         // Enable detailed debug logs (default: false)
   autoDiscover?: boolean;  // Enable automatic service discovery (default: true)
   mcpDir?: string;         // Custom mcp directory path (optional)
   serviceFactories?: Record<string, () => any>;  // Dependency injection factories
@@ -82,16 +83,25 @@ export class MCPServer {
   private resources: Map<string, RegisteredResource> = new Map();
   private logging: boolean;
   private logger: Logger;
-  private autoDiscovered: boolean = false;
   private options: MCPServerConstructorOptions;
+  private initPromise: Promise<void>;
+  private autoDiscovered: boolean = false;
 
   constructor(options: MCPServerConstructorOptions) {
     this.options = options;
     this.logging = options.logging || false;
+    
+    // Determine log level based on logging and debug flags
+    let logLevel = LogLevel.NONE;
+    if (options.logging) {
+      logLevel = options.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    }
+    
     this.logger = new Logger({
-      level: this.logging ? LogLevel.INFO : LogLevel.NONE,
+      level: logLevel,
       prefix: 'MCPServer'
     });
+
     this.server = new Server(
       {
         name: options.name,
@@ -100,28 +110,35 @@ export class MCPServer {
       {
         capabilities: {
           tools: {},
-          resources: {},
           prompts: {},
+          resources: {},
         },
       }
     );
 
     this.setupHandlers();
-  }
-  
-  /**
-   * Initialize the server and auto-discover services
-   * This must be called after construction if autoDiscover is enabled (default)
-   */
-  async init() {
-    if (this.autoDiscovered) return;
     
+    // Start auto-discovery immediately
+    this.initPromise = this.autoInit();
+  }
+
+  /**
+   * Internal initialization - runs automatically in constructor
+   */
+  private async autoInit() {
     const options = this.options;
     
-    // Auto-discover services if enabled (default: true)
     if (options.autoDiscover !== false) {
       await this.autoDiscoverServices(options.mcpDir, options.serviceFactories);
     }
+  }
+
+  /**
+   * Wait for initialization to complete
+   * This is called internally by createHTTPServer
+   */
+  async waitForInit(): Promise<void> {
+    await this.initPromise;
   }
   
   /**
@@ -157,7 +174,7 @@ export class MCPServer {
       
       // Only auto-register if the directory exists
       if (fs.existsSync(mcpDir)) {
-        this.logger.info(`Auto-discovering services from: ${mcpDir}`);
+        this.logger.debug(`Auto-discovering services from: ${mcpDir}`);
         await this.autoRegisterServices(mcpDir, serviceFactories);
       } else {
         this.logger.debug(`MCP directory not found at ${mcpDir}, skipping auto-discovery`);
@@ -402,7 +419,7 @@ export class MCPServer {
     mcpDir: string, 
     serviceFactories?: Record<string, () => any>
   ) {
-    this.logger.info(`Auto-registering services from: ${mcpDir}`);
+    this.logger.debug(`Auto-registering services from: ${mcpDir}`);
     
     if (!fs.existsSync(mcpDir)) {
       this.logger.warn(`MCP directory not found: ${mcpDir}`);
@@ -410,7 +427,7 @@ export class MCPServer {
     }
 
     const serviceFiles = this.findServiceFiles(mcpDir);
-    this.logger.info(`Found ${serviceFiles.length} service file(s)`);
+    this.logger.debug(`Found ${serviceFiles.length} service file(s)`);
 
     for (const filePath of serviceFiles) {
       try {
@@ -453,7 +470,7 @@ export class MCPServer {
     filePath: string,
     serviceFactories?: Record<string, () => any>
   ) {
-    this.logger.info(`Loading service from: ${filePath}`);
+    this.logger.debug(`Loading service from: ${filePath}`);
     
     // Convert to file URL for dynamic import
     const fileUrl = pathToFileURL(filePath).href;
@@ -480,7 +497,7 @@ export class MCPServer {
           
           this.registerService(instance);
           registeredCount++;
-          this.logger.info(`Registered service: ${exportName} from ${path.basename(filePath)}`);
+          this.logger.debug(`Registered service: ${exportName} from ${path.basename(filePath)}`);
         } catch (error: any) {
           this.logger.warn(`Skipped ${exportName}: ${error.message}`);
         }
@@ -522,7 +539,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+        this.logger.debug(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
       }
     }
 
@@ -558,7 +575,7 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered prompt: ${methodMeta.promptName}`);
+        this.logger.debug(`Registered prompt: ${methodMeta.promptName}`);
       }
     }
 
@@ -591,15 +608,18 @@ export class MCPServer {
       });
       
       if (this.logging) {
-        this.logger.info(`Registered resource: ${methodMeta.resourceUri}`);
+        this.logger.debug(`Registered resource: ${methodMeta.resourceUri}`);
       }
     }
   }
 
   /**
    * Get the underlying MCP SDK Server instance
+   * Attaches waitForInit method for HTTP server initialization
    */
   getServer() {
+    // Attach waitForInit to the server instance for HTTP server to use
+    (this.server as any).waitForInit = () => this.waitForInit();
     return this.server;
   }
 }
