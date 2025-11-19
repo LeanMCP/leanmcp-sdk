@@ -4,11 +4,13 @@ Command-line tool for creating LeanMCP projects with production-ready templates.
 
 ## Features
 
+- **Interactive setup** - Guided prompts for dependency installation and dev server
 - **Quick project scaffolding** - Create new MCP servers in seconds
 - **Complete setup** - Includes TypeScript, dependencies, and configuration
 - **Best practices** - Generated projects follow MCP standards
 - **Ready to run** - Start developing immediately with hot reload
 - **Example service** - Includes working examples to get started
+- **Pure ESM** - Modern ES modules with full TypeScript support
 
 ## Installation
 
@@ -41,16 +43,25 @@ npx @leanmcp/cli create my-mcp-server
 
 ```bash
 $ leanmcp create my-sentiment-tool
-✔ Creating project my-sentiment-tool...
+✔ Project my-sentiment-tool created!
 
-Project created successfully!
+Success! Your MCP server is ready.
 
-Next steps:
+Next, navigate to your project:
   cd my-sentiment-tool
-  npm install
-  npm run dev
 
-Your MCP server will be running on http://localhost:3001
+? Would you like to install dependencies now? (Y/n) Yes
+✔ Dependencies installed successfully!
+? Would you like to start the development server? (Y/n) Yes
+
+Starting development server...
+
+> my-sentiment-tool@1.0.0 dev
+> tsx watch main.ts
+
+[HTTP][INFO] Starting LeanMCP HTTP Server...
+[HTTP][INFO] Server running on http://localhost:3001
+[HTTP][INFO] MCP endpoint: http://localhost:3001/mcp
 ```
 
 ### Add a New Service
@@ -143,22 +154,49 @@ npm run clean   # Remove build artifacts
 
 ## Development Workflow
 
-After creating a project:
+### Interactive Setup (Recommended)
+
+The CLI provides an interactive setup experience:
 
 ```bash
-# 1. Install dependencies
+# Create project
+leanmcp create my-mcp-server
+
+# The CLI will:
+# 1. Create project structure
+# 2. Ask if you want to install dependencies (Y/n)
+# 3. If yes, ask if you want to start dev server (Y/n)
+# 4. If yes, start server with hot reload
+
+# If you choose "No" to installation:
 cd my-mcp-server
 npm install
+npm run dev
+```
 
-# 2. Start development server
+### Manual Setup
+
+If you prefer manual control:
+
+```bash
+# 1. Create project (answer "No" to prompts)
+leanmcp create my-mcp-server
+
+# 2. Navigate to project
+cd my-mcp-server
+
+# 3. Install dependencies
+npm install
+
+# 4. Start development server
 npm run dev
 
-# 3. Server starts on http://localhost:3001
+# 5. Server starts on http://localhost:3001
 # - Endpoint: http://localhost:3001/mcp
 # - Health check: http://localhost:3001/health
 # - Hot reload enabled
 
-# 4. Edit files in mcp/ directory
+# 6. Edit files in mcp/ directory
 # Server automatically reloads on changes
 ```
 
@@ -341,6 +379,11 @@ Creates a complete MCP server project with:
 - TypeScript configuration
 - Package.json with all dependencies
 - Development and build scripts
+
+**Interactive Prompts:**
+- Asks if you want to install dependencies
+- If installed, asks if you want to start dev server
+- Runs commands in the project directory automatically
 
 #### `add <service-name>`
 Adds a new service to an existing project:

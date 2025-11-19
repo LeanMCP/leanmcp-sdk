@@ -1,9 +1,14 @@
-#!/usr/bin/env node
 import { Command } from "commander";
 import chalk from "chalk";
 import fs from "fs-extra";
 import path from "path";
 import ora from "ora";
+import { createRequire } from "module";
+import { confirm } from "@inquirer/prompts";
+import { spawn } from "child_process";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json");
 
 // Helper function to capitalize first letter
 function capitalize(str: string): string {
@@ -15,7 +20,7 @@ const program = new Command();
 program
   .name("leanmcp")
   .description("LeanMCP CLI — create production-ready MCP servers with Streamable HTTP")
-  .version("0.1.0");
+  .version(pkg.version);
 
 program
   .command("create <projectName>")
@@ -318,12 +323,78 @@ MIT
     await fs.writeFile(path.join(targetDir, "README.md"), readme);
 
     spinner.succeed(`Project ${projectName} created!`);
-    console.log(chalk.green("\\nSuccess! Your MCP server is ready.\\n"));
-    console.log(chalk.cyan("Next steps:"));
-    console.log(chalk.gray(`  cd ${projectName}`));
-    console.log(chalk.gray(`  npm install`));
-    console.log(chalk.gray(`  npm run dev`));
-    console.log(chalk.gray(`\\nServer will run on http://localhost:3001`));
+    console.log(chalk.green("\nSuccess! Your MCP server is ready.\n"));
+    console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
+
+    // Ask if user wants to install dependencies
+    const shouldInstall = await confirm({
+      message: "Would you like to install dependencies now?",
+      default: true
+    });
+
+    if (shouldInstall) {
+      const installSpinner = ora("Installing dependencies...").start();
+      
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const npmInstall = spawn("npm", ["install"], {
+            cwd: targetDir,
+            stdio: "pipe",
+            shell: true
+          });
+
+          npmInstall.on("close", (code) => {
+            if (code === 0) {
+              resolve();
+            } else {
+              reject(new Error(`npm install failed with code ${code}`));
+            }
+          });
+
+          npmInstall.on("error", reject);
+        });
+
+        installSpinner.succeed("Dependencies installed successfully!");
+
+        // Ask if user wants to start dev server
+        const shouldStartDev = await confirm({
+          message: "Would you like to start the development server?",
+          default: true
+        });
+
+        if (shouldStartDev) {
+          console.log(chalk.cyan("\nStarting development server...\n"));
+
+          // Start dev server with inherited stdio so user can see output and interact
+          const devServer = spawn("npm", ["run", "dev"], {
+            cwd: targetDir,
+            stdio: "inherit",
+            shell: true
+          });
+
+          // Handle process termination
+          process.on("SIGINT", () => {
+            devServer.kill();
+            process.exit(0);
+          });
+        } else {
+          console.log(chalk.cyan("\nTo start the development server later:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  npm run dev`));
+        }
+      } catch (error) {
+        installSpinner.fail("Failed to install dependencies");
+        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        console.log(chalk.cyan("\nYou can install dependencies manually:"));
+        console.log(chalk.gray(`  cd ${projectName}`));
+        console.log(chalk.gray(`  npm install`));
+      }
+    } else {
+      console.log(chalk.cyan("\nTo get started:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  npm install`));
+      console.log(chalk.gray(`  npm run dev`));
+    }
   });
 
 program
