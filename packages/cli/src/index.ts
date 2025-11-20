@@ -146,27 +146,38 @@ class CalculateInput {
   operation?: string;
 }
 
+class EchoInput {
+  @SchemaConstraint({ 
+    description: "Message to echo back",
+    minLength: 1
+  })
+  message!: string;
+}
+
 export class ExampleService {
   @Tool({ 
     description: "Perform arithmetic operations with automatic schema validation",
     inputClass: CalculateInput
   })
   async calculate(input: CalculateInput) {
+    // Ensure numerical operations by explicitly converting to numbers
+    const a = Number(input.a);
+    const b = Number(input.b);
     let result: number;
     
     switch (input.operation || "add") {
       case "add":
-        result = input.a + input.b;
+        result = a + b;
         break;
       case "subtract":
-        result = input.a - input.b;
+        result = a - b;
         break;
       case "multiply":
-        result = input.a * input.b;
+        result = a * b;
         break;
       case "divide":
-        if (input.b === 0) throw new Error("Cannot divide by zero");
-        result = input.a / input.b;
+        if (b === 0) throw new Error("Cannot divide by zero");
+        result = a / b;
         break;
       default:
         throw new Error("Invalid operation");
@@ -184,8 +195,11 @@ export class ExampleService {
     };
   }
 
-  @Tool({ description: "Echo a message back" })
-  async echo(input: { message: string }) {
+  @Tool({ 
+    description: "Echo a message back",
+    inputClass: EchoInput
+  })
+  async echo(input: EchoInput) {
     return {
       content: [{
         type: "text" as const,
