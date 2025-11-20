@@ -5,11 +5,12 @@ Authentication module for LeanMCP providing token-based authentication decorator
 ## Features
 
 - **@Authenticated decorator** - Protect MCP tools, prompts, and resources with token authentication
-- **Multi-provider support** - AWS Cognito (more providers coming soon)
+- **Multi-provider support** - AWS Cognito, Clerk, Auth0
 - **Method or class-level protection** - Apply to individual methods or entire services
 - **Automatic token validation** - Validates tokens before method execution
 - **Custom error handling** - Detailed error codes for different auth failures
 - **Type-safe** - Full TypeScript support with type inference
+- **OAuth & Session modes** - Support for both session-based and OAuth refresh token flows
 
 ## Installation
 
@@ -22,6 +23,16 @@ npm install @leanmcp/auth @leanmcp/core
 For AWS Cognito:
 ```bash
 npm install @aws-sdk/client-cognito-identity-provider axios jsonwebtoken jwk-to-pem
+```
+
+For Clerk:
+```bash
+npm install axios jsonwebtoken jwk-to-pem
+```
+
+For Auth0:
+```bash
+npm install axios jsonwebtoken jwk-to-pem
 ```
 
 ## Quick Start
@@ -169,6 +180,17 @@ try {
 
 ## Supported Auth Providers
 
+### Provider Comparison
+
+| Feature | AWS Cognito | Clerk | Auth0 |
+|---------|-------------|-------|-------|
+| **JWT Verification** | ✅ JWKS | ✅ JWKS | ✅ JWKS |
+| **Refresh Tokens** | ✅ Yes | ✅ Yes (OAuth mode) | ✅ Yes |
+| **Session Mode** | ❌ No | ✅ Yes (default) | ❌ No |
+| **OAuth Mode** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **User Data** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Setup Complexity** | Low | Low | Low |
+
 ### AWS Cognito
 
 ```typescript
@@ -185,10 +207,123 @@ await authProvider.init();
 - Token must be valid and not expired
 - Token must be issued by the configured User Pool
 
+**Environment Variables:**
+```bash
+AWS_REGION=us-east-1
+COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
+COGNITO_CLIENT_ID=your-client-id
+```
+
+### Clerk
+
+Clerk supports both **Session Mode** (default) and **OAuth Mode** (with refresh tokens).
+
+#### Session Mode (Default)
+
+```typescript
+const authProvider = new AuthProvider('clerk', {
+  frontendApi: 'your-frontend-api.clerk.accounts.dev',
+  secretKey: 'sk_test_...'
+});
+await authProvider.init();
+```
+
+**Configuration:**
+- `frontendApi` - Your Clerk Frontend API domain
+- `secretKey` - Your Clerk Secret Key
+
+**Environment Variables:**
+```bash
+CLERK_FRONTEND_API=your-frontend-api.clerk.accounts.dev
+CLERK_SECRET_KEY=sk_test_...
+```
+
+#### OAuth Mode (Refresh Tokens)
+
+```typescript
+const authProvider = new AuthProvider('clerk', {
+  frontendApi: 'your-frontend-api.clerk.accounts.dev',
+  secretKey: 'sk_test_...',
+  clientId: 'your-oauth-client-id',
+  clientSecret: 'your-oauth-client-secret',
+  redirectUri: 'https://yourapp.com/callback'
+});
+await authProvider.init();
+
+// Refresh tokens when needed
+const newTokens = await authProvider.refreshToken(refreshToken);
+// Returns: { access_token, id_token, refresh_token }
+```
+
+**OAuth Configuration:**
+- `clientId` - OAuth Client ID from Clerk
+- `clientSecret` - OAuth Client Secret from Clerk
+- `redirectUri` - OAuth redirect URI
+
+**Token Requirements:**
+- JWT token from Clerk (ID token or session token)
+- Token must be valid and not expired
+- Token must be issued by your Clerk instance
+
+**User Data:**
+```typescript
+const user = await authProvider.getUser(idToken);
+// Returns: { sub, email, email_verified, first_name, last_name, attributes }
+```
+
+### Auth0
+
+```typescript
+const authProvider = new AuthProvider('auth0', {
+  domain: 'your-tenant.auth0.com',
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret', // Optional for public clients
+  audience: 'https://your-api-identifier',
+  scopes: 'openid profile email offline_access' // Optional, defaults shown
+});
+await authProvider.init();
+
+// Refresh tokens when needed
+const newTokens = await authProvider.refreshToken(refreshToken);
+// Returns: { access_token, id_token, refresh_token, expires_in }
+```
+
+**Configuration:**
+- `domain` - Your Auth0 tenant domain (e.g., `your-tenant.auth0.com`)
+- `clientId` - Your Auth0 Application Client ID
+- `clientSecret` - Your Auth0 Application Client Secret (optional for public clients)
+- `audience` - Your API identifier (required for API access)
+- `scopes` - OAuth scopes (default: `openid profile email offline_access`)
+
+**Environment Variables:**
+```bash
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_AUDIENCE=https://your-api-identifier
+```
+
+**Token Requirements:**
+- JWT token from Auth0 (access token or ID token)
+- Token must be valid and not expired
+- Token must be issued by your Auth0 tenant
+- Token must have the correct audience
+
+**User Data:**
+```typescript
+const user = await authProvider.getUser(idToken);
+// Returns: { sub, email, email_verified, name, attributes }
+```
+
+**Error Handling:**
+Auth0 provider includes detailed error messages:
+- `Token has expired` - Token is expired
+- `Invalid token signature` - Token signature verification failed
+- `Malformed token` - Token format is invalid
+- `Invalid token issuer` - Token issuer doesn't match
+
 ### More Providers Coming Soon
 
-- Clerk
-- Auth0
 - Firebase Auth
 - Custom JWT providers
 
@@ -238,16 +373,32 @@ function getAuthProvider(target: any, propertyKey?: string): AuthProvider | unde
 
 ## Environment Variables
 
-For AWS Cognito:
+### AWS Cognito
 ```bash
 AWS_REGION=us-east-1
 COGNITO_USER_POOL_ID=us-east-1_XXXXXXXXX
 COGNITO_CLIENT_ID=your-client-id
 ```
 
-## Complete Example
+### Clerk (Session Mode)
+```bash
+CLERK_FRONTEND_API=your-frontend-api.clerk.accounts.dev
+CLERK_SECRET_KEY=sk_test_...
+```
 
-See [examples/slack-with-auth](../../examples/slack-with-auth) for a complete working example with AWS Cognito.
+### Auth0
+```bash
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_AUDIENCE=https://your-api-identifier
+```
+
+## Complete Examples
+
+### AWS Cognito Example
+
+See [examples/slack-with-auth](../../examples/slack-with-auth) for a complete working example.
 
 ```typescript
 import { createHTTPServer, MCPServer } from "@leanmcp/core";
@@ -280,6 +431,123 @@ const serverFactory = () => {
 await createHTTPServer(serverFactory, { port: 3000 });
 ```
 
+### Clerk Example
+
+```typescript
+import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { AuthProvider, Authenticated } from "@leanmcp/auth";
+
+// Initialize Clerk in Session Mode
+const authProvider = new AuthProvider('clerk', {
+  frontendApi: process.env.CLERK_FRONTEND_API,
+  secretKey: process.env.CLERK_SECRET_KEY
+});
+await authProvider.init();
+
+// Or initialize in OAuth Mode (with refresh tokens)
+const authProviderOAuth = new AuthProvider('clerk', {
+  frontendApi: process.env.CLERK_FRONTEND_API,
+  secretKey: process.env.CLERK_SECRET_KEY,
+  clientId: process.env.CLERK_CLIENT_ID,
+  clientSecret: process.env.CLERK_CLIENT_SECRET,
+  redirectUri: process.env.CLERK_REDIRECT_URI
+});
+await authProviderOAuth.init();
+
+@Authenticated(authProvider)
+class UserService {
+  @Tool({ description: 'Get user profile' })
+  async getProfile(input: { userId: string }) {
+    // Token is automatically validated
+    return { userId: input.userId, name: "John Doe" };
+  }
+}
+
+const serverFactory = () => {
+  const server = new MCPServer({ name: "clerk-server", version: "1.0.0" });
+  server.registerService(new UserService());
+  return server.getServer();
+};
+
+await createHTTPServer(serverFactory, { port: 3000 });
+```
+
+### Auth0 Example
+
+```typescript
+import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { AuthProvider, Authenticated } from "@leanmcp/auth";
+
+// Initialize Auth0
+const authProvider = new AuthProvider('auth0', {
+  domain: process.env.AUTH0_DOMAIN,
+  clientId: process.env.AUTH0_CLIENT_ID,
+  clientSecret: process.env.AUTH0_CLIENT_SECRET,
+  audience: process.env.AUTH0_AUDIENCE,
+  scopes: 'openid profile email offline_access'
+});
+await authProvider.init();
+
+@Authenticated(authProvider)
+class SecureAPIService {
+  @Tool({ description: 'Get sensitive data' })
+  async getSensitiveData(input: { dataId: string }) {
+    // Token is automatically validated
+    return { dataId: input.dataId, data: "Sensitive information" };
+  }
+  
+  @Tool({ description: 'Update user settings' })
+  async updateSettings(input: { settings: Record<string, any> }) {
+    return { success: true, settings: input.settings };
+  }
+}
+
+const serverFactory = () => {
+  const server = new MCPServer({ name: "auth0-server", version: "1.0.0" });
+  server.registerService(new SecureAPIService());
+  return server.getServer();
+};
+
+await createHTTPServer(serverFactory, { port: 3000 });
+```
+
+### Multi-Provider Example
+
+```typescript
+import { AuthProvider, Authenticated } from "@leanmcp/auth";
+
+// Initialize multiple providers
+const clerkAuth = new AuthProvider('clerk', {
+  frontendApi: process.env.CLERK_FRONTEND_API,
+  secretKey: process.env.CLERK_SECRET_KEY
+});
+await clerkAuth.init();
+
+const auth0Auth = new AuthProvider('auth0', {
+  domain: process.env.AUTH0_DOMAIN,
+  clientId: process.env.AUTH0_CLIENT_ID,
+  audience: process.env.AUTH0_AUDIENCE
+});
+await auth0Auth.init();
+
+// Use different providers for different services
+@Authenticated(clerkAuth)
+class UserService {
+  @Tool()
+  async getUserData(input: { userId: string }) {
+    return { userId: input.userId };
+  }
+}
+
+@Authenticated(auth0Auth)
+class AdminService {
+  @Tool()
+  async getAdminData(input: { adminId: string }) {
+    return { adminId: input.adminId };
+  }
+}
+```
+
 ## How It Works
 
 1. **Request arrives** with `_meta.authorization.token`
@@ -304,6 +572,85 @@ await createHTTPServer(serverFactory, { port: 3000 });
 5. **Log authentication failures** - Monitor for suspicious activity
 6. **Use environment variables** - Never hardcode credentials
 7. **Use _meta for auth** - Don't include tokens in business arguments
+8. **Choose the right mode** - Use Session mode for simpler setups, OAuth mode for refresh tokens
+9. **Test token expiration** - Ensure your app handles expired tokens gracefully
+10. **Monitor JWKS cache** - Providers cache JWKS keys for performance
+
+## Quick Reference
+
+### Initialization Patterns
+
+```typescript
+// AWS Cognito
+const cognito = new AuthProvider('cognito', {
+  region: 'us-east-1',
+  userPoolId: 'us-east-1_XXX',
+  clientId: 'xxx'
+});
+
+// Clerk (Session Mode)
+const clerk = new AuthProvider('clerk', {
+  frontendApi: 'xxx.clerk.accounts.dev',
+  secretKey: 'sk_test_xxx'
+});
+
+// Clerk (OAuth Mode)
+const clerkOAuth = new AuthProvider('clerk', {
+  frontendApi: 'xxx.clerk.accounts.dev',
+  secretKey: 'sk_test_xxx',
+  clientId: 'xxx',
+  clientSecret: 'xxx',
+  redirectUri: 'https://app.com/callback'
+});
+
+// Auth0
+const auth0 = new AuthProvider('auth0', {
+  domain: 'tenant.auth0.com',
+  clientId: 'xxx',
+  clientSecret: 'xxx',
+  audience: 'https://api-identifier'
+});
+```
+
+### Common Operations
+
+```typescript
+// Initialize
+await authProvider.init();
+
+// Verify token
+const isValid = await authProvider.verifyToken(token);
+
+// Refresh token (OAuth/Auth0 only)
+const newTokens = await authProvider.refreshToken(refreshToken);
+
+// Get user data
+const user = await authProvider.getUser(idToken);
+
+// Get provider type
+const type = authProvider.getProviderType(); // 'cognito' | 'clerk' | 'auth0'
+```
+
+### Decorator Usage
+
+```typescript
+// Protect single method
+@Authenticated(authProvider)
+async myMethod(input: { data: string }) { }
+
+// Protect entire class
+@Authenticated(authProvider)
+class MyService {
+  @Tool() async method1() { }
+  @Tool() async method2() { }
+}
+
+// Check if authentication required
+const required = isAuthenticationRequired(target, 'methodName');
+
+// Get auth provider for method
+const provider = getAuthProvider(target, 'methodName');
+```
 
 ## License
 

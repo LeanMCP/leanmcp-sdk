@@ -87,7 +87,7 @@ const serverFactory = async () => {
   const server = new MCPServer({
     name: "my-mcp-server",
     version: "1.0.0",
-    logging: true  // Enable HTTP server logs
+    logging: true
   });
 
   // Services are automatically discovered and registered from ./mcp directory

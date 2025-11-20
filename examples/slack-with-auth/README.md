@@ -335,6 +335,7 @@ The example works without a real Slack token - it simulates API calls for testin
 6. **Token refresh capability** - Handle expired tokens gracefully
 7. **Comprehensive error handling** - Clear error messages
 8. **Type-safe inputs/outputs** - Full TypeScript support
+9. **Proper service separation** - Auth logic separate from business logic
 
 ## Troubleshooting
 
