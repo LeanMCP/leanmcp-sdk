@@ -1,0 +1,118 @@
+name: 🌟 Showcase Your Project
+description: Share your awesome MCP server built with LeanMCP
+title: "[Showcase]: "
+labels: ["showcase", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your project with the LeanMCP community! We feature outstanding projects in our documentation.
+
+  - type: input
+    id: project-name
+    attributes:
+      label: Project Name
+      description: Name of your MCP server
+      placeholder: "e.g., Slack Integration Server, Weather API Server"
+    validations:
+      required: true
+
+  - type: input
+    id: repo-url
+    attributes:
+      label: GitHub Repository
+      description: Link to your project repository
+      placeholder: "https://github.com/username/project"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Project Description
+      description: What does your MCP server do?
+      placeholder: |
+        A brief description of your project and what problems it solves...
+    validations:
+      required: true
+
+  - type: textarea
+    id: unique
+    attributes:
+      label: What Makes It Special?
+      description: What makes your project unique or interesting?
+      placeholder: |
+        - Integrates with X service
+        - Solves Y problem
+        - Innovative use of Z feature
+    validations:
+      required: true
+
+  - type: input
+    id: demo
+    attributes:
+      label: Demo / Video (Optional)
+      description: Link to demo, video, or screenshots
+      placeholder: "https://youtube.com/... or https://imgur.com/..."
+
+  - type: dropdown
+    id: clients
+    attributes:
+      label: Tested MCP Clients
+      description: Which MCP clients work with your server?
+      multiple: true
+      options:
+        - "Claude Desktop"
+        - "Claude.ai"
+        - "Cline"
+        - "Continue"
+        - "Cursor"
+        - "Windsurf"
+        - "Zed"
+        - "Other (specify below)"
+
+  - type: dropdown
+    id: features
+    attributes:
+      label: MCP Features Used
+      description: Which MCP features does your server implement?
+      multiple: true
+      options:
+        - "Tools"
+        - "Resources"
+        - "Prompts"
+        - "Sampling"
+        - "Roots"
+        - "Elicitation"
+
+  - type: textarea
+    id: tech-stack
+    attributes:
+      label: Tech Stack
+      description: Technologies and packages used
+      placeholder: |
+        - LeanMCP Core
+        - TypeScript
+        - Express
+        - External APIs: ...
+
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: Project license
+      placeholder: "MIT, Apache 2.0, GPL, etc."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Showcase Requirements
+      options:
+        - label: My project uses LeanMCP SDK
+          required: true
+        - label: My project is open source or has public documentation
+          required: true
+        - label: My project has a clear README with usage instructions
+          required: true
+        - label: I'm okay with my project being featured in LeanMCP docs
+          required: true

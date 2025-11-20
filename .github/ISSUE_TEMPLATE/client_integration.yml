@@ -1,0 +1,265 @@
+name: 🔌 MCP Client Integration Issue
+description: Report issues connecting LeanMCP server to MCP clients
+title: "[Client]: "
+labels: ["client-integration", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report issues specific to connecting your LeanMCP server with MCP clients (Claude Desktop, Cline, Continue, etc.)
+
+  - type: dropdown
+    id: client
+    attributes:
+      label: MCP Client
+      description: Which MCP client are you having issues with?
+      options:
+        - "Claude Desktop App"
+        - "Claude.ai (web/remote)"
+        - "Claude Code"
+        - "Cline (VS Code extension)"
+        - "Continue (VS Code/JetBrains)"
+        - "Cursor"
+        - "Windsurf"
+        - "Zed"
+        - "MCP Inspector"
+        - "CodeGPT"
+        - "Amazon Q"
+        - "GitHub Copilot"
+        - "Custom client (specify below)"
+        - "Other (specify below)"
+    validations:
+      required: true
+
+  - type: input
+    id: client-version
+    attributes:
+      label: Client Version
+      description: Version of the MCP client
+      placeholder: "e.g., Claude Desktop 0.7.2, Cline v3.1.0, Continue v0.9.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport Method
+      description: How are you connecting the client to your server?
+      options:
+        - "HTTP (Streamable HTTP)"
+        - "stdio (Standard Input/Output)"
+        - "SSE (Server-Sent Events)"
+        - "Not sure"
+        - "Other (specify below)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue
+    attributes:
+      label: Issue Description
+      description: Describe the integration issue you're experiencing
+      placeholder: |
+        - Client cannot discover tools/resources
+        - Connection drops after X seconds
+        - Authentication fails
+        - Tools appear but don't execute
+    validations:
+      required: true
+
+  - type: textarea
+    id: client-config
+    attributes:
+      label: Client Configuration
+      description: How did you configure the client? (claude_desktop_config.json, settings.json, etc.) **Remove sensitive data!**
+      placeholder: |
+        ```json
+        {
+          "mcpServers": {
+            "my-server": {
+              "command": "node",
+              "args": ["/path/to/server/index.js"],
+              "env": {
+                "PORT": "3001"
+              }
+            }
+          }
+        }
+        ```
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: server-config
+    attributes:
+      label: Server Configuration
+      description: Your LeanMCP server setup (main.ts, package.json snippets) **Remove sensitive data!**
+      placeholder: |
+        ```typescript
+        const server = new MCPServer({
+          name: "my-server",
+          version: "1.0.0"
+        });
+        
+        await createHTTPServer(server, {
+          port: 3001,
+          cors: true
+        });
+        ```
+      render: typescript
+
+  - type: dropdown
+    id: mcp-features
+    attributes:
+      label: Affected MCP Features
+      description: Which MCP features are not working?
+      multiple: true
+      options:
+        - "Tools (functions)"
+        - "Resources (data)"
+        - "Prompts (templates)"
+        - "Sampling (LLM requests)"
+        - "Roots (workspace roots)"
+        - "Elicitation (user input)"
+        - "Server discovery"
+        - "Connection/handshake"
+        - "Authorization/OAuth"
+        - "All features"
+
+  - type: input
+    id: leanmcp-version
+    attributes:
+      label: LeanMCP Version
+      description: Version of LeanMCP packages
+      placeholder: "e.g., @leanmcp/core@0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: mcp-sdk-version
+    attributes:
+      label: MCP SDK Version
+      description: Version of @modelcontextprotocol/sdk
+      placeholder: "e.g., @modelcontextprotocol/sdk@1.0.0"
+
+  - type: dropdown
+    id: protocol-version
+    attributes:
+      label: MCP Protocol Version
+      description: Which protocol version is your server using?
+      options:
+        - "2025-06-18 (Current)"
+        - "2025-03-26"
+        - "2024-11-05"
+        - "Don't know"
+        - "Other (specify below)"
+
+  - type: textarea
+    id: client-logs
+    attributes:
+      label: Client Logs
+      description: Logs from the MCP client (if available)
+      placeholder: |
+        ```
+        [Paste client logs here]
+        Check: Claude Desktop > View > Developer > Developer Tools > Console
+        ```
+      render: shell
+
+  - type: textarea
+    id: server-logs
+    attributes:
+      label: Server Logs
+      description: Logs from your LeanMCP server
+      placeholder: |
+        ```
+        [Paste server logs here]
+        ```
+      render: shell
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this integration issue?
+      placeholder: |
+        1. Start LeanMCP server: `npm run dev`
+        2. Configure Claude Desktop with the config above
+        3. Restart Claude Desktop
+        4. Try to use tool "my-tool"
+        5. Observe error: ...
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Output of `node --version`
+      placeholder: "e.g., v20.16.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running?
+      options:
+        - "macOS (Apple Silicon)"
+        - "macOS (Intel)"
+        - "Windows 11"
+        - "Windows 10"
+        - "Linux (Ubuntu/Debian)"
+        - "Linux (RHEL/CentOS/Fedora)"
+        - "Linux (Arch)"
+        - "Linux (Other)"
+        - "WSL2"
+        - "Docker"
+    validations:
+      required: true
+
+  - type: textarea
+    id: network
+    attributes:
+      label: Network Configuration (if applicable)
+      description: Are you behind a proxy, firewall, or VPN?
+      placeholder: |
+        - Corporate proxy: Yes/No
+        - VPN: Yes/No
+        - Firewall rules: ...
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workarounds Attempted
+      description: What have you tried to fix this?
+      placeholder: |
+        - Tried stdio instead of HTTP: ...
+        - Changed port: ...
+        - Disabled CORS: ...
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: |
+        - Works with MCP Inspector but not Claude Desktop
+        - Fails only for specific tools
+        - Connection succeeds but tools timeout
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have verified the server works with MCP Inspector
+          required: false
+        - label: I have checked the client's documentation for configuration
+          required: false
+        - label: I have searched existing issues
+          required: true
+        - label: I have removed sensitive information
+          required: true

@@ -14,14 +14,15 @@ Command-line tool for creating LeanMCP projects with production-ready templates.
 
 ## Installation
 
-### Global Installation (Recommended)
-
 ```bash
+# npm 
 npm install -g @leanmcp/cli
+
+# GitHub Packages 
+npm install -g @leanmcp/cli --registry=https://npm.pkg.github.com
 ```
 
-### Run Without Installing
-
+Or use without installing:
 ```bash
 npx @leanmcp/cli create my-mcp-server
 ```
@@ -392,6 +393,23 @@ Adds a new service to an existing project:
 - Automatically imports and registers in `main.ts`
 - Includes example Tool, Prompt, and Resource implementations
 - Uses schema validation with `@SchemaConstraint` decorators
+
+## 🌟 Showcase Your MCP Server
+
+Built something cool with LeanMCP? We'd love to feature it!
+
+### How to Get Featured
+
+1. **Build** an awesome MCP server using LeanMCP
+2. **Share** your project on GitHub
+3. **Submit** for showcase:
+   - Open an issue: [Request Showcase](https://github.com/LeanMCP/leanmcp-sdk/issues/new?title=[Showcase]%20Your%20Project%20Name)
+   - Include:
+     - Project name and description
+     - GitHub repository link
+     - What makes it unique
+     - Screenshots or demo 
+
 
 ## License
 

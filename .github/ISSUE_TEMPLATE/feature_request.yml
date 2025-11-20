@@ -1,0 +1,153 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for LeanMCP
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide as much detail as possible.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: I'm frustrated when... / It would be helpful if...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: |
+        Add a new command: `leanmcp deploy` that...
+        Add support for X feature in the MCP protocol...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected Component
+      description: Which component should this feature be added to?
+      options:
+        - "@leanmcp/cli - CLI tool"
+        - "@leanmcp/core - Core server functionality"
+        - "@leanmcp/auth - Authentication"
+        - "Documentation"
+        - "New package/component"
+        - "Other (specify below)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mcp-feature
+    attributes:
+      label: Related MCP Feature
+      description: Which MCP protocol feature does this relate to?
+      options:
+        - "Tools"
+        - "Resources"
+        - "Prompts"
+        - "Sampling"
+        - "Roots"
+        - "Elicitation"
+        - "Authorization/OAuth"
+        - "Transport (HTTP/stdio/SSE)"
+        - "Not MCP-specific"
+        - "Multiple features"
+        - "Other (specify below)"
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Describe alternative solutions or features you've considered
+      placeholder: |
+        - Alternative 1: ...
+        - Alternative 2: ...
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Describe specific use cases or scenarios where this feature would be valuable
+      placeholder: |
+        1. When building a MCP server for...
+        2. When integrating with...
+        3. For users who need to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Code Examples (Optional)
+      description: Show how you envision using this feature
+      placeholder: |
+        ```typescript
+        // Example API
+        server.addFeature({
+          name: "my-feature",
+          config: { ... }
+        });
+        ```
+      render: typescript
+
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: Breaking Change?
+      description: Would this be a breaking change to existing APIs?
+      options:
+        - "No - Fully backward compatible"
+        - "Yes - Breaking change required"
+        - "Uncertain - Needs discussion"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (Your Perspective)
+      description: How important is this feature to you?
+      options:
+        - "Critical - Blocking my work"
+        - "High - Would significantly improve my workflow"
+        - "Medium - Nice to have"
+        - "Low - Minor improvement"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other context, screenshots, or references
+      placeholder: |
+        - Similar feature in other frameworks: ...
+        - Related GitHub issues: ...
+        - External documentation: ...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to submit a PR to implement this feature
+          required: false
+        - label: I'm available to help test this feature
+          required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I have searched existing issues and feature requests
+          required: true
+        - label: This feature aligns with LeanMCP's goals and scope
+          required: true
