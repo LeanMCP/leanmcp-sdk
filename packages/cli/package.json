@@ -1,38 +1,41 @@
 {
   "name": "@leanmcp/cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Command-line interface for scaffolding LeanMCP projects",
   "bin": {
-    "leanmcp": "dist/index.js"
+    "leanmcp": "bin/leanmcp.js"
   },
+  "type": "module",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
-      "import": "./dist/index.mjs"
+      "import": "./dist/index.js"
     }
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "test": "echo \"No tests yet\" && exit 0"
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "echo \"No tests yet\" && exit 0",
+    "clean": "rimraf dist"
   },
   "dependencies": {
+    "@inquirer/prompts": "^7.0.1",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "fs-extra": "^11.2.0",
     "ora": "^8.1.0"
   },
   "devDependencies": {
-    "@types/fs-extra": "^11.0.4"
+    "@types/fs-extra": "^11.0.4",
+    "rimraf": "^6.1.2"
   },
   "repository": {
     "type": "git",
