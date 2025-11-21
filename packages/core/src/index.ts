@@ -200,28 +200,52 @@ export class MCPServer {
       const err = new Error();
       Error.prepareStackTrace = (_, stack) => stack;
       const stack = err.stack as any;
-      
+            
       // Find the first stack frame that's not from the @leanmcp/core package
       for (let i = 0; i < stack.length; i++) {
         let fileName = stack[i].getFileName();
-        if (fileName && 
-            !fileName.includes('@leanmcp') && 
-            !fileName.includes('leanmcp-sdk\\packages\\core') &&
-            !fileName.includes('leanmcp-sdk/packages/core') &&
-            (fileName.endsWith('.ts') || fileName.endsWith('.js') || fileName.endsWith('.mjs'))) {
-          
-          // Convert file:// URL to regular path
-          if (fileName.startsWith('file://')) {
-            fileName = fileName.replace('file:///', '').replace('file://', '');
-            // On Windows, remove leading slash if present
+        if (!fileName) continue;
+        
+        // Convert file:// URL to regular path first
+        if (fileName.startsWith('file://')) {
+          // Use URL API for proper cross-platform handling
+          try {
+            const url = new URL(fileName);
+            // URL.pathname automatically decodes URL-encoded characters
+            fileName = decodeURIComponent(url.pathname);
+            
+            // On Windows, remove leading slash (e.g., /C:/path -> C:/path)
+            if (process.platform === 'win32' && fileName.startsWith('/')) {
+              fileName = fileName.substring(1);
+            }
+            // On Unix-like systems, keep the leading slash (it's the root directory)
+          } catch (e) {
+            // Fallback to simple string replacement if URL parsing fails
+            fileName = fileName.replace('file://', '');
             if (process.platform === 'win32' && fileName.startsWith('/')) {
               fileName = fileName.substring(1);
             }
           }
-          
+        }
+        
+        // Normalize path separators to forward slashes for OS-agnostic comparison
+        const normalizedPath = fileName.replace(/\\/g, '/');
+        
+        // Check if this file is NOT from the @leanmcp/core package
+        const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') || 
+                              normalizedPath.includes('leanmcp-sdk/packages/core');
+        
+        // Check if this is a valid TypeScript/JavaScript file
+        const isValidExtension = fileName.endsWith('.ts') || 
+                                 fileName.endsWith('.js') || 
+                                 fileName.endsWith('.mjs');
+                
+        if (!isLeanMCPCore && isValidExtension) {
           return fileName;
         }
       }
+      
+      this.logger.debug('No suitable caller file found in stack trace');
       return null;
     } finally {
       Error.prepareStackTrace = originalPrepareStackTrace;
