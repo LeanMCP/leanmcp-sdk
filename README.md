@@ -9,8 +9,8 @@ A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type
 - **Clean API** - Function names become tool/prompt/resource names automatically
 - **MCP compliant** - Built on official @modelcontextprotocol/sdk
 - **Streamable HTTP** - Production-ready HTTP server with session management
-- **Authentication** - Built-in `@Authenticated` decorator with multi-provider support (AWS Cognito, more coming)
-- **Quick start** - CLI tool for instant project scaffolding
+- **Authentication** - Built-in `@Authenticated` decorator with multi-provider support (AWS Cognito, Clerk, Auth0)
+- **Interactive CLI** - Guided project setup with dependency installation and dev server options
 - **Built-in validation** - Automatic input validation using defined schemas
 
 ## Table of Contents
@@ -201,13 +201,19 @@ getStats() {
 
 ## CLI Commands
 
+The LeanMCP CLI provides an interactive experience for creating and managing MCP projects.
+
 ### `leanmcp create <project-name>`
 
-Creates a new MCP server project with standard structure.
+Creates a new MCP server project with **interactive setup**:
 
 ```bash
 leanmcp create my-mcp-server
 ```
+
+**Interactive prompts:**
+- Auto-install dependencies (optional)
+- Start dev server after creation (optional)
 
 **Generated structure:**
 ```
@@ -226,42 +232,20 @@ my-mcp-server/
 
 ### `leanmcp add <service-name>`
 
-Adds a new service to an existing project and automatically registers it in `main.ts`.
+Adds a new service to an existing project with auto-registration:
 
 ```bash
 leanmcp add weather
 ```
 
-**Creates:**
-- `mcp/weather/index.ts` with boilerplate service code
+**What it does:**
+- Creates `mcp/weather/index.ts` with boilerplate (Tool, Prompt, Resource examples)
 - Auto-registers the service in `main.ts`
+- Ready to customize and use immediately
 
-**Example generated service:**
-```typescript
-import { Tool, Resource, Prompt } from "@leanmcp/core";
+### More CLI Features
 
-export class WeatherService {
-  @Tool({ description: 'Get weather information' })
-  async getWeather(args: { city: string }) {
-    return { city: args.city, temp: 72, conditions: 'sunny' };
-  }
-
-  @Prompt({ description: 'Weather query prompt' })
-  weatherPrompt(args: { city?: string }) {
-    return {
-      messages: [{
-        role: 'user',
-        content: { type: 'text', text: `What's the weather in ${args.city || 'the city'}?` }
-      }]
-    };
-  }
-
-  @Resource({ description: 'Weather service status' })
-  getStatus() {
-    return { service: 'weather', status: 'active' };
-  }
-}
-```
+For complete CLI documentation including all commands, options, and advanced usage, see [@leanmcp/cli README](./packages/cli/README.md).
 
 ## Decorators
 

@@ -63,13 +63,19 @@ export class AuthProvider extends AuthProviderBase {
         break;
       }
       
-      // Add more providers here in the future
-      // case 'clerk': {
-      //   const { AuthClerk } = await import('./providers/clerk');
-      //   this.providerInstance = new AuthClerk();
-      //   await this.providerInstance.init(finalConfig);
-      //   break;
-      // }
+      case 'auth0': {
+        const { AuthAuth0 } = await import('./providers/auth0');
+        this.providerInstance = new AuthAuth0();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
+
+      case 'clerk': {
+        const { AuthClerk } = await import('./providers/clerk');
+        this.providerInstance = new AuthClerk();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
       
       default:
         throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito`);
