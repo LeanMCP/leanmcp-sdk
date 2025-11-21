@@ -74,7 +74,7 @@ Refresh an expired access token using a refresh token.
 {
   "access_token": "new-access-token",
   "id_token": "new-id-token",
-  "expires_in": 3600,
+  "expires_in": 86400,
   "token_type": "Bearer",
   "scope": "openid profile email offline_access"
 }
@@ -96,33 +96,31 @@ Get information about the authentication configuration.
 ### Demo Service (`DemoService`)
 
 #### `getUserProfile` (Protected)
-Get the authenticated user's profile information.
+Get the authenticated user's profile information from the JWT token.
 
-**Input**:
-```json
-{
-  "token": "your-id-token"
-}
-```
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically available (via a concurrency-safe getter) with the decoded JWT payload.
+
+**Input**: None required (token is provided automatically)
 
 **Output**:
 ```json
 {
-  "sub": "auth0|123456",
+  "userId": "auth0|507f1f77bcf86cd799439011",
   "email": "user@example.com",
-  "email_verified": true,
   "name": "John Doe",
-  "attributes": { ... }
+  "picture": "https://s.gravatar.com/avatar/...",
+  "emailVerified": true
 }
 ```
 
 #### `echo` (Protected)
-Echo back a message with authentication confirmation.
+Echo back a message with authenticated user information from the JWT token.
+
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically available (via a concurrency-safe getter) with the decoded JWT payload.
 
 **Input**:
 ```json
 {
-  "token": "your-id-token",
   "message": "Hello, World!"
 }
 ```
@@ -132,7 +130,8 @@ Echo back a message with authentication confirmation.
 {
   "message": "Hello, World!",
   "timestamp": "2024-01-01T12:00:00.000Z",
-  "authenticated": true
+  "userId": "auth0|507f1f77bcf86cd799439011",
+  "userEmail": "user@example.com"
 }
 ```
 
@@ -143,8 +142,9 @@ Echo back a message with authentication confirmation.
    - Obtain `access_token`, `id_token`, and `refresh_token`
 
 2. **Use protected tools**:
-   - Include the `id_token` in the `token` field when calling protected tools
-   - The `@Authenticated` decorator will verify the token automatically
+   - Pass the `id_token` via `_meta.authorization.token` in your MCP request
+   - The `@Authenticated` decorator will automatically extract and verify the token
+   - No need to include the token in the tool's input parameters
 
 3. **Refresh expired tokens**:
    - When tokens expire, use the `refreshToken` tool with your `refresh_token`
@@ -174,7 +174,11 @@ The MCP server automatically discovers and registers all services exported from 
 ### Authentication
 - The `@Authenticated` decorator protects tools that require authentication
 - Auth0 JWT tokens are verified using JWKS (JSON Web Key Set)
-- Token verification includes signature validation and issuer verification
+- Token verification includes signature validation, expiration checks, and issuer/audience verification
+- The `authUser` variable is automatically available in protected methods with the decoded JWT payload
+- **Concurrency Safe**: `authUser` is implemented as a getter that reads from AsyncLocalStorage, ensuring each request has its own isolated context
+- Access user information directly via `authUser.sub`, `authUser.email`, etc.
+- Safe for high-concurrency scenarios with thousands of concurrent requests
 
 ### Configuration
 The `config.ts` file initializes the Auth0 authentication provider with your credentials. Services import this shared configuration to access authentication functionality.

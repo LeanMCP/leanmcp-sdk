@@ -120,5 +120,8 @@ export class AuthProvider extends AuthProviderBase {
   }
 }
 
-// Export decorators
-export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider } from './decorators';
+// Export types
+export type { AuthenticatedOptions } from './types';
+
+// Export decorators and utilities
+export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider, getAuthUser } from './decorators';
