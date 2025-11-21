@@ -9,7 +9,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.2.0",
+    "@leanmcp/core": "^0.3.0",
     "@leanmcp/elicitation": "*",
     "@slack/web-api": "^7.0.0",
     "dotenv": "^16.5.0"

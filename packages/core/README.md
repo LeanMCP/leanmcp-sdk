@@ -77,34 +77,30 @@ export class SentimentService {
 
 #### Option A: Zero-Config Auto-Discovery (Recommended)
 
-Automatically discover and register all services from the `./mcp` directory:
+The simplest way to create an HTTP server with auto-discovery:
 
 ```typescript
-import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { createHTTPServer } from "@leanmcp/core";
 
-// Create MCP server with auto-discovery
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: "my-mcp-server",
-    version: "1.0.0",
-    logging: true
-  });
-
-  // Services are automatically discovered and registered from ./mcp directory
-  return server.getServer();
-};
-
-// Start HTTP server
-await createHTTPServer(serverFactory, {
+// Create and start HTTP server with auto-discovery
+await createHTTPServer({
+  name: "my-mcp-server",
+  version: "1.0.0",
   port: 3000,
   cors: true,
-  logging: true  // Log HTTP requests
+  logging: true
 });
 
 console.log('\nMCP Server running');
 console.log('HTTP endpoint: http://localhost:3000/mcp');
 console.log('Health check: http://localhost:3000/health');
 ```
+
+**What happens automatically:**
+- Services are discovered from `./mcp` directory
+- HTTP server is created and started
+- Session management is configured
+- CORS is enabled (if specified)
 
 **Directory Structure:**
 ```
@@ -119,15 +115,15 @@ your-project/
         └── index.ts    # export class DatabaseService
 ```
 
-#### Option B: Manual Registration
+#### Option B: Factory Pattern (Advanced)
 
-Manually import and register each service:
+For advanced use cases requiring manual service registration or custom configuration:
 
 ```typescript
 import { createHTTPServer, MCPServer } from "@leanmcp/core";
 import { SentimentService } from "./services/sentiment";
 
-// Create MCP server
+// Create MCP server with factory function
 const serverFactory = async () => {
   const server = new MCPServer({
     name: "my-mcp-server",
@@ -142,11 +138,11 @@ const serverFactory = async () => {
   return server.getServer();
 };
 
-// Start HTTP server
+// Start HTTP server with factory
 await createHTTPServer(serverFactory, {
   port: 3000,
   cors: true,
-  logging: true  // Log HTTP requests
+  logging: true
 });
 ```
 
@@ -295,32 +291,27 @@ server.getServer(): Server;
 
 Services are automatically discovered and registered from the `./mcp` directory when the server is created:
 
-**Basic Usage:**
+**Basic Usage (Simplified API):**
 ```typescript
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: "my-server",
-    version: "1.0.0",
-    logging: true  // Enable logging
-  });
+import { createHTTPServer } from "@leanmcp/core";
 
-  // Services are automatically discovered and registered
-  return server.getServer();
-};
+await createHTTPServer({
+  name: "my-server",
+  version: "1.0.0",
+  port: 3000,
+  logging: true  // Enable logging
+});
 ```
 
 **With Debug Logging:**
 ```typescript
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: "my-server",
-    version: "1.0.0",
-    logging: true,
-    debug: true  // Show detailed service registration logs
-  });
-
-  return server.getServer();
-};
+await createHTTPServer({
+  name: "my-server",
+  version: "1.0.0",
+  port: 3000,
+  logging: true,
+  debug: true  // Show detailed service registration logs
+});
 ```
 
 **With Shared Dependencies:**
@@ -369,16 +360,16 @@ export class SlackService {
 Your main file stays clean:
 
 ```typescript
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: "my-server",
-    version: "1.0.0",
-    logging: true
-  });
+import { createHTTPServer } from "@leanmcp/core";
 
-  // Services are automatically discovered and registered
-  return server.getServer();
-};
+await createHTTPServer({
+  name: "my-server",
+  version: "1.0.0",
+  port: 3000,
+  logging: true
+});
+
+// Services are automatically discovered and registered
 ```
 
 **How It Works:**
@@ -406,15 +397,52 @@ your-project/
 
 Create and start an HTTP server with streamable transport.
 
+**Simplified API (Recommended):**
+```typescript
+await createHTTPServer({
+  name: string;              // Server name (required)
+  version: string;           // Server version (required)
+  port?: number;             // Port number (default: 3001)
+  cors?: boolean | object;   // Enable CORS (default: false)
+  logging?: boolean;         // Enable logging (default: false)
+  debug?: boolean;           // Enable debug logs (default: false)
+  autoDiscover?: boolean;    // Auto-discover services (default: true)
+  mcpDir?: string;           // Custom mcp directory path (optional)
+  sessionTimeout?: number;   // Session timeout in ms (optional)
+});
+```
+
+**Factory Pattern (Advanced):**
 ```typescript
 await createHTTPServer(
   serverFactory: () => Server | Promise<Server>,
   options: {
-    port?: number;      // Port number (default: 3000)
-    cors?: boolean;     // Enable CORS (default: false)
-    logging?: boolean;  // Enable HTTP request logging (default: false)
+    port?: number;             // Port number (default: 3001)
+    cors?: boolean | object;   // Enable CORS (default: false)
+    logging?: boolean;         // Enable HTTP request logging (default: false)
+    sessionTimeout?: number;   // Session timeout in ms (optional)
   }
 );
+```
+
+**CORS Configuration:**
+```typescript
+// Simple CORS (allow all origins - not recommended for production)
+await createHTTPServer({
+  name: "my-server",
+  version: "1.0.0",
+  cors: true
+});
+
+// Advanced CORS configuration
+await createHTTPServer({
+  name: "my-server",
+  version: "1.0.0",
+  cors: {
+    origin: 'https://example.com',  // Specific origin
+    credentials: true                // Allow credentials
+  }
+});
 ```
 
 ### Schema Generation

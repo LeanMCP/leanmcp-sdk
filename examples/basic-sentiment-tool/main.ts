@@ -1,20 +1,12 @@
-import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { createHTTPServer } from "@leanmcp/core";
 
-const serverFactory = async () => {
-  // Services are automatically discovered from ./mcp directory
-  const server = new MCPServer({
-    name: "sentiment-analysis-server",
-    version: "1.0.0",
-    logging: true
-  });
-
-  return server.getServer();
-};
-
-await createHTTPServer(serverFactory, {
+// Services are automatically discovered from ./mcp directory
+await createHTTPServer({
+  name: "sentiment-analysis-server",
+  version: "1.0.0",
   port: 8080,
   cors: true,
-  // logging: true // use to log HTTP requests
+  logging: true
 });
 
 console.log("\nSentiment Analysis MCP Server");
