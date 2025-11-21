@@ -2,6 +2,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { randomUUID } from "node:crypto";
 import { Logger, LogLevel } from "./logger";
 import { validatePort } from "./validation";
+import type { MCPServerConstructorOptions } from "./index";
 
 export interface HTTPServerOptions {
   port?: number;
@@ -18,6 +19,8 @@ export interface MCPServerFactory {
   (): Server | Promise<Server>;
 }
 
+export type HTTPServerInput = MCPServerFactory | MCPServerConstructorOptions;
+
 // Helper to check if request is initialize
 function isInitializeRequest(body: any): boolean {
   return body && body.method === 'initialize';
@@ -26,11 +29,43 @@ function isInitializeRequest(body: any): boolean {
 /**
  * Create an HTTP server for MCP with Streamable HTTP transport
  * Returns the HTTP server instance to keep the process alive
+ * 
+ * @param serverInput - Either MCPServerConstructorOptions or a factory function that returns a Server
+ * @param options - HTTP server options (only used when serverInput is a factory function)
  */
 export async function createHTTPServer(
-  serverFactory: MCPServerFactory,
-  options: HTTPServerOptions = {}
+  serverInput: HTTPServerInput,
+  options?: HTTPServerOptions
 ): Promise<any> {
+  // Determine if we're using the new simplified API or legacy factory pattern
+  let serverFactory: MCPServerFactory;
+  let httpOptions: HTTPServerOptions;
+  
+  if (typeof serverInput === 'function') {
+    // Legacy factory pattern
+    serverFactory = serverInput;
+    httpOptions = options || {};
+  } else {
+    // New simplified API - serverInput is MCPServerConstructorOptions
+    const serverOptions = serverInput;
+    
+    // Dynamically import MCPServer to avoid circular dependency
+    const { MCPServer } = await import('./index.js');
+    
+    // Create factory that instantiates MCPServer
+    serverFactory = async () => {
+      const mcpServer = new MCPServer(serverOptions);
+      return mcpServer.getServer();
+    };
+    
+    // Extract HTTP options from server options
+    httpOptions = {
+      port: (serverOptions as any).port,
+      cors: (serverOptions as any).cors,
+      logging: serverOptions.logging,
+      sessionTimeout: (serverOptions as any).sessionTimeout
+    };
+  }
   // Dynamic imports for optional peer dependencies
   // @ts-ignore - Express is a peer dependency
   const [express, { StreamableHTTPServerTransport }, cors] = await Promise.all([
@@ -43,11 +78,11 @@ export async function createHTTPServer(
       throw new Error("MCP SDK not found. Install with: npm install @modelcontextprotocol/sdk");
     }),
     // @ts-ignore
-    options.cors ? import("cors").catch(() => null) : Promise.resolve(null)
+    httpOptions.cors ? import("cors").catch(() => null) : Promise.resolve(null)
   ]);
 
   const app = express.default();
-  const port = options.port || 3001;
+  const port = httpOptions.port || 3001;
   
   // Validate port number
   validatePort(port);
@@ -56,19 +91,19 @@ export async function createHTTPServer(
   let mcpServer: Server | null = null; // Store the MCP server instance
   
   // Initialize logger
-  const logger = options.logger || new Logger({
-    level: options.logging ? LogLevel.INFO : LogLevel.NONE,
+  const logger = httpOptions.logger || new Logger({
+    level: httpOptions.logging ? LogLevel.INFO : LogLevel.NONE,
     prefix: 'HTTP'
   });
 
   // Middleware
-  if (cors && options.cors) {
-    const corsOptions = typeof options.cors === 'object' ? {
-      origin: options.cors.origin || false, // No wildcard - must be explicitly configured
+  if (cors && httpOptions.cors) {
+    const corsOptions = typeof httpOptions.cors === 'object' ? {
+      origin: httpOptions.cors.origin || false, // No wildcard - must be explicitly configured
       methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
       exposedHeaders: ['mcp-session-id'],
-      credentials: options.cors.credentials ?? false, // Default false for security
+      credentials: httpOptions.cors.credentials ?? false, // Default false for security
       maxAge: 86400
     } : false;
     

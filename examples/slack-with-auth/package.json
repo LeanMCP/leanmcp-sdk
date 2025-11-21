@@ -18,7 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.932.0",
     "@leanmcp/auth": "^0.3.0",
-    "@leanmcp/core": "^0.2.0",
+    "@leanmcp/core": "^0.3.0",
     "axios": "^1.7.0",
     "jsonwebtoken": "^9.0.2",
     "jwk-to-pem": "^2.0.6",

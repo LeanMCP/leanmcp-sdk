@@ -41,6 +41,13 @@ export interface MCPServerConstructorOptions {
   autoDiscover?: boolean;  // Enable automatic service discovery (default: true)
   mcpDir?: string;         // Custom mcp directory path (optional)
   serviceFactories?: Record<string, () => any>;  // Dependency injection factories
+  // HTTP Server options (used when passing to createHTTPServer directly)
+  port?: number;
+  cors?: boolean | {
+    origin?: string | string[];
+    credentials?: boolean;
+  };
+  sessionTimeout?: number;
 }
 
 interface RegisteredTool {

@@ -300,17 +300,39 @@ class UserInput {
 
 ### Main Entry Point (`main.ts`)
 
+**Simplified API (Recommended):**
 ```typescript
 import { createHTTPServer } from "@leanmcp/core";
+
+// Services are automatically discovered from ./mcp directory
+await createHTTPServer({
+  name: "my-mcp-server",
+  version: "1.0.0",
+  port: 8080,
+  cors: true,
+  logging: true
+});
+```
+
+**Factory Pattern (Advanced):**
+```typescript
+import { createHTTPServer, MCPServer } from "@leanmcp/core";
 import { ExampleService } from "./mcp/example/index.js";
 
-const serverFactory = (server: any) => {
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-mcp-server",
+    version: "1.0.0",
+    autoDiscover: false
+  });
+  
   server.registerService(new ExampleService());
+  return server.getServer();
 };
 
-createHTTPServer(serverFactory, {
+await createHTTPServer(serverFactory, {
   port: 8080,
-  enableCors: true
+  cors: true
 });
 ```
 
@@ -355,41 +377,91 @@ export class ServiceName {
 
 ## API Reference
 
-### `createHTTPServer(serverFactory, options)`
+### `createHTTPServer(options | serverFactory, options?)`
 
 Creates and starts an HTTP server with MCP support.
 
-**Parameters:**
-- `serverFactory`: `(server: MCPServer) => void` - Function to configure server and register services
-- `options`: Server configuration options
-  - `port?: number` - Port to listen on (default: 8080)
-  - `enableCors?: boolean` - Enable CORS (default: false)
+**Simplified API (Recommended):**
+```typescript
+await createHTTPServer({
+  name: string;              // Server name (required)
+  version: string;           // Server version (required)
+  port?: number;             // Port number (default: 3001)
+  cors?: boolean | object;   // Enable CORS (default: false)
+  logging?: boolean;         // Enable logging (default: false)
+  debug?: boolean;           // Enable debug logs (default: false)
+  autoDiscover?: boolean;    // Auto-discover services (default: true)
+  mcpDir?: string;           // Custom mcp directory path (optional)
+  sessionTimeout?: number;   // Session timeout in ms (optional)
+});
+```
 
 **Example:**
+```typescript
+import { createHTTPServer } from "@leanmcp/core";
+
+// Services automatically discovered from ./mcp directory
+await createHTTPServer({
+  name: "my-mcp-server",
+  version: "1.0.0",
+  port: 3000,
+  cors: true,
+  logging: true
+});
+```
+
+**Factory Pattern (Advanced):**
 ```typescript
 import { createHTTPServer, MCPServer } from "@leanmcp/core";
 import { MyService } from "./mcp/myservice/index.js";
 
-const serverFactory = (server: MCPServer) => {
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-mcp-server",
+    version: "1.0.0",
+    autoDiscover: false
+  });
+  
   server.registerService(new MyService());
+  return server.getServer();
 };
 
-createHTTPServer(serverFactory, {
+await createHTTPServer(serverFactory, {
   port: 3000,
-  enableCors: true
+  cors: true
 });
 ```
 
-### `MCPServer.registerService(instance)`
+### `MCPServer`
 
-Registers a service instance with the MCP server.
+Main server class for manual service registration.
 
-**Parameters:**
-- `instance`: Service class instance with decorated methods
+**Constructor Options:**
+```typescript
+const server = new MCPServer({
+  name: string;              // Server name (required)
+  version: string;           // Server version (required)
+  logging?: boolean;         // Enable logging (default: false)
+  debug?: boolean;           // Enable debug logs (default: false)
+  autoDiscover?: boolean;    // Auto-discover services (default: true)
+  mcpDir?: string;           // Custom mcp directory path (optional)
+});
+```
+
+**Methods:**
+- `registerService(instance)` - Manually register a service instance
+- `getServer()` - Get the underlying MCP SDK server
 
 **Example:**
 ```typescript
-const server = new MCPServer();
+import { MCPServer } from "@leanmcp/core";
+
+const server = new MCPServer({
+  name: "my-server",
+  version: "1.0.0",
+  autoDiscover: false
+});
+
 server.registerService(new WeatherService());
 server.registerService(new PaymentService());
 ```

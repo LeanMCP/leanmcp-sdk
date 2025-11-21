@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { createHTTPServer } from "@leanmcp/core";
 
 /**
  * Auth0 MCP Server Example
@@ -8,20 +8,12 @@ import { createHTTPServer, MCPServer } from "@leanmcp/core";
  * and handle their own dependencies internally.
  */
 
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: 'auth0-example',
-    version: '1.0.0',
-    logging: true
-  });
-
-  return server.getServer();
-};
-
-await createHTTPServer(serverFactory, {
+await createHTTPServer({
+  name: 'auth0-example',
+  version: '1.0.0',
   port: parseInt(process.env.PORT || '3000'),
   cors: true,
-  // logging: true // use to log HTTP requests
+  logging: true
 });
 
 console.log('\nAuth0 MCP Server Example');
