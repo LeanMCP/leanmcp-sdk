@@ -1,6 +1,50 @@
 import "reflect-metadata";
+import { AsyncLocalStorage } from "async_hooks";
 import { AuthProviderBase } from "./index";
 import type { AuthenticatedOptions } from "./types";
+
+/**
+ * Global authUser type declaration
+ * This makes authUser available in @Authenticated methods without explicit declaration
+ */
+declare global {
+  /**
+   * Authenticated user object automatically available in @Authenticated methods
+   * 
+   * Implemented as a getter that reads from AsyncLocalStorage for concurrency safety.
+   * Each request has its own isolated context - 100% safe for concurrent requests.
+   */
+  const authUser: any;
+}
+
+/**
+ * AsyncLocalStorage for request-scoped authUser storage
+ * This ensures each request has its own isolated authUser context,
+ * preventing race conditions in concurrent request scenarios
+ */
+const authUserStorage = new AsyncLocalStorage<any>();
+
+/**
+ * Get the current authenticated user from the async context
+ * This is safe for concurrent requests as each request has its own context
+ */
+export function getAuthUser(): any {
+  return authUserStorage.getStore();
+}
+
+/**
+ * Define authUser as a global getter that reads from AsyncLocalStorage
+ * This makes authUser truly concurrency-safe while maintaining the global variable API
+ */
+if (typeof globalThis !== 'undefined' && !Object.getOwnPropertyDescriptor(globalThis, 'authUser')) {
+  Object.defineProperty(globalThis, 'authUser', {
+    get() {
+      return authUserStorage.getStore();
+    },
+    configurable: true,
+    enumerable: false
+  });
+}
 
 /**
  * Authentication error class for better error handling
@@ -14,6 +58,9 @@ export class AuthenticationError extends Error {
 
 /**
  * Decorator to protect MCP tools, prompts, resources, or entire services with authentication
+ * 
+ * CONCURRENCY SAFE: Uses AsyncLocalStorage to ensure each request has its own isolated
+ * authUser context, preventing race conditions in high-concurrency scenarios.
  * 
  * Usage:
  * 
@@ -180,24 +227,25 @@ function createAuthenticatedMethod(
     if (options.getUser !== false) {
       try {
         const user = await authProvider.getUser(token);
-        // Inject authUser into the global scope temporarily
-        (globalThis as any).authUser = user;
+        // Run the method within an async context with the user data
+        // This ensures each request has its own isolated authUser
+        // The global 'authUser' variable automatically reads from this context
+        return await authUserStorage.run(user, async () => {
+          return await originalMethod.apply(this, [args]);
+        });
       } catch (error) {
         // Log error but don't fail the request if user fetch fails
         console.warn('Failed to fetch user information:', error);
-        (globalThis as any).authUser = undefined;
+        // Run with undefined user
+        return await authUserStorage.run(undefined, async () => {
+          return await originalMethod.apply(this, [args]);
+        });
       }
     } else {
-      (globalThis as any).authUser = undefined;
-    }
-    
-    try {
-      // Token is valid, proceed with the original method
-      // authUser is now available as a global variable
-      return await originalMethod.apply(this, [args]);
-    } finally {
-      // Clean up the global authUser after method execution
-      delete (globalThis as any).authUser;
+      // No user fetch - run with undefined
+      return await authUserStorage.run(undefined, async () => {
+        return await originalMethod.apply(this, [args]);
+      });
     }
   };
 }

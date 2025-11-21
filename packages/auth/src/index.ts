@@ -1,4 +1,3 @@
-/// <reference path="./globals.d.ts" />
 import "reflect-metadata";
 
 /**
@@ -124,5 +123,5 @@ export class AuthProvider extends AuthProviderBase {
 // Export types
 export type { AuthenticatedOptions } from './types';
 
-// Export decorators
-export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider } from './decorators';
+// Export decorators and utilities
+export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider, getAuthUser } from './decorators';

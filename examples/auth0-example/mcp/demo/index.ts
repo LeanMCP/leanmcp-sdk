@@ -3,10 +3,13 @@ import { Authenticated } from "@leanmcp/auth";
 import { authProvider } from "../config.js";
 
 /**
- * Global authUser variable injected by @Authenticated decorator
- * Contains authenticated user information from Auth0
+ * Note: authUser is globally available in @Authenticated methods
+ * 
+ * It's implemented as a getter that reads from AsyncLocalStorage,
+ * making it 100% concurrency-safe even with thousands of concurrent requests.
+ * 
+ * No imports or declarations needed - authUser is automatically available!
  */
-declare const authUser: any;
 
 /**
  * Input for echo tool

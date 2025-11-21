@@ -95,7 +95,7 @@ Get information about the authentication configuration.
 #### `getUserProfile` (Protected)
 Get the authenticated user's profile information from the JWT token.
 
-**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically injected with the decoded JWT payload.
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically available (via a concurrency-safe getter) with the decoded JWT payload.
 
 **Input**: None required (token is provided automatically)
 
@@ -113,7 +113,7 @@ Get the authenticated user's profile information from the JWT token.
 #### `echo` (Protected)
 Echo back a message with authenticated user information from the JWT token.
 
-**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically injected with the decoded JWT payload.
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically available (via a concurrency-safe getter) with the decoded JWT payload.
 
 **Input**:
 ```json
@@ -172,8 +172,10 @@ The MCP server automatically discovers and registers all services exported from 
 - The `@Authenticated` decorator protects tools that require authentication
 - Clerk JWT tokens are verified using JWKS (JSON Web Key Set)
 - Token verification includes signature validation and issuer verification
-- The `authUser` variable is automatically injected into protected methods with the decoded JWT payload
+- The `authUser` variable is automatically available in protected methods with the decoded JWT payload
+- **Concurrency Safe**: `authUser` is implemented as a getter that reads from AsyncLocalStorage, ensuring each request has its own isolated context
 - Access user information directly via `authUser.userId`, `authUser.email`, etc.
+- Safe for high-concurrency scenarios with thousands of concurrent requests
 
 ### Configuration
 The `config.ts` file initializes the Clerk authentication provider with your credentials. Services import this shared configuration to access authentication functionality.

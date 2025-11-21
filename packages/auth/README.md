@@ -5,11 +5,12 @@ Authentication module for LeanMCP providing token-based authentication decorator
 ## Features
 
 - **@Authenticated decorator** - Protect MCP tools, prompts, and resources with token authentication
+- **Automatic authUser injection** - Access decoded user info via global `authUser` variable in protected methods
 - **Multi-provider support** - AWS Cognito, Clerk, Auth0
 - **Method or class-level protection** - Apply to individual methods or entire services
 - **Automatic token validation** - Validates tokens before method execution
 - **Custom error handling** - Detailed error codes for different auth failures
-- **Type-safe** - Full TypeScript support with type inference
+- **Type-safe** - Full TypeScript support with type inference and global type declarations
 - **OAuth & Session modes** - Support for both session-based and OAuth refresh token flows
 
 ## Installation
@@ -59,13 +60,20 @@ import { Tool } from "@leanmcp/core";
 import { Authenticated } from "@leanmcp/auth";
 
 export class SentimentService {
-  // This method requires authentication
+  // This method requires authentication with automatic user info
   @Tool({ description: 'Analyze sentiment (requires auth)' })
-  @Authenticated(authProvider)
+  @Authenticated(authProvider) // getUser: true by default
   async analyzeSentiment(input: { text: string }) {
     // Token is automatically validated from _meta.authorization.token
-    // Only business arguments are passed to the method
-    return { sentiment: 'positive', score: 0.8 };
+    // authUser is automatically available with decoded JWT payload
+    console.log('User ID:', authUser.sub);
+    console.log('Email:', authUser.email);
+    
+    return { 
+      sentiment: 'positive', 
+      score: 0.8,
+      analyzedBy: authUser.sub
+    };
   }
 
   // This method is public
@@ -86,13 +94,131 @@ import { Authenticated } from "@leanmcp/auth";
 export class SecureService {
   @Tool({ description: 'Protected tool 1' })
   async tool1(input: { data: string }) {
-    // All methods require authentication via _meta
+    // authUser is automatically available in all methods
+    console.log('Authenticated user:', authUser.email);
+    return { data: input.data, userId: authUser.sub };
   }
 
   @Tool({ description: 'Protected tool 2' })
   async tool2(input: { data: string }) {
-    // All methods require authentication via _meta
+    // authUser is available here too
+    return { data: input.data, userId: authUser.sub };
   }
+}
+```
+
+## authUser Variable
+
+### Automatic User Information Injection
+
+When you use the `@Authenticated` decorator, a global `authUser` variable is automatically injected into your protected methods containing the decoded JWT token payload.
+
+```typescript
+@Tool({ description: 'Create post' })
+@Authenticated(authProvider)
+async createPost(input: { title: string, content: string }) {
+  // authUser is automatically available - no need to pass it as a parameter
+  console.log('User ID:', authUser.sub);
+  console.log('Email:', authUser.email);
+  
+  return {
+    id: generateId(),
+    title: input.title,
+    content: input.content,
+    authorId: authUser.sub,
+    authorEmail: authUser.email
+  };
+}
+```
+
+### Controlling User Data Fetching
+
+You can control whether user information is fetched using the `getUser` option:
+
+```typescript
+// Fetch user info (default behavior)
+@Authenticated(authProvider, { getUser: true })
+async methodWithUserInfo(input: any) {
+  // authUser is available
+  console.log(authUser);
+}
+
+// Only verify token, don't fetch user info
+@Authenticated(authProvider, { getUser: false })
+async methodWithoutUserInfo(input: any) {
+  // authUser is undefined
+  // Faster execution, use when you only need token validation
+}
+```
+
+### Provider-Specific User Data
+
+The structure of `authUser` depends on your authentication provider:
+
+**AWS Cognito:**
+```typescript
+{
+  sub: 'user-uuid',
+  email: 'user@example.com',
+  email_verified: true,
+  'cognito:username': 'username',
+  'cognito:groups': ['admin', 'users'],
+  // ... other Cognito claims
+}
+```
+
+**Clerk:**
+```typescript
+{
+  sub: 'user_2abc123xyz',
+  userId: 'user_2abc123xyz',
+  email: 'user@example.com',
+  firstName: 'John',
+  lastName: 'Doe',
+  imageUrl: 'https://img.clerk.com/...',
+  // ... other Clerk claims
+}
+```
+
+**Auth0:**
+```typescript
+{
+  sub: 'auth0|507f1f77bcf86cd799439011',
+  email: 'user@example.com',
+  email_verified: true,
+  name: 'John Doe',
+  picture: 'https://s.gravatar.com/avatar/...',
+  // ... other Auth0 claims
+}
+```
+
+### TypeScript Support
+
+The `authUser` variable is globally declared and available without TypeScript errors:
+
+```typescript
+// No need to import or declare authUser
+@Authenticated(authProvider)
+async myMethod(input: any) {
+  // TypeScript knows about authUser
+  const userId: string = authUser.sub;
+  const email: string = authUser.email;
+}
+```
+
+For better type safety, you can create a typed interface:
+
+```typescript
+interface MyAuthUser {
+  sub: string;
+  email: string;
+  name?: string;
+}
+
+@Authenticated(authProvider)
+async myMethod(input: any) {
+  const user = authUser as MyAuthUser;
+  console.log(user.email); // Fully typed
 }
 ```
 
@@ -345,12 +471,23 @@ class AuthProvider {
 ### @Authenticated Decorator
 
 ```typescript
-function Authenticated(authProvider: AuthProvider): ClassDecorator | MethodDecorator;
+function Authenticated(
+  authProvider: AuthProvider, 
+  options?: AuthenticatedOptions
+): ClassDecorator | MethodDecorator;
+
+interface AuthenticatedOptions {
+  getUser?: boolean; // Default: true
+}
 ```
 
 Can be applied to:
 - **Classes** - Protects all methods in the class
 - **Methods** - Protects individual methods
+
+**Options:**
+- `getUser: true` (default) - Fetches user info and injects `authUser` variable
+- `getUser: false` - Only validates token, skips user info fetch (faster)
 
 ### AuthenticationError
 
@@ -415,9 +552,17 @@ await authProvider.init();
 // Create service with protected methods
 @Authenticated(authProvider)
 class MyService {
-  @Tool()
+  @Tool({ description: 'Process protected data' })
   async protectedTool(input: { data: string }) {
-    return { result: "Protected data" };
+    // authUser is automatically available
+    console.log('User:', authUser.sub);
+    console.log('Email:', authUser.email);
+    
+    return { 
+      result: "Protected data",
+      processedBy: authUser.sub,
+      userEmail: authUser.email
+    };
   }
 }
 
@@ -457,9 +602,27 @@ await authProviderOAuth.init();
 @Authenticated(authProvider)
 class UserService {
   @Tool({ description: 'Get user profile' })
-  async getProfile(input: { userId: string }) {
-    // Token is automatically validated
-    return { userId: input.userId, name: "John Doe" };
+  async getProfile() {
+    // authUser is automatically available with Clerk user data
+    return { 
+      userId: authUser.userId || authUser.sub,
+      email: authUser.email,
+      firstName: authUser.firstName,
+      lastName: authUser.lastName,
+      imageUrl: authUser.imageUrl
+    };
+  }
+  
+  @Tool({ description: 'Create user post' })
+  async createPost(input: { title: string, content: string }) {
+    // Access authUser in any protected method
+    return {
+      id: generateId(),
+      title: input.title,
+      content: input.content,
+      authorId: authUser.userId,
+      authorEmail: authUser.email
+    };
   }
 }
 
@@ -492,13 +655,27 @@ await authProvider.init();
 class SecureAPIService {
   @Tool({ description: 'Get sensitive data' })
   async getSensitiveData(input: { dataId: string }) {
-    // Token is automatically validated
-    return { dataId: input.dataId, data: "Sensitive information" };
+    // authUser is automatically available with Auth0 user data
+    console.log('User:', authUser.sub);
+    console.log('Email:', authUser.email);
+    
+    return { 
+      dataId: input.dataId, 
+      data: "Sensitive information",
+      accessedBy: authUser.sub,
+      userName: authUser.name
+    };
   }
   
   @Tool({ description: 'Update user settings' })
   async updateSettings(input: { settings: Record<string, any> }) {
-    return { success: true, settings: input.settings };
+    // Access authUser in any protected method
+    return { 
+      success: true, 
+      settings: input.settings,
+      userId: authUser.sub,
+      updatedBy: authUser.email
+    };
   }
 }
 
@@ -533,17 +710,27 @@ await auth0Auth.init();
 // Use different providers for different services
 @Authenticated(clerkAuth)
 class UserService {
-  @Tool()
-  async getUserData(input: { userId: string }) {
-    return { userId: input.userId };
+  @Tool({ description: 'Get user data' })
+  async getUserData() {
+    // authUser contains Clerk user data
+    return { 
+      userId: authUser.userId,
+      email: authUser.email,
+      firstName: authUser.firstName
+    };
   }
 }
 
 @Authenticated(auth0Auth)
 class AdminService {
-  @Tool()
-  async getAdminData(input: { adminId: string }) {
-    return { adminId: input.adminId };
+  @Tool({ description: 'Get admin data' })
+  async getAdminData() {
+    // authUser contains Auth0 user data
+    return { 
+      adminId: authUser.sub,
+      email: authUser.email,
+      name: authUser.name
+    };
   }
 }
 ```
@@ -554,14 +741,19 @@ class AdminService {
 2. **Decorator intercepts** the method call before execution
 3. **Token is extracted** from `_meta.authorization.token`
 4. **Token is validated** using the configured auth provider
-5. **Method executes** with clean business arguments (no token)
-6. **Response returns** to client
+5. **User info is fetched** (if `getUser: true`) and decoded from JWT
+6. **authUser is injected** as a global variable in method scope
+7. **Method executes** with clean business arguments and access to `authUser`
+8. **authUser is cleaned up** after method execution
+9. **Response returns** to client
 
 **Key Benefits:**
 - **Clean separation** - Authentication metadata separate from business data
 - **MCP compliant** - Follows standard `_meta` pattern
 - **Type-safe** - Input classes don't need token fields
+- **Automatic user injection** - Access user data via `authUser` without manual extraction
 - **Reusable** - Same input classes work for authenticated and public methods
+- **Secure** - `authUser` is scoped to method execution and cleaned up after
 
 ## Best Practices
 
@@ -575,6 +767,9 @@ class AdminService {
 8. **Choose the right mode** - Use Session mode for simpler setups, OAuth mode for refresh tokens
 9. **Test token expiration** - Ensure your app handles expired tokens gracefully
 10. **Monitor JWKS cache** - Providers cache JWKS keys for performance
+11. **Use authUser for user context** - Access user data via `authUser` instead of parsing tokens manually
+12. **Type authUser when needed** - Cast `authUser` to a typed interface for better type safety
+13. **Use getUser: false for performance** - Skip user fetch when you only need token validation
 
 ## Quick Reference
 
@@ -634,15 +829,28 @@ const type = authProvider.getProviderType(); // 'cognito' | 'clerk' | 'auth0'
 ### Decorator Usage
 
 ```typescript
-// Protect single method
+// Protect single method with authUser (default)
 @Authenticated(authProvider)
-async myMethod(input: { data: string }) { }
+async myMethod(input: { data: string }) {
+  console.log(authUser.sub); // User ID available
+}
+
+// Protect method without fetching user (faster)
+@Authenticated(authProvider, { getUser: false })
+async fastMethod(input: { data: string }) {
+  // Only token validation, no authUser
+}
 
 // Protect entire class
 @Authenticated(authProvider)
 class MyService {
-  @Tool() async method1() { }
-  @Tool() async method2() { }
+  @Tool() async method1() {
+    // authUser available in all methods
+    return { userId: authUser.sub };
+  }
+  @Tool() async method2() {
+    return { email: authUser.email };
+  }
 }
 
 // Check if authentication required
@@ -650,6 +858,39 @@ const required = isAuthenticationRequired(target, 'methodName');
 
 // Get auth provider for method
 const provider = getAuthProvider(target, 'methodName');
+```
+
+### authUser Quick Reference
+
+```typescript
+// Access user data in protected methods
+@Authenticated(authProvider)
+async createPost(input: { title: string }) {
+  // authUser is automatically available
+  const userId = authUser.sub;           // User ID (all providers)
+  const email = authUser.email;          // Email (all providers)
+  
+  // Provider-specific fields
+  const clerkId = authUser.userId;       // Clerk only
+  const firstName = authUser.firstName;  // Clerk only
+  const cognitoGroups = authUser['cognito:groups']; // Cognito only
+  const auth0Name = authUser.name;       // Auth0 only
+  
+  return { authorId: userId, authorEmail: email };
+}
+
+// Type authUser for better type safety
+interface MyUser {
+  sub: string;
+  email: string;
+  name?: string;
+}
+
+@Authenticated(authProvider)
+async typedMethod(input: any) {
+  const user = authUser as MyUser;
+  console.log(user.email); // Fully typed
+}
 ```
 
 ## License
