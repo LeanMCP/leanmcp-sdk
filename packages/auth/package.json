@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/auth",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Authentication and identity module supporting multiple providers",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -24,7 +24,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.2.0",
+    "@leanmcp/core": "^0.3.0",
     "reflect-metadata": "^0.2.1"
   },
   "devDependencies": {
