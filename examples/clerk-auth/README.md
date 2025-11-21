@@ -93,34 +93,31 @@ Get information about the authentication configuration.
 ### Demo Service (`DemoService`)
 
 #### `getUserProfile` (Protected)
-Get the authenticated user's profile information.
+Get the authenticated user's profile information from the JWT token.
 
-**Input**:
-```json
-{
-  "token": "your-id-token"
-}
-```
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically injected with the decoded JWT payload.
+
+**Input**: None required (token is provided automatically)
 
 **Output**:
 ```json
 {
-  "sub": "user_123456",
+  "userId": "user_2abc123xyz",
   "email": "user@example.com",
-  "email_verified": true,
-  "first_name": "John",
-  "last_name": "Doe",
-  "attributes": { ... }
+  "firstName": "John",
+  "lastName": "Doe",
+  "imageUrl": "https://img.clerk.com/..."
 }
 ```
 
 #### `echo` (Protected)
-Echo back a message with authentication confirmation.
+Echo back a message with authenticated user information from the JWT token.
+
+**Authentication**: Token is automatically extracted from `_meta.authorization.token` and decoded. The `authUser` variable is automatically injected with the decoded JWT payload.
 
 **Input**:
 ```json
 {
-  "token": "your-id-token",
   "message": "Hello, World!"
 }
 ```
@@ -130,7 +127,8 @@ Echo back a message with authentication confirmation.
 {
   "message": "Hello, World!",
   "timestamp": "2024-01-01T12:00:00.000Z",
-  "authenticated": true
+  "userId": "user_2abc123xyz",
+  "userEmail": "user@example.com"
 }
 ```
 
@@ -141,8 +139,9 @@ Echo back a message with authentication confirmation.
    - Obtain `access_token`, `id_token`, and `refresh_token` from Clerk session
 
 2. **Use protected tools**:
-   - Include the `id_token` in the `token` field when calling protected tools
-   - The `@Authenticated` decorator will verify the token automatically
+   - Pass the `id_token` via `_meta.authorization.token` in your MCP request
+   - The `@Authenticated` decorator will automatically extract and verify the token
+   - No need to include the token in the tool's input parameters
 
 3. **Refresh expired tokens**:
    - When tokens expire, use the `refreshToken` tool with your `refresh_token`
@@ -173,6 +172,8 @@ The MCP server automatically discovers and registers all services exported from 
 - The `@Authenticated` decorator protects tools that require authentication
 - Clerk JWT tokens are verified using JWKS (JSON Web Key Set)
 - Token verification includes signature validation and issuer verification
+- The `authUser` variable is automatically injected into protected methods with the decoded JWT payload
+- Access user information directly via `authUser.userId`, `authUser.email`, etc.
 
 ### Configuration
 The `config.ts` file initializes the Clerk authentication provider with your credentials. Services import this shared configuration to access authentication functionality.

@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { AuthProviderBase } from "./index";
+import type { AuthenticatedOptions } from "./types";
 
 /**
  * Authentication error class for better error handling
@@ -16,22 +17,35 @@ export class AuthenticationError extends Error {
  * 
  * Usage:
  * 
- * 1. Protect individual methods:
+ * 1. Protect individual methods with automatic user info:
  * ```typescript
  * @Tool({ description: 'Analyze sentiment' })
- * @Authenticated(authProvider)
+ * @Authenticated(authProvider, { getUser: true })
  * async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
- *   // This method requires authentication
+ *   // authUser is automatically available in method scope
+ *   console.log('User:', authUser);
+ *   console.log('User ID:', authUser.sub);
  * }
  * ```
  * 
- * 2. Protect entire service (all tools/prompts/resources):
+ * 2. Protect without fetching user info:
+ * ```typescript
+ * @Tool({ description: 'Public tool' })
+ * @Authenticated(authProvider, { getUser: false })
+ * async publicTool(args: PublicToolInput): Promise<PublicToolOutput> {
+ *   // Only verifies token, doesn't fetch user info
+ * }
+ * ```
+ * 
+ * 3. Protect entire service (all tools/prompts/resources):
  * ```typescript
  * @Authenticated(authProvider)
  * export class SentimentAnalysisService {
  *   @Tool({ description: 'Analyze sentiment' })
  *   async analyzeSentiment(args: AnalyzeSentimentInput) {
  *     // All methods in this service require authentication
+ *     // authUser is automatically available in all methods
+ *     console.log('User:', authUser);
  *   }
  * }
  * ```
@@ -54,14 +68,18 @@ export class AuthenticationError extends Error {
  * ```
  * 
  * @param authProvider - Instance of AuthProviderBase to use for token verification
+ * @param options - Optional configuration for authentication behavior
  */
-export function Authenticated(authProvider: AuthProviderBase) {
+export function Authenticated(authProvider: AuthProviderBase, options?: AuthenticatedOptions) {
+  const authOptions: AuthenticatedOptions = { getUser: true, ...options };
+  
   return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     // Case 1: Applied to a class (protect all methods)
     if (!propertyKey && !descriptor) {
       // Store auth provider on the class
       Reflect.defineMetadata("auth:provider", authProvider, target);
       Reflect.defineMetadata("auth:required", true, target);
+      Reflect.defineMetadata("auth:options", authOptions, target);
       
       // Get all method names from the prototype
       const prototype = target.prototype;
@@ -78,9 +96,10 @@ export function Authenticated(authProvider: AuthProviderBase) {
           // Store auth metadata on the method
           Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
           Reflect.defineMetadata("auth:required", true, originalMethod);
+          Reflect.defineMetadata("auth:options", authOptions, originalMethod);
           
           // Wrap the method with authentication logic
-          prototype[methodName] = createAuthenticatedMethod(originalMethod, authProvider);
+          prototype[methodName] = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
           
           // Copy metadata from original method to wrapped method
           copyMetadata(originalMethod, prototype[methodName]);
@@ -97,9 +116,10 @@ export function Authenticated(authProvider: AuthProviderBase) {
       // Store auth metadata on the method
       Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
       Reflect.defineMetadata("auth:required", true, originalMethod);
+      Reflect.defineMetadata("auth:options", authOptions, originalMethod);
       
       // Wrap the method with authentication logic
-      descriptor.value = createAuthenticatedMethod(originalMethod, authProvider);
+      descriptor.value = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
       
       // Copy metadata from original method to wrapped method
       copyMetadata(originalMethod, descriptor.value);
@@ -114,8 +134,13 @@ export function Authenticated(authProvider: AuthProviderBase) {
 /**
  * Creates an authenticated wrapper around a method
  * Extracts token from _meta.authorization following MCP protocol standards
+ * Optionally fetches and injects user information as 'authUser' variable in method scope
  */
-function createAuthenticatedMethod(originalMethod: Function, authProvider: AuthProviderBase) {
+function createAuthenticatedMethod(
+  originalMethod: Function, 
+  authProvider: AuthProviderBase,
+  options: AuthenticatedOptions
+) {
   return async function (this: any, args: any, meta?: any) {
     // Extract token from _meta.authorization (MCP standard)
     const token = meta?.authorization?.token;
@@ -151,9 +176,29 @@ function createAuthenticatedMethod(originalMethod: Function, authProvider: AuthP
       );
     }
     
-    // Token is valid, proceed with the original method
-    // Pass only the business arguments (no token in args)
-    return originalMethod.apply(this, [args]);
+    // Fetch user information if requested
+    if (options.getUser !== false) {
+      try {
+        const user = await authProvider.getUser(token);
+        // Inject authUser into the global scope temporarily
+        (globalThis as any).authUser = user;
+      } catch (error) {
+        // Log error but don't fail the request if user fetch fails
+        console.warn('Failed to fetch user information:', error);
+        (globalThis as any).authUser = undefined;
+      }
+    } else {
+      (globalThis as any).authUser = undefined;
+    }
+    
+    try {
+      // Token is valid, proceed with the original method
+      // authUser is now available as a global variable
+      return await originalMethod.apply(this, [args]);
+    } finally {
+      // Clean up the global authUser after method execution
+      delete (globalThis as any).authUser;
+    }
   };
 }
 

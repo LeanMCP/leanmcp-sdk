@@ -3,26 +3,15 @@ import { Authenticated } from "@leanmcp/auth";
 import { authProvider } from "../config.js";
 
 /**
- * Input for getting user profile
+ * Global authUser variable injected by @Authenticated decorator
+ * Contains authenticated user information from Auth0
  */
-class GetProfileInput {
-  @SchemaConstraint({
-    description: 'ID token from Auth0 authentication',
-    minLength: 1
-  })
-  token!: string;
-}
+declare const authUser: any;
 
 /**
  * Input for echo tool
  */
 class EchoInput {
-  @SchemaConstraint({
-    description: 'ID token from Auth0 authentication',
-    minLength: 1
-  })
-  token!: string;
-
   @SchemaConstraint({
     description: 'Message to echo back',
     minLength: 1
@@ -33,62 +22,59 @@ class EchoInput {
 /**
  * Demo Service
  * 
- * Demonstrates protected endpoints that require authentication.
+ * Demonstrates protected endpoints with automatic authUser injection.
  * All tools in this service are protected by the class-level @Authenticated decorator.
+ * The authUser variable is automatically available in all methods with user information from Auth0.
  */
 @Authenticated(authProvider)
 export class DemoService {
   /**
    * Get the authenticated user's profile
    * 
-   * This is a protected endpoint that requires a valid Auth0 token.
-   * Authentication is automatically enforced by the class-level decorator.
+   * Demonstrates automatic authUser injection.
+   * The authUser variable contains the authenticated user's information from Auth0.
    */
   @Tool({ 
-    description: 'Get the authenticated user profile information from Auth0',
-    inputClass: GetProfileInput
+    description: 'Get the authenticated user profile information from Auth0. Returns user details automatically extracted from the JWT token.'
   })
-  async getUserProfile(args: GetProfileInput): Promise<{
-    sub: string;
+  async getUserProfile(): Promise<{
+    userId: string;
     email: string;
-    email_verified: boolean;
-    name: string;
-    attributes: any;
+    name?: string;
+    picture?: string;
+    emailVerified?: boolean;
   }> {
-    try {
-      const user = await authProvider.getUser(args.token);
-      
-      return {
-        sub: user.sub,
-        email: user.email,
-        email_verified: user.email_verified,
-        name: user.name,
-        attributes: user.attributes
-      };
-    } catch (error) {
-      throw new Error(
-        `Failed to get user profile: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    // authUser is automatically available - injected by @Authenticated decorator
+    // It contains the decoded JWT token payload from Auth0
+    return {
+      userId: authUser.sub,
+      email: authUser.email,
+      name: authUser.name,
+      picture: authUser.picture,
+      emailVerified: authUser.email_verified
+    };
   }
 
   /**
-   * A simple protected endpoint that echoes back a message
-   * Authentication is automatically enforced by the class-level decorator.
+   * Echo back a message with user information
+   * Demonstrates accessing authUser in a tool with input arguments.
    */
   @Tool({ 
-    description: 'Echo back a message (requires authentication)',
+    description: 'Echo back a message with authenticated user information',
     inputClass: EchoInput
   })
   async echo(args: EchoInput): Promise<{ 
     message: string;
     timestamp: string;
-    authenticated: boolean;
+    userId: string;
+    userEmail: string;
   }> {
+    // authUser is automatically available
     return {
       message: args.message,
       timestamp: new Date().toISOString(),
-      authenticated: true
+      userId: authUser.sub,
+      userEmail: authUser.email
     };
   }
 }
