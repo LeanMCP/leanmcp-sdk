@@ -62,7 +62,7 @@ export class AuthProvider extends AuthProviderBase {
         await this.providerInstance.init(finalConfig);
         break;
       }
-      
+
       case 'auth0': {
         const { AuthAuth0 } = await import('./providers/auth0');
         this.providerInstance = new AuthAuth0();
@@ -76,9 +76,16 @@ export class AuthProvider extends AuthProviderBase {
         await this.providerInstance.init(finalConfig);
         break;
       }
-      
+
+      case 'leanmcp': {
+        const { AuthLeanmcp } = await import('./providers/leanmcp');
+        this.providerInstance = new AuthLeanmcp();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
+
       default:
-        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito`);
+        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, leanmcp`);
     }
   }
 
