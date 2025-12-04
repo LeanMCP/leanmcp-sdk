@@ -1,4 +1,4 @@
-# LeanMCP SDK
+# LeanMCP SDK 
 
 A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type-safe decorators and streamable HTTP support.
 
