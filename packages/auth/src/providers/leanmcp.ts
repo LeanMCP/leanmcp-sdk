@@ -101,4 +101,41 @@ export class AuthLeanmcp extends AuthProviderBase {
             type: 'jwt'
         };
     }
+
+    /**
+     * Fetch user-specific environment variables for a project
+     * Uses the user's UID and project ID to retrieve their stored secrets
+     * 
+     * @param token - User's auth token
+     * @param projectId - Project ID to scope the secrets
+     * @returns Record of environment variables
+     */
+    async getUserSecrets(token: string, projectId: string): Promise<Record<string, string>> {
+        if (!this.apiKey) {
+            console.warn(
+                '[LeanMCP] API key not configured - cannot fetch user secrets. ' +
+                'Set LEANMCP_API_KEY environment variable or pass apiKey in config.'
+            );
+            return {};
+        }
+
+        const url = `${this.orchestrationApiUrl}/public/secrets/user/${projectId}`;
+
+        try {
+            const { data } = await axios.get(url, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "x-api-key": this.apiKey
+                }
+            });
+
+            return data.secrets || {};
+        } catch (error: any) {
+            // Log error without sensitive details
+            console.warn('[LeanMCP] Failed to fetch user secrets:', error.response?.status || error.message);
+            // Return empty object instead of failing - let @RequireEnv handle missing vars
+            return {};
+        }
+    }
 }
+

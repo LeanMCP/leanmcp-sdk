@@ -11,4 +11,11 @@ export interface AuthenticatedOptions {
    * @default true
    */
   getUser?: boolean;
+
+  /**
+   * Project ID for fetching user environment variables.
+   * Required when @RequireEnv is used on the method or class.
+   * Used to scope user secrets to a specific project.
+   */
+  projectId?: string;
 }

@@ -1,0 +1,49 @@
+{
+    "name": "@leanmcp/env-injection",
+    "version": "0.1.0",
+    "description": "Request-scoped environment variable injection for LeanMCP",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "require": "./dist/index.js",
+            "import": "./dist/index.mjs"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format esm,cjs --dts",
+        "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+        "test": "jest --passWithNoTests"
+    },
+    "dependencies": {
+        "reflect-metadata": "^0.2.1"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsup": "^8.0.0",
+        "typescript": "^5.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+        "directory": "packages/env-injection"
+    },
+    "keywords": [
+        "mcp",
+        "model-context-protocol",
+        "environment",
+        "injection",
+        "secrets"
+    ],
+    "author": "LeanMCP <admin@leanmcp.com>",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    }
+}

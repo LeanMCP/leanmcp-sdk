@@ -120,6 +120,23 @@ export class AuthProvider extends AuthProviderBase {
   }
 
   /**
+   * Get user secrets for a project (LeanMCP provider only)
+   * Other providers will return empty object
+   */
+  async getUserSecrets(token: string, projectId: string): Promise<Record<string, string>> {
+    if (!this.providerInstance) {
+      throw new Error("AuthProvider not initialized. Call init() first.");
+    }
+    // Check if the underlying provider supports getUserSecrets
+    if ('getUserSecrets' in this.providerInstance &&
+      typeof (this.providerInstance as any).getUserSecrets === 'function') {
+      return (this.providerInstance as any).getUserSecrets(token, projectId);
+    }
+    // Other providers don't support user secrets
+    return {};
+  }
+
+  /**
    * Get the provider type
    */
   getProviderType(): string {

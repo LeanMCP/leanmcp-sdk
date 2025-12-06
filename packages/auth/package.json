@@ -38,12 +38,16 @@
   },
   "peerDependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.0.0",
+    "@leanmcp/env-injection": "^0.1.0",
     "axios": "^1.0.0",
     "jsonwebtoken": "^9.0.0",
     "jwk-to-pem": "^2.0.0"
   },
   "peerDependenciesMeta": {
     "@aws-sdk/client-cognito-identity-provider": {
+      "optional": true
+    },
+    "@leanmcp/env-injection": {
       "optional": true
     },
     "axios": {
