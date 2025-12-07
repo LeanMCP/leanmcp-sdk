@@ -54,7 +54,7 @@ program
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.2.0",
+        "@leanmcp/core": "^3.1.0",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
