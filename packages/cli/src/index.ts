@@ -54,7 +54,7 @@ program
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^3.1.0",
+        "@leanmcp/core": "^0.3.2",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
@@ -115,8 +115,6 @@ await createHTTPServer(serverFactory, {
 });
 
 console.log(\`\\n${projectName} MCP Server\`);
-console.log(\`HTTP endpoint: http://localhost:\${PORT}/mcp\`);
-console.log(\`Health check: http://localhost:\${PORT}/health\`);
 `;
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
