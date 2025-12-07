@@ -82,10 +82,10 @@ export async function createHTTPServer(
   ]);
 
   const app = express.default();
-  const port = httpOptions.port || 3001;
+  const basePort = httpOptions.port || 3001;
   
-  // Validate port number
-  validatePort(port);
+  // Validate base port number
+  validatePort(basePort);
   
   const transports: Record<string, any> = {};
   let mcpServer: Server | null = null; // Store the MCP server instance
@@ -95,6 +95,54 @@ export async function createHTTPServer(
     level: httpOptions.logging ? LogLevel.INFO : LogLevel.NONE,
     prefix: 'HTTP'
   });
+
+  // Primary logs must always emit regardless of logging flag
+  const logPrimary = (message: string) => {
+    console.log(message);
+    logger.info?.(message);
+  };
+
+  const warnPrimary = (message: string) => {
+    console.warn(message);
+    logger.warn?.(message);
+  };
+
+  const startServerWithPortRetry = async () => {
+    const maxAttempts = 20;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const portToTry = basePort + attempt;
+      const listener = await new Promise<any>((resolve, reject) => {
+        const server = app.listen(portToTry);
+
+        const onListening = () => {
+          server.off('error', onError);
+          resolve(server);
+        };
+
+        const onError = (error: NodeJS.ErrnoException) => {
+          server.off('listening', onListening);
+          server.close();
+          reject(error);
+        };
+
+        server.once('listening', onListening);
+        server.once('error', onError);
+      }).catch((error: NodeJS.ErrnoException) => {
+        if (error?.code === 'EADDRINUSE' && attempt < maxAttempts - 1) {
+          warnPrimary(`Port ${portToTry} in use, trying ${portToTry + 1}...`);
+          return null;
+        }
+        throw error;
+      });
+
+      if (listener) {
+        return { listener, port: portToTry };
+      }
+    }
+
+    throw new Error(`No available port found in range ${basePort}-${basePort + maxAttempts - 1}`);
+  };
 
   // Middleware
   if (cors && httpOptions.cors) {
@@ -114,7 +162,7 @@ export async function createHTTPServer(
 
   app.use(express.json());
 
-  logger.info("Starting LeanMCP HTTP Server...");
+  logPrimary("Starting LeanMCP HTTP Server...");
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
@@ -202,6 +250,8 @@ export async function createHTTPServer(
   app.delete('/mcp', handleMCPRequest);
 
   return new Promise(async (resolve, reject) => {
+    let activeListener: any;
+
     try {
       // Initialize the MCP server and wait for auto-discovery to complete
       mcpServer = await serverFactory();
@@ -212,14 +262,19 @@ export async function createHTTPServer(
       }
       
       // Now start the HTTP listener - all services are discovered and ready
-      const listener = app.listen(port, () => {
-        logger.info(`Server running on http://localhost:${port}`);
-        logger.info(`MCP endpoint: http://localhost:${port}/mcp`);
-        logger.info(`Health check: http://localhost:${port}/health`);
-        resolve(listener); // Return listener to keep process alive
-      });
+      const { listener, port } = await startServerWithPortRetry();
+      activeListener = listener;
+
+      // Surface the actual bound port for downstream consumers
+      process.env.PORT = String(port);
+      (listener as any).port = port;
+
+      logPrimary(`Server running on http://localhost:${port}`);
+      logPrimary(`MCP endpoint: http://localhost:${port}/mcp`);
+      logPrimary(`Health check: http://localhost:${port}/health`);
+      resolve({ listener, port }); // Return listener and port to keep process alive
       
-      listener.on('error', (error) => {
+      listener.on('error', (error: NodeJS.ErrnoException) => {
         logger.error(`Server error: ${error.message}`);
         reject(error);
       });
@@ -232,7 +287,7 @@ export async function createHTTPServer(
         Object.values(transports).forEach(t => t.close?.());
         
         // Close the HTTP server
-        listener.close(() => {
+        activeListener?.close(() => {
           logger.info('Server closed');
           process.exit(0);
         });

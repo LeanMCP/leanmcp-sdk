@@ -15,13 +15,10 @@ await createHTTPServer({
     version: '1.0.0',
     port: parseInt(process.env.PORT || '3000'),
     cors: true,
-    logging: true
+    logging: false
 });
 
 console.log('\nENV Injection MCP Server Example');
-console.log(`HTTP endpoint: http://localhost:${process.env.PORT || '3000'}/mcp`);
-console.log(`Health check: http://localhost:${process.env.PORT || '3000'}/health`);
-console.log('\nThis server demonstrates:');
 console.log('  - @RequireEnv decorator for validating required env vars');
 console.log('  - getEnv() for accessing user-specific secrets');
 console.log('  - Request-scoped isolation (each user sees their own secrets)');

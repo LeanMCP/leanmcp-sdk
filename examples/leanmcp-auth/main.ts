@@ -17,5 +17,3 @@ await createHTTPServer({
 });
 
 console.log('\nLeanmcp Auth MCP Server Example');
-console.log(`HTTP endpoint: http://localhost:${process.env.PORT || '3000'}/mcp`);
-console.log(`Health check: http://localhost:${process.env.PORT || '3000'}/health`);

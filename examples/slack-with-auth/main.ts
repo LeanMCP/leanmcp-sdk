@@ -17,5 +17,4 @@ await createHTTPServer({
 });
 
 console.log('\nSlack MCP Server with Authentication');
-console.log(`HTTP endpoint: http://localhost:${process.env.PORT || '3000'}/mcp`);
-console.log(`Health check: http://localhost:${process.env.PORT || '3000'}/health`);
+
