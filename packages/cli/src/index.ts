@@ -20,12 +20,20 @@ const program = new Command();
 program
   .name("leanmcp")
   .description("LeanMCP CLI — create production-ready MCP servers with Streamable HTTP")
-  .version(pkg.version);
+  .version(pkg.version)
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ leanmcp create my-app --allow-all    # Scaffold without interactive prompts
+`
+  );
 
 program
   .command("create <projectName>")
   .description("Create a new LeanMCP project with Streamable HTTP transport")
-  .action(async (projectName) => {
+  .option("--allow-all", "Skip interactive confirmations and assume Yes")
+  .action(async (projectName, options) => {
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
 
@@ -339,10 +347,12 @@ MIT
     console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
 
     // Ask if user wants to install dependencies
-    const shouldInstall = await confirm({
-      message: "Would you like to install dependencies now?",
-      default: true
-    });
+    const shouldInstall = options.allowAll
+      ? true
+      : await confirm({
+          message: "Would you like to install dependencies now?",
+          default: true
+        });
 
     if (shouldInstall) {
       const installSpinner = ora("Installing dependencies...").start();
@@ -369,10 +379,12 @@ MIT
         installSpinner.succeed("Dependencies installed successfully!");
 
         // Ask if user wants to start dev server
-        const shouldStartDev = await confirm({
-          message: "Would you like to start the development server?",
-          default: true
-        });
+        const shouldStartDev = options.allowAll
+          ? true
+          : await confirm({
+              message: "Would you like to start the development server?",
+              default: true
+            });
 
         if (shouldStartDev) {
           console.log(chalk.cyan("\nStarting development server...\n"));

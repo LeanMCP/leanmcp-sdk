@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/cli",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Command-line interface for scaffolding LeanMCP projects",
   "bin": {
     "leanmcp": "bin/leanmcp.js"
