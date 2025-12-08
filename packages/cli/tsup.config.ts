@@ -9,10 +9,10 @@ export default defineConfig({
   splitting: false,
   outDir: "dist",
   target: "node18",
-  // ESM output goes to .mjs, CJS to .js
+  // Emit ESM as .js (matches package.json main) and CJS as .cjs
   outExtension({ format }) {
     return {
-      js: format === "esm" ? ".mjs" : ".js",
+      js: format === "cjs" ? ".cjs" : ".js",
     };
   },
 });
