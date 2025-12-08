@@ -98,13 +98,19 @@ export async function createHTTPServer(
 
   // Primary logs must always emit regardless of logging flag
   const logPrimary = (message: string) => {
-    console.log(message);
-    logger.info?.(message);
+    if (httpOptions.logging) {
+      logger.info?.(message);
+    } else {
+      console.log(message);
+    }
   };
 
   const warnPrimary = (message: string) => {
-    console.warn(message);
-    logger.warn?.(message);
+    if (httpOptions.logging) {
+      logger.warn?.(message);
+    } else {
+      console.warn(message);
+    }
   };
 
   const startServerWithPortRetry = async () => {
@@ -162,7 +168,7 @@ export async function createHTTPServer(
 
   app.use(express.json());
 
-  logPrimary("Starting LeanMCP HTTP Server...");
+  console.log("Starting LeanMCP HTTP Server...");
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
@@ -269,9 +275,10 @@ export async function createHTTPServer(
       process.env.PORT = String(port);
       (listener as any).port = port;
 
-      logPrimary(`Server running on http://localhost:${port}`);
-      logPrimary(`MCP endpoint: http://localhost:${port}/mcp`);
-      logPrimary(`Health check: http://localhost:${port}/health`);
+      // Always emit startup endpoints to console only to avoid double logging
+      console.log(`Server running on http://localhost:${port}`);
+      console.log(`MCP endpoint: http://localhost:${port}/mcp`);
+      console.log(`Health check: http://localhost:${port}/health`);
       resolve({ listener, port }); // Return listener and port to keep process alive
       
       listener.on('error', (error: NodeJS.ErrnoException) => {
