@@ -40,7 +40,7 @@ export async function createHTTPServer(
   // Determine if we're using the new simplified API or legacy factory pattern
   let serverFactory: MCPServerFactory;
   let httpOptions: HTTPServerOptions;
-  
+
   if (typeof serverInput === 'function') {
     // Legacy factory pattern
     serverFactory = serverInput;
@@ -48,16 +48,16 @@ export async function createHTTPServer(
   } else {
     // New simplified API - serverInput is MCPServerConstructorOptions
     const serverOptions = serverInput;
-    
+
     // Dynamically import MCPServer to avoid circular dependency
     const { MCPServer } = await import('./index.js');
-    
+
     // Create factory that instantiates MCPServer
     serverFactory = async () => {
       const mcpServer = new MCPServer(serverOptions);
       return mcpServer.getServer();
     };
-    
+
     // Extract HTTP options from server options
     httpOptions = {
       port: (serverOptions as any).port,
@@ -83,13 +83,13 @@ export async function createHTTPServer(
 
   const app = express.default();
   const basePort = httpOptions.port || 3001;
-  
+
   // Validate base port number
   validatePort(basePort);
-  
+
   const transports: Record<string, any> = {};
   let mcpServer: Server | null = null; // Store the MCP server instance
-  
+
   // Initialize logger
   const logger = httpOptions.logger || new Logger({
     level: httpOptions.logging ? LogLevel.INFO : LogLevel.NONE,
@@ -153,17 +153,23 @@ export async function createHTTPServer(
   // Middleware
   if (cors && httpOptions.cors) {
     const corsOptions = typeof httpOptions.cors === 'object' ? {
-      origin: httpOptions.cors.origin || false, // No wildcard - must be explicitly configured
+      origin: httpOptions.cors.origin || '*', // Use wildcard if not specified
       methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
       exposedHeaders: ['mcp-session-id'],
       credentials: httpOptions.cors.credentials ?? false, // Default false for security
       maxAge: 86400
-    } : false;
-    
-    if (corsOptions) {
-      app.use(cors.default(corsOptions));
-    }
+    } : {
+      // When cors: true, use permissive defaults for development
+      origin: '*',
+      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
+      exposedHeaders: ['mcp-session-id'],
+      credentials: false,
+      maxAge: 86400
+    };
+
+    app.use(cors.default(corsOptions));
   }
 
   app.use(express.json());
@@ -188,19 +194,19 @@ export async function createHTTPServer(
     const method = req.body?.method || 'unknown';
     const params = req.body?.params;
     let logMessage = `${req.method} /mcp - ${method}`;
-    
+
     // Add name for tools/resources/prompts
     if (params?.name) {
       logMessage += ` [${params.name}]`;
     } else if (params?.uri) {
       logMessage += ` [${params.uri}]`;
     }
-    
+
     // Add session info
     if (sessionId) {
       logMessage += ` (session: ${sessionId.substring(0, 8)}...)`;
     }
-    
+
     logger.info(logMessage);
 
     try {
@@ -261,12 +267,12 @@ export async function createHTTPServer(
     try {
       // Initialize the MCP server and wait for auto-discovery to complete
       mcpServer = await serverFactory();
-      
+
       // If the server has a waitForInit method (from MCPServer wrapper), wait for it
       if (mcpServer && typeof (mcpServer as any).waitForInit === 'function') {
         await (mcpServer as any).waitForInit();
       }
-      
+
       // Now start the HTTP listener - all services are discovered and ready
       const { listener, port } = await startServerWithPortRetry();
       activeListener = listener;
@@ -280,7 +286,7 @@ export async function createHTTPServer(
       console.log(`MCP endpoint: http://localhost:${port}/mcp`);
       console.log(`Health check: http://localhost:${port}/health`);
       resolve({ listener, port }); // Return listener and port to keep process alive
-      
+
       listener.on('error', (error: NodeJS.ErrnoException) => {
         logger.error(`Server error: ${error.message}`);
         reject(error);
@@ -289,16 +295,16 @@ export async function createHTTPServer(
       // Cleanup on shutdown
       const cleanup = () => {
         logger.info('\nShutting down server...');
-        
+
         // Close all MCP transports
         Object.values(transports).forEach(t => t.close?.());
-        
+
         // Close the HTTP server
         activeListener?.close(() => {
           logger.info('Server closed');
           process.exit(0);
         });
-        
+
         // Force exit after 5 seconds if graceful shutdown fails
         setTimeout(() => {
           logger.warn('Forcing shutdown...');

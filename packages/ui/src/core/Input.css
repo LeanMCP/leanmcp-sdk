@@ -1,0 +1,102 @@
+/* Input Component Styles */
+
+.lui-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lui-space-1);
+}
+
+.lui-input-wrapper--full-width {
+    width: 100%;
+}
+
+.lui-input-label {
+    font-size: var(--lui-text-sm);
+    font-weight: 500;
+    color: var(--lui-text);
+}
+
+.lui-input-container {
+    display: flex;
+    align-items: center;
+    background: var(--lui-bg);
+    border: 1px solid var(--lui-border);
+    border-radius: var(--lui-radius-md);
+    transition: all var(--lui-transition);
+}
+
+.lui-input-container:focus-within {
+    border-color: var(--lui-border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.lui-input-container--error {
+    border-color: var(--lui-error);
+}
+
+.lui-input-container--error:focus-within {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Sizes */
+.lui-input-container--sm {
+    height: 32px;
+}
+
+.lui-input-container--md {
+    height: 40px;
+}
+
+.lui-input-container--lg {
+    height: 48px;
+}
+
+.lui-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 var(--lui-space-3);
+    font-family: var(--lui-font-sans);
+    font-size: var(--lui-text-sm);
+    color: var(--lui-text);
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+.lui-input::placeholder {
+    color: var(--lui-text-muted);
+}
+
+.lui-input-container--has-left .lui-input {
+    padding-left: 0;
+}
+
+.lui-input-container--has-right .lui-input {
+    padding-right: 0;
+}
+
+/* Input elements (icons) */
+.lui-input-element {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 var(--lui-space-3);
+    color: var(--lui-text-muted);
+}
+
+.lui-input-element svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Messages */
+.lui-input-message {
+    margin: 0;
+    font-size: var(--lui-text-xs);
+    color: var(--lui-text-muted);
+}
+
+.lui-input-message--error {
+    color: var(--lui-error);
+}

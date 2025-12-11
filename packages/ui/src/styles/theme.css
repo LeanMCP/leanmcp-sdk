@@ -1,0 +1,102 @@
+/* @leanmcp/ui Theme Variables */
+:root {
+    /* Colors */
+    --lui-primary: #6366f1;
+    --lui-primary-hover: #4f46e5;
+    --lui-primary-active: #4338ca;
+
+    --lui-success: #22c55e;
+    --lui-warning: #f59e0b;
+    --lui-error: #ef4444;
+    --lui-info: #3b82f6;
+
+    /* Backgrounds */
+    --lui-bg: #ffffff;
+    --lui-bg-secondary: #f8fafc;
+    --lui-surface: #f1f5f9;
+    --lui-surface-hover: #e2e8f0;
+
+    /* Text */
+    --lui-text: #0f172a;
+    --lui-text-secondary: #475569;
+    --lui-text-muted: #94a3b8;
+    --lui-text-inverse: #ffffff;
+
+    /* Borders */
+    --lui-border: #e2e8f0;
+    --lui-border-focus: #6366f1;
+
+    /* Spacing */
+    --lui-space-1: 4px;
+    --lui-space-2: 8px;
+    --lui-space-3: 12px;
+    --lui-space-4: 16px;
+    --lui-space-5: 20px;
+    --lui-space-6: 24px;
+    --lui-space-8: 32px;
+
+    /* Radius */
+    --lui-radius-sm: 4px;
+    --lui-radius-md: 8px;
+    --lui-radius-lg: 12px;
+    --lui-radius-xl: 16px;
+    --lui-radius-full: 9999px;
+
+    /* Shadows */
+    --lui-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --lui-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --lui-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Transitions */
+    --lui-transition-fast: 100ms ease;
+    --lui-transition: 150ms ease;
+    --lui-transition-slow: 300ms ease;
+
+    /* Typography */
+    --lui-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --lui-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+    --lui-text-xs: 0.75rem;
+    --lui-text-sm: 0.875rem;
+    --lui-text-base: 1rem;
+    --lui-text-lg: 1.125rem;
+    --lui-text-xl: 1.25rem;
+}
+
+/* Dark theme */
+[data-theme="dark"],
+.lui-dark {
+    --lui-primary: #818cf8;
+    --lui-primary-hover: #6366f1;
+    --lui-primary-active: #4f46e5;
+
+    --lui-bg: #0f172a;
+    --lui-bg-secondary: #1e293b;
+    --lui-surface: #334155;
+    --lui-surface-hover: #475569;
+
+    --lui-text: #f1f5f9;
+    --lui-text-secondary: #cbd5e1;
+    --lui-text-muted: #64748b;
+    --lui-text-inverse: #0f172a;
+
+    --lui-border: #334155;
+    --lui-border-focus: #818cf8;
+}
+
+/* Base styles */
+.lui-root {
+    font-family: var(--lui-font-sans);
+    font-size: var(--lui-text-base);
+    color: var(--lui-text);
+    background: var(--lui-bg);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus ring utility */
+.lui-focus-ring:focus-visible {
+    outline: 2px solid var(--lui-border-focus);
+    outline-offset: 2px;
+}

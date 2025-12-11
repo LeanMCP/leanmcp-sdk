@@ -6,6 +6,8 @@ import ora from "ora";
 import { createRequire } from "module";
 import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
+import { devCommand } from "./commands/dev";
+import { startCommand } from "./commands/start";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -350,13 +352,13 @@ MIT
     const shouldInstall = options.allowAll
       ? true
       : await confirm({
-          message: "Would you like to install dependencies now?",
-          default: true
-        });
+        message: "Would you like to install dependencies now?",
+        default: true
+      });
 
     if (shouldInstall) {
       const installSpinner = ora("Installing dependencies...").start();
-      
+
       try {
         await new Promise<void>((resolve, reject) => {
           const npmInstall = spawn("npm", ["install"], {
@@ -382,9 +384,9 @@ MIT
         const shouldStartDev = options.allowAll
           ? true
           : await confirm({
-              message: "Would you like to start the development server?",
-              default: true
-            });
+            message: "Would you like to start the development server?",
+            default: true
+          });
 
         if (shouldStartDev) {
           console.log(chalk.cyan("\nStarting development server...\n"));
@@ -427,7 +429,7 @@ program
   .action(async (serviceName) => {
     const cwd = process.cwd();
     const mcpDir = path.join(cwd, "mcp");
-    
+
     if (!fs.existsSync(path.join(cwd, "main.ts"))) {
       console.error(chalk.red("ERROR: Not a LeanMCP project (main.ts missing)."));
       process.exit(1);
@@ -435,7 +437,7 @@ program
 
     const serviceDir = path.join(mcpDir, serviceName);
     const serviceFile = path.join(serviceDir, "index.ts");
-    
+
     if (fs.existsSync(serviceDir)) {
       console.error(chalk.red(`ERROR: Service ${serviceName} already exists.`));
       process.exit(1);
@@ -503,7 +505,7 @@ export class ${capitalize(serviceName)}Service {
 }
 `;
     await fs.writeFile(serviceFile, indexTs);
-    
+
     console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
     console.log(chalk.gray(`   File: mcp/${serviceName}/index.ts`));
     console.log(chalk.gray(`   Tool: greet`));
@@ -512,4 +514,15 @@ export class ${capitalize(serviceName)}Service {
     console.log(chalk.green(`\\nService will be automatically discovered on next server start!`));
   });
 
+program
+  .command("dev")
+  .description("Start development server with UI hot-reload (builds @UIApp components)")
+  .action(devCommand);
+
+program
+  .command("start")
+  .description("Build UI components and start production server")
+  .action(startCommand);
+
 program.parse();
+

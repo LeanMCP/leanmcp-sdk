@@ -1,0 +1,71 @@
+/* AppShell Component Styles */
+
+.lui-app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    background: var(--lui-bg);
+    color: var(--lui-text);
+    font-family: var(--lui-font-sans);
+}
+
+/* Padding variants */
+.lui-app-shell--padding-none .lui-app-shell-main {
+    padding: 0;
+}
+
+.lui-app-shell--padding-sm .lui-app-shell-main {
+    padding: var(--lui-space-3);
+}
+
+.lui-app-shell--padding-md .lui-app-shell-main {
+    padding: var(--lui-space-4);
+}
+
+.lui-app-shell--padding-lg .lui-app-shell-main {
+    padding: var(--lui-space-6);
+}
+
+/* Header */
+.lui-app-shell-header {
+    flex-shrink: 0;
+    padding: var(--lui-space-3) var(--lui-space-4);
+    background: var(--lui-bg);
+    border-bottom: 1px solid var(--lui-border);
+}
+
+/* Body (sidebar + main) */
+.lui-app-shell-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Sidebar */
+.lui-app-shell-sidebar {
+    flex-shrink: 0;
+    padding: var(--lui-space-4);
+    background: var(--lui-bg-secondary);
+    border-right: 1px solid var(--lui-border);
+    overflow-y: auto;
+}
+
+.lui-app-shell-sidebar:last-child {
+    border-right: none;
+    border-left: 1px solid var(--lui-border);
+}
+
+/* Main */
+.lui-app-shell-main {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Footer */
+.lui-app-shell-footer {
+    flex-shrink: 0;
+    padding: var(--lui-space-3) var(--lui-space-4);
+    background: var(--lui-bg-secondary);
+    border-top: 1px solid var(--lui-border);
+}

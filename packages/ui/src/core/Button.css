@@ -1,0 +1,156 @@
+/* Button Component Styles */
+
+.lui-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--lui-space-2);
+    font-family: var(--lui-font-sans);
+    font-weight: 500;
+    border: none;
+    border-radius: var(--lui-radius-md);
+    cursor: pointer;
+    transition: all var(--lui-transition);
+    user-select: none;
+    white-space: nowrap;
+}
+
+.lui-button:focus-visible {
+    outline: 2px solid var(--lui-border-focus);
+    outline-offset: 2px;
+}
+
+.lui-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Variants */
+.lui-button--primary {
+    background: var(--lui-primary);
+    color: var(--lui-text-inverse);
+}
+
+.lui-button--primary:hover:not(:disabled) {
+    background: var(--lui-primary-hover);
+}
+
+.lui-button--primary:active:not(:disabled) {
+    background: var(--lui-primary-active);
+}
+
+.lui-button--secondary {
+    background: var(--lui-surface);
+    color: var(--lui-text);
+}
+
+.lui-button--secondary:hover:not(:disabled) {
+    background: var(--lui-surface-hover);
+}
+
+.lui-button--ghost {
+    background: transparent;
+    color: var(--lui-text);
+}
+
+.lui-button--ghost:hover:not(:disabled) {
+    background: var(--lui-surface);
+}
+
+.lui-button--outline {
+    background: transparent;
+    color: var(--lui-primary);
+    border: 1px solid var(--lui-border);
+}
+
+.lui-button--outline:hover:not(:disabled) {
+    background: var(--lui-surface);
+    border-color: var(--lui-primary);
+}
+
+.lui-button--destructive {
+    background: var(--lui-error);
+    color: var(--lui-text-inverse);
+}
+
+.lui-button--destructive:hover:not(:disabled) {
+    background: #dc2626;
+}
+
+/* Sizes */
+.lui-button--sm {
+    height: 32px;
+    padding: 0 var(--lui-space-3);
+    font-size: var(--lui-text-sm);
+}
+
+.lui-button--md {
+    height: 40px;
+    padding: 0 var(--lui-space-4);
+    font-size: var(--lui-text-sm);
+}
+
+.lui-button--lg {
+    height: 48px;
+    padding: 0 var(--lui-space-6);
+    font-size: var(--lui-text-base);
+}
+
+.lui-button--icon {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+}
+
+.lui-button--icon.lui-button--sm {
+    width: 32px;
+    height: 32px;
+}
+
+.lui-button--icon.lui-button--lg {
+    width: 48px;
+    height: 48px;
+}
+
+/* Loading state */
+.lui-button--loading {
+    position: relative;
+}
+
+.lui-button__spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lui-spinner-icon {
+    width: 16px;
+    height: 16px;
+    animation: lui-spin 1s linear infinite;
+}
+
+@keyframes lui-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.lui-button__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lui-button__icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.lui-button--lg .lui-button__icon svg {
+    width: 20px;
+    height: 20px;
+}

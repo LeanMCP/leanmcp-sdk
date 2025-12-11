@@ -1,0 +1,70 @@
+/* ToolForm Component Styles */
+
+.lui-tool-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lui-space-4);
+}
+
+.lui-tool-form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lui-space-3);
+}
+
+.lui-tool-form-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.lui-tool-form-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: var(--lui-space-3);
+    font-family: var(--lui-font-sans);
+    font-size: var(--lui-text-sm);
+    color: var(--lui-text);
+    background: var(--lui-bg);
+    border: 1px solid var(--lui-border);
+    border-radius: var(--lui-radius-md);
+    resize: vertical;
+    outline: none;
+    transition: all var(--lui-transition);
+}
+
+.lui-tool-form-textarea:focus {
+    border-color: var(--lui-border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.lui-tool-form-textarea::placeholder {
+    color: var(--lui-text-muted);
+}
+
+.lui-tool-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--lui-space-3);
+}
+
+.lui-tool-form-error {
+    padding: var(--lui-space-3);
+    font-size: var(--lui-text-sm);
+    color: var(--lui-error);
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: var(--lui-radius-md);
+}
+
+.lui-tool-form-result {
+    padding: var(--lui-space-3);
+    font-family: var(--lui-font-mono);
+    font-size: var(--lui-text-xs);
+    color: var(--lui-text-secondary);
+    background: var(--lui-surface);
+    border-radius: var(--lui-radius-md);
+    overflow-x: auto;
+}
+
+.lui-tool-form-result pre {
+    margin: 0;
+}

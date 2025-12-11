@@ -46,11 +46,11 @@ export interface ResourceOptions {
 export function Tool(options: ToolOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     const toolName = String(propertyKey);
-    
+
     Reflect.defineMetadata("tool:name", toolName, descriptor.value!);
     Reflect.defineMetadata("tool:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("tool:propertyKey", propertyKey, descriptor.value!);
-    
+
     // Store inputClass if provided
     if (options.inputClass) {
       Reflect.defineMetadata("tool:inputClass", options.inputClass, descriptor.value!);
@@ -80,11 +80,11 @@ export function Tool(options: ToolOptions = {}): MethodDecorator {
 export function Prompt(options: PromptOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     const promptName = String(propertyKey);
-    
+
     Reflect.defineMetadata("prompt:name", promptName, descriptor.value!);
     Reflect.defineMetadata("prompt:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("prompt:propertyKey", propertyKey, descriptor.value!);
-    
+
     // Store inputClass if explicitly provided
     if (options.inputClass) {
       Reflect.defineMetadata("prompt:inputClass", options.inputClass, descriptor.value!);
@@ -98,10 +98,17 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
   };
 }
 
+export interface ResourceOptions {
+  description?: string;
+  mimeType?: string;
+  inputClass?: any;  // Optional: Explicit input class for schema generation
+  uri?: string;      // Optional: Explicit URI (uses ui:// scheme by default)
+}
+
 /**
  * Marks a method as an MCP resource (data source/endpoint)
- * - Resource URI is automatically derived from function name (e.g., "myservice://functionName")
- * - Can be customized with description, mimeType, and input schema
+ * - Resource URI defaults to ui://classname/methodname (for ext-apps compatibility)
+ * - Can be customized with explicit uri option
  * 
  * @example
  * class ResourceInput {
@@ -115,23 +122,22 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
  *   inputClass: ResourceInput 
  * })
  * getStats(args: ResourceInput) {
- *   // Resource URI will be: "servicename://getStats"
- *   return { stats: '...' };
+ *   // Resource URI will be: "ui://servicename/getStats"
  * }
  */
 export function Resource(options: ResourceOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     const resourceName = String(propertyKey);
-    // Generate URI from class name and method name
+    // Generate URI using ui:// scheme (required by ext-apps hosts)
     const className = target.constructor.name.toLowerCase().replace('service', '');
-    const resourceUri = `${className}://${resourceName}`;
-    
+    const resourceUri = options.uri ?? `ui://${className}/${resourceName}`;
+
     Reflect.defineMetadata("resource:uri", resourceUri, descriptor.value!);
     Reflect.defineMetadata("resource:name", resourceName, descriptor.value!);
     Reflect.defineMetadata("resource:description", options.description || "", descriptor.value!);
     Reflect.defineMetadata("resource:mimeType", options.mimeType || "application/json", descriptor.value!);
     Reflect.defineMetadata("resource:propertyKey", propertyKey, descriptor.value!);
-    
+
     // Store inputClass if provided
     if (options.inputClass) {
       Reflect.defineMetadata("resource:inputClass", options.inputClass, descriptor.value!);
@@ -240,15 +246,15 @@ export function Render(format: 'markdown' | 'html' | 'json' | 'chart' | 'table' 
 export function Deprecated(message?: string): ClassDecorator & MethodDecorator {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     const deprecationMessage = message || 'This feature is deprecated';
-    
+
     if (propertyKey && descriptor) {
       // Method decorator
       Reflect.defineMetadata("deprecated:message", deprecationMessage, descriptor.value!);
       Reflect.defineMetadata("deprecated:true", true, descriptor.value!);
-      
+
       // Wrap method to log deprecation warning
       const originalMethod = descriptor.value as Function;
-      descriptor.value = function(this: any, ...args: any[]) {
+      descriptor.value = function (this: any, ...args: any[]) {
         console.warn(`DEPRECATED: ${String(propertyKey)} - ${deprecationMessage}`);
         return originalMethod.apply(this, args);
       } as any;
@@ -273,16 +279,16 @@ export function getMethodMetadata(method: Function) {
     // Tool metadata
     toolName: Reflect.getMetadata("tool:name", method),
     toolDescription: Reflect.getMetadata("tool:description", method),
-    
+
     // Prompt metadata
     promptName: Reflect.getMetadata("prompt:name", method),
     promptDescription: Reflect.getMetadata("prompt:description", method),
-    
+
     // Resource metadata
     resourceUri: Reflect.getMetadata("resource:uri", method),
     resourceName: Reflect.getMetadata("resource:name", method),
     resourceDescription: Reflect.getMetadata("resource:description", method),
-    
+
     // Common metadata
     inputSchema: Reflect.getMetadata("schema:input", method),
     outputSchema: Reflect.getMetadata("schema:output", method),
@@ -301,7 +307,7 @@ export function getMethodMetadata(method: Function) {
 export function getDecoratedMethods(target: any, metadataKey: string): Array<{ method: Function; propertyKey: string; metadata: any }> {
   const methods: Array<{ method: Function; propertyKey: string; metadata: any }> = [];
   const prototype = target.prototype || target;
-  
+
   for (const propertyKey of Object.getOwnPropertyNames(prototype)) {
     const descriptor = Object.getOwnPropertyDescriptor(prototype, propertyKey);
     if (descriptor && typeof descriptor.value === 'function') {
@@ -315,6 +321,6 @@ export function getDecoratedMethods(target: any, metadataKey: string): Array<{ m
       }
     }
   }
-  
+
   return methods;
 }

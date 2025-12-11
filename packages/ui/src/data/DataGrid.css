@@ -1,0 +1,103 @@
+/* DataGrid Component Styles */
+
+.lui-datagrid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lui-space-3);
+    width: 100%;
+}
+
+.lui-datagrid-search {
+    display: flex;
+}
+
+.lui-datagrid-search-input {
+    flex: 1;
+    height: 36px;
+    padding: 0 var(--lui-space-3);
+    font-family: var(--lui-font-sans);
+    font-size: var(--lui-text-sm);
+    color: var(--lui-text);
+    background: var(--lui-bg);
+    border: 1px solid var(--lui-border);
+    border-radius: var(--lui-radius-md);
+    outline: none;
+    transition: all var(--lui-transition);
+}
+
+.lui-datagrid-search-input:focus {
+    border-color: var(--lui-border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.lui-datagrid-search-input::placeholder {
+    color: var(--lui-text-muted);
+}
+
+.lui-datagrid-container {
+    overflow-x: auto;
+    border: 1px solid var(--lui-border);
+    border-radius: var(--lui-radius-md);
+}
+
+.lui-datagrid-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--lui-text-sm);
+}
+
+.lui-datagrid-th {
+    padding: var(--lui-space-3) var(--lui-space-4);
+    text-align: left;
+    font-weight: 600;
+    color: var(--lui-text);
+    background: var(--lui-bg-secondary);
+    border-bottom: 1px solid var(--lui-border);
+    white-space: nowrap;
+}
+
+.lui-datagrid-th--sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.lui-datagrid-th--sortable:hover {
+    background: var(--lui-surface);
+}
+
+.lui-datagrid-th-content {
+    display: flex;
+    align-items: center;
+    gap: var(--lui-space-2);
+}
+
+.lui-datagrid-sort-icon {
+    font-size: var(--lui-text-xs);
+    color: var(--lui-primary);
+}
+
+.lui-datagrid-td {
+    padding: var(--lui-space-3) var(--lui-space-4);
+    color: var(--lui-text);
+    border-bottom: 1px solid var(--lui-border);
+}
+
+.lui-datagrid-row:last-child .lui-datagrid-td {
+    border-bottom: none;
+}
+
+.lui-datagrid-row--clickable {
+    cursor: pointer;
+    transition: background var(--lui-transition);
+}
+
+.lui-datagrid-row--clickable:hover {
+    background: var(--lui-surface);
+}
+
+.lui-datagrid-loading,
+.lui-datagrid-empty {
+    padding: var(--lui-space-8);
+    text-align: center;
+    color: var(--lui-text-muted);
+}
