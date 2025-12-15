@@ -1,5 +1,25 @@
 
 # LeanMCP SDK 
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/core" alt="npm downloads" />
+  </a>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
+
+
+
 
 ## What LeanMCP Is
 
