@@ -6,6 +6,8 @@ import ora from "ora";
 import { createRequire } from "module";
 import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
+import { devCommand } from "./commands/dev";
+import { startCommand } from "./commands/start";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -20,12 +22,20 @@ const program = new Command();
 program
   .name("leanmcp")
   .description("LeanMCP CLI — create production-ready MCP servers with Streamable HTTP")
-  .version(pkg.version);
+  .version(pkg.version)
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ leanmcp create my-app --allow-all    # Scaffold without interactive prompts
+`
+  );
 
 program
   .command("create <projectName>")
   .description("Create a new LeanMCP project with Streamable HTTP transport")
-  .action(async (projectName) => {
+  .option("--allow-all", "Skip interactive confirmations and assume Yes")
+  .action(async (projectName, options) => {
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
 
@@ -54,7 +64,7 @@ program
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.2.0",
+        "@leanmcp/core": "^0.3.2",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
@@ -115,8 +125,6 @@ await createHTTPServer(serverFactory, {
 });
 
 console.log(\`\\n${projectName} MCP Server\`);
-console.log(\`HTTP endpoint: http://localhost:\${PORT}/mcp\`);
-console.log(\`Health check: http://localhost:\${PORT}/health\`);
 `;
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
@@ -341,14 +349,16 @@ MIT
     console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
 
     // Ask if user wants to install dependencies
-    const shouldInstall = await confirm({
-      message: "Would you like to install dependencies now?",
-      default: true
-    });
+    const shouldInstall = options.allowAll
+      ? true
+      : await confirm({
+        message: "Would you like to install dependencies now?",
+        default: true
+      });
 
     if (shouldInstall) {
       const installSpinner = ora("Installing dependencies...").start();
-      
+
       try {
         await new Promise<void>((resolve, reject) => {
           const npmInstall = spawn("npm", ["install"], {
@@ -371,10 +381,12 @@ MIT
         installSpinner.succeed("Dependencies installed successfully!");
 
         // Ask if user wants to start dev server
-        const shouldStartDev = await confirm({
-          message: "Would you like to start the development server?",
-          default: true
-        });
+        const shouldStartDev = options.allowAll
+          ? true
+          : await confirm({
+            message: "Would you like to start the development server?",
+            default: true
+          });
 
         if (shouldStartDev) {
           console.log(chalk.cyan("\nStarting development server...\n"));
@@ -417,7 +429,7 @@ program
   .action(async (serviceName) => {
     const cwd = process.cwd();
     const mcpDir = path.join(cwd, "mcp");
-    
+
     if (!fs.existsSync(path.join(cwd, "main.ts"))) {
       console.error(chalk.red("ERROR: Not a LeanMCP project (main.ts missing)."));
       process.exit(1);
@@ -425,7 +437,7 @@ program
 
     const serviceDir = path.join(mcpDir, serviceName);
     const serviceFile = path.join(serviceDir, "index.ts");
-    
+
     if (fs.existsSync(serviceDir)) {
       console.error(chalk.red(`ERROR: Service ${serviceName} already exists.`));
       process.exit(1);
@@ -493,7 +505,7 @@ export class ${capitalize(serviceName)}Service {
 }
 `;
     await fs.writeFile(serviceFile, indexTs);
-    
+
     console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
     console.log(chalk.gray(`   File: mcp/${serviceName}/index.ts`));
     console.log(chalk.gray(`   Tool: greet`));
@@ -502,4 +514,15 @@ export class ${capitalize(serviceName)}Service {
     console.log(chalk.green(`\\nService will be automatically discovered on next server start!`));
   });
 
+program
+  .command("dev")
+  .description("Start development server with UI hot-reload (builds @UIApp components)")
+  .action(devCommand);
+
+program
+  .command("start")
+  .description("Build UI components and start production server")
+  .action(startCommand);
+
 program.parse();
+

@@ -62,7 +62,7 @@ export class AuthProvider extends AuthProviderBase {
         await this.providerInstance.init(finalConfig);
         break;
       }
-      
+
       case 'auth0': {
         const { AuthAuth0 } = await import('./providers/auth0');
         this.providerInstance = new AuthAuth0();
@@ -76,9 +76,16 @@ export class AuthProvider extends AuthProviderBase {
         await this.providerInstance.init(finalConfig);
         break;
       }
-      
+
+      case 'leanmcp': {
+        const { AuthLeanmcp } = await import('./providers/leanmcp');
+        this.providerInstance = new AuthLeanmcp();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
+
       default:
-        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito`);
+        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, leanmcp`);
     }
   }
 
@@ -110,6 +117,23 @@ export class AuthProvider extends AuthProviderBase {
       throw new Error("AuthProvider not initialized. Call init() first.");
     }
     return this.providerInstance.getUser(token);
+  }
+
+  /**
+   * Get user secrets for a project (LeanMCP provider only)
+   * Other providers will return empty object
+   */
+  async getUserSecrets(token: string, projectId: string): Promise<Record<string, string>> {
+    if (!this.providerInstance) {
+      throw new Error("AuthProvider not initialized. Call init() first.");
+    }
+    // Check if the underlying provider supports getUserSecrets
+    if ('getUserSecrets' in this.providerInstance &&
+      typeof (this.providerInstance as any).getUserSecrets === 'function') {
+      return (this.providerInstance as any).getUserSecrets(token, projectId);
+    }
+    // Other providers don't support user secrets
+    return {};
   }
 
   /**

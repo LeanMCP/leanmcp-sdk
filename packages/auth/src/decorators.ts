@@ -119,7 +119,7 @@ export class AuthenticationError extends Error {
  */
 export function Authenticated(authProvider: AuthProviderBase, options?: AuthenticatedOptions) {
   const authOptions: AuthenticatedOptions = { getUser: true, ...options };
-  
+
   return function (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) {
     // Case 1: Applied to a class (protect all methods)
     if (!propertyKey && !descriptor) {
@@ -127,53 +127,53 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
       Reflect.defineMetadata("auth:provider", authProvider, target);
       Reflect.defineMetadata("auth:required", true, target);
       Reflect.defineMetadata("auth:options", authOptions, target);
-      
+
       // Get all method names from the prototype
       const prototype = target.prototype;
       const methodNames = Object.getOwnPropertyNames(prototype).filter(
         name => name !== 'constructor' && typeof prototype[name] === 'function'
       );
-      
+
       // Wrap each method with authentication
       for (const methodName of methodNames) {
         const originalDescriptor = Object.getOwnPropertyDescriptor(prototype, methodName);
         if (originalDescriptor && typeof originalDescriptor.value === 'function') {
           const originalMethod = originalDescriptor.value;
-          
+
           // Store auth metadata on the method
           Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
           Reflect.defineMetadata("auth:required", true, originalMethod);
           Reflect.defineMetadata("auth:options", authOptions, originalMethod);
-          
+
           // Wrap the method with authentication logic
           prototype[methodName] = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
-          
+
           // Copy metadata from original method to wrapped method
           copyMetadata(originalMethod, prototype[methodName]);
         }
       }
-      
+
       return target;
     }
-    
+
     // Case 2: Applied to a method
     if (descriptor && typeof descriptor.value === 'function') {
       const originalMethod = descriptor.value;
-      
+
       // Store auth metadata on the method
       Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
       Reflect.defineMetadata("auth:required", true, originalMethod);
       Reflect.defineMetadata("auth:options", authOptions, originalMethod);
-      
+
       // Wrap the method with authentication logic
       descriptor.value = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
-      
+
       // Copy metadata from original method to wrapped method
       copyMetadata(originalMethod, descriptor.value);
-      
+
       return descriptor;
     }
-    
+
     throw new Error("@Authenticated can only be applied to classes or methods");
   };
 }
@@ -182,16 +182,17 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
  * Creates an authenticated wrapper around a method
  * Extracts token from _meta.authorization following MCP protocol standards
  * Optionally fetches and injects user information as 'authUser' variable in method scope
+ * Optionally fetches user secrets and injects them via runWithEnv when projectId is provided
  */
 function createAuthenticatedMethod(
-  originalMethod: Function, 
+  originalMethod: Function,
   authProvider: AuthProviderBase,
   options: AuthenticatedOptions
 ) {
   return async function (this: any, args: any, meta?: any) {
     // Extract token from _meta.authorization (MCP standard)
     const token = meta?.authorization?.token;
-    
+
     // Check if token is provided
     if (!token) {
       throw new AuthenticationError(
@@ -199,11 +200,11 @@ function createAuthenticatedMethod(
         "MISSING_TOKEN"
       );
     }
-    
+
     // Verify token using the auth provider
     try {
       const isValid = await authProvider.verifyToken(token);
-      
+
       if (!isValid) {
         throw new AuthenticationError(
           "Invalid or expired token. Please authenticate again.",
@@ -215,38 +216,59 @@ function createAuthenticatedMethod(
       if (error instanceof AuthenticationError) {
         throw error;
       }
-      
+
       // Otherwise, wrap the error
       throw new AuthenticationError(
         `Token verification failed: ${error instanceof Error ? error.message : String(error)}`,
         "VERIFICATION_FAILED"
       );
     }
-    
+
     // Fetch user information if requested
+    let user: any = undefined;
     if (options.getUser !== false) {
       try {
-        const user = await authProvider.getUser(token);
-        // Run the method within an async context with the user data
-        // This ensures each request has its own isolated authUser
-        // The global 'authUser' variable automatically reads from this context
-        return await authUserStorage.run(user, async () => {
-          return await originalMethod.apply(this, [args]);
-        });
+        user = await authProvider.getUser(token);
       } catch (error) {
-        // Log error but don't fail the request if user fetch fails
         console.warn('Failed to fetch user information:', error);
-        // Run with undefined user
-        return await authUserStorage.run(undefined, async () => {
+      }
+    }
+
+    // Fetch user secrets if projectId is configured
+    let userSecrets: Record<string, string> = {};
+    if (options.projectId) {
+      try {
+        // Check if auth provider supports getUserSecrets (LeanMCP provider)
+        if ('getUserSecrets' in authProvider && typeof (authProvider as any).getUserSecrets === 'function') {
+          userSecrets = await (authProvider as any).getUserSecrets(token, options.projectId);
+        } else {
+          console.warn(
+            '[Auth] Auth provider does not support user secrets. ' +
+            'Only the LeanMCP provider supports @RequireEnv and getEnv(). ' +
+            'Use: new AuthProvider("leanmcp", { apiKey: "..." })'
+          );
+        }
+      } catch (error) {
+        console.warn('[Auth] Failed to fetch user secrets:', error instanceof Error ? error.message : error);
+      }
+    }
+
+    // Run the method within nested async contexts
+    // 1. authUserStorage for authUser global
+    // 2. envStorage for getEnv() (if projectId configured)
+    return await authUserStorage.run(user, async () => {
+      // If projectId is configured, always wrap with env context (even if empty)
+      if (options.projectId) {
+        // Dynamically import to avoid circular dependency
+        const { runWithEnv } = await import('@leanmcp/env-injection');
+        return await runWithEnv(userSecrets, async () => {
           return await originalMethod.apply(this, [args]);
         });
       }
-    } else {
-      // No user fetch - run with undefined
-      return await authUserStorage.run(undefined, async () => {
-        return await originalMethod.apply(this, [args]);
-      });
-    }
+
+      // No env injection needed
+      return await originalMethod.apply(this, [args]);
+    });
   };
 }
 
@@ -256,13 +278,13 @@ function createAuthenticatedMethod(
 function copyMetadata(source: Function, target: Function) {
   // Get all metadata keys
   const metadataKeys = Reflect.getMetadataKeys(source);
-  
+
   // Copy each metadata key
   for (const key of metadataKeys) {
     const value = Reflect.getMetadata(key, source);
     Reflect.defineMetadata(key, value, target);
   }
-  
+
   // Also copy design-time metadata (TypeScript emitted metadata)
   const designKeys = ['design:type', 'design:paramtypes', 'design:returntype'];
   for (const key of designKeys) {

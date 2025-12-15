@@ -10,5 +10,3 @@ await createHTTPServer({
 });
 
 console.log("\nSentiment Analysis MCP Server");
-console.log("HTTP endpoint: http://localhost:8080/mcp");
-console.log("Health check: http://localhost:8080/health");

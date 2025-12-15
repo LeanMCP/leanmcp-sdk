@@ -1,0 +1,112 @@
+/* Card Component Styles */
+
+.lui-card {
+    background: var(--lui-bg);
+    border-radius: var(--lui-radius-lg);
+    overflow: hidden;
+}
+
+/* Variants */
+.lui-card--default {
+    border: 1px solid var(--lui-border);
+}
+
+.lui-card--outline {
+    border: 1px solid var(--lui-border);
+    background: transparent;
+}
+
+.lui-card--elevated {
+    border: none;
+    box-shadow: var(--lui-shadow-md);
+}
+
+/* Padding */
+.lui-card--padding-none {
+    padding: 0;
+}
+
+.lui-card--padding-sm {
+    padding: var(--lui-space-3);
+}
+
+.lui-card--padding-md {
+    padding: var(--lui-space-4);
+}
+
+.lui-card--padding-lg {
+    padding: var(--lui-space-6);
+}
+
+/* Interactive */
+.lui-card--interactive {
+    cursor: pointer;
+    transition: all var(--lui-transition);
+}
+
+.lui-card--interactive:hover {
+    border-color: var(--lui-primary);
+    box-shadow: var(--lui-shadow-md);
+}
+
+/* Card Header */
+.lui-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--lui-space-4);
+    padding: var(--lui-space-4);
+    border-bottom: 1px solid var(--lui-border);
+}
+
+.lui-card--padding-none .lui-card-header {
+    padding: var(--lui-space-4);
+}
+
+.lui-card-header__text {
+    flex: 1;
+    min-width: 0;
+}
+
+.lui-card-header__title {
+    margin: 0;
+    font-size: var(--lui-text-lg);
+    font-weight: 600;
+    color: var(--lui-text);
+    line-height: 1.4;
+}
+
+.lui-card-header__description {
+    margin: var(--lui-space-1) 0 0;
+    font-size: var(--lui-text-sm);
+    color: var(--lui-text-muted);
+    line-height: 1.5;
+}
+
+.lui-card-header__action {
+    flex-shrink: 0;
+}
+
+/* Card Content */
+.lui-card-content {
+    padding: var(--lui-space-4);
+}
+
+.lui-card--padding-none .lui-card-content {
+    padding: var(--lui-space-4);
+}
+
+/* Card Footer */
+.lui-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--lui-space-3);
+    padding: var(--lui-space-4);
+    border-top: 1px solid var(--lui-border);
+    background: var(--lui-bg-secondary);
+}
+
+.lui-card--padding-none .lui-card-footer {
+    padding: var(--lui-space-4);
+}

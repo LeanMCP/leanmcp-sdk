@@ -57,6 +57,7 @@ interface RegisteredTool {
   method: Function;
   instance: any;
   propertyKey: string;
+  _meta?: Record<string, unknown>;  // Tool metadata (e.g., ui/resourceUri)
 }
 
 interface RegisteredPrompt {
@@ -97,13 +98,13 @@ export class MCPServer {
   constructor(options: MCPServerConstructorOptions) {
     this.options = options;
     this.logging = options.logging || false;
-    
+
     // Determine log level based on logging and debug flags
     let logLevel = LogLevel.NONE;
     if (options.logging) {
       logLevel = options.debug ? LogLevel.DEBUG : LogLevel.INFO;
     }
-    
+
     this.logger = new Logger({
       level: logLevel,
       prefix: 'MCPServer'
@@ -124,7 +125,7 @@ export class MCPServer {
     );
 
     this.setupHandlers();
-    
+
     // Start auto-discovery immediately
     this.initPromise = this.autoInit();
   }
@@ -134,10 +135,13 @@ export class MCPServer {
    */
   private async autoInit() {
     const options = this.options;
-    
+
     if (options.autoDiscover !== false) {
       await this.autoDiscoverServices(options.mcpDir, options.serviceFactories);
     }
+
+    // Load UI manifest for pre-built @UIApp components
+    await this.loadUIManifest();
   }
 
   /**
@@ -147,7 +151,7 @@ export class MCPServer {
   async waitForInit(): Promise<void> {
     await this.initPromise;
   }
-  
+
   /**
    * Automatically discover and register services from the mcp directory
    * Called by init() unless autoDiscover is set to false
@@ -158,11 +162,11 @@ export class MCPServer {
   ) {
     if (this.autoDiscovered) return;
     this.autoDiscovered = true;
-    
+
     try {
       // Determine the mcp directory location
       let mcpDir: string;
-      
+
       if (customMcpDir) {
         // Use custom directory if provided
         mcpDir = customMcpDir;
@@ -178,7 +182,7 @@ export class MCPServer {
           mcpDir = path.join(process.cwd(), 'mcp');
         }
       }
-      
+
       // Only auto-register if the directory exists
       if (fs.existsSync(mcpDir)) {
         this.logger.debug(`Auto-discovering services from: ${mcpDir}`);
@@ -190,7 +194,7 @@ export class MCPServer {
       this.logger.warn(`Auto-discovery failed: ${error.message}`);
     }
   }
-  
+
   /**
    * Get the file path of the caller (the file that instantiated MCPServer)
    */
@@ -200,12 +204,12 @@ export class MCPServer {
       const err = new Error();
       Error.prepareStackTrace = (_, stack) => stack;
       const stack = err.stack as any;
-            
+
       // Find the first stack frame that's not from the @leanmcp/core package
       for (let i = 0; i < stack.length; i++) {
         let fileName = stack[i].getFileName();
         if (!fileName) continue;
-        
+
         // Convert file:// URL to regular path first
         if (fileName.startsWith('file://')) {
           // Use URL API for proper cross-platform handling
@@ -213,7 +217,7 @@ export class MCPServer {
             const url = new URL(fileName);
             // URL.pathname automatically decodes URL-encoded characters
             fileName = decodeURIComponent(url.pathname);
-            
+
             // On Windows, remove leading slash (e.g., /C:/path -> C:/path)
             if (process.platform === 'win32' && fileName.startsWith('/')) {
               fileName = fileName.substring(1);
@@ -227,24 +231,24 @@ export class MCPServer {
             }
           }
         }
-        
+
         // Normalize path separators to forward slashes for OS-agnostic comparison
         const normalizedPath = fileName.replace(/\\/g, '/');
-        
+
         // Check if this file is NOT from the @leanmcp/core package
-        const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') || 
-                              normalizedPath.includes('leanmcp-sdk/packages/core');
-        
+        const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') ||
+          normalizedPath.includes('leanmcp-sdk/packages/core');
+
         // Check if this is a valid TypeScript/JavaScript file
-        const isValidExtension = fileName.endsWith('.ts') || 
-                                 fileName.endsWith('.js') || 
-                                 fileName.endsWith('.mjs');
-                
+        const isValidExtension = fileName.endsWith('.ts') ||
+          fileName.endsWith('.js') ||
+          fileName.endsWith('.mjs');
+
         if (!isLeanMCPCore && isValidExtension) {
           return fileName;
         }
       }
-      
+
       this.logger.debug('No suitable caller file found in stack trace');
       return null;
     } finally {
@@ -256,25 +260,30 @@ export class MCPServer {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: any[] = [];
-      
+
       for (const [name, tool] of this.tools.entries()) {
-        tools.push({
+        const toolDef: any = {
           name,
           description: tool.description,
           inputSchema: tool.inputSchema || {
             type: "object",
             properties: {},
           },
-        });
+        };
+        // Include _meta if present (e.g., from @UIApp decorator)
+        if (tool._meta && Object.keys(tool._meta).length > 0) {
+          toolDef._meta = tool._meta;
+        }
+        tools.push(toolDef);
       }
-      
+
       return { tools };
     });
 
     // Call a tool
     this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const toolName = request.params.name;
-      
+
       const tool = this.tools.get(toolName);
       if (!tool) {
         throw new Error(`Tool ${toolName} not found`);
@@ -296,7 +305,7 @@ export class MCPServer {
         // Extract _meta for authentication (if present) - it's at params level, not arguments level
         const meta = request.params._meta;
         const result = await tool.method.call(tool.instance, request.params.arguments, meta);
-        
+
         // Format result
         let formattedResult = result;
         if (methodMeta.renderFormat === 'markdown' && typeof result === 'string') {
@@ -307,7 +316,8 @@ export class MCPServer {
           formattedResult = String(result);
         }
 
-        return {
+        // Build response with _meta if present (e.g., from @UIApp decorator)
+        const response: any = {
           content: [
             {
               type: "text",
@@ -315,6 +325,13 @@ export class MCPServer {
             },
           ],
         };
+
+        // Include _meta in the result if the tool has it (for ext-apps UI)
+        if (tool._meta && Object.keys(tool._meta).length > 0) {
+          response._meta = tool._meta;
+        }
+
+        return response;
       } catch (error: any) {
         return {
           content: [
@@ -331,7 +348,7 @@ export class MCPServer {
     // List resources
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       const resources: any[] = [];
-      
+
       for (const [uri, resource] of this.resources.entries()) {
         const resourceInfo: any = {
           uri: resource.uri,
@@ -339,22 +356,22 @@ export class MCPServer {
           description: resource.description,
           mimeType: resource.mimeType,
         };
-        
+
         // Include inputSchema if it exists
         if (resource.inputSchema) {
           resourceInfo.inputSchema = resource.inputSchema;
         }
-        
+
         resources.push(resourceInfo);
       }
-      
+
       return { resources };
     });
 
     // Read a resource
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request: any) => {
       const uri = request.params.uri;
-      
+
       const resource = this.resources.get(uri);
       if (!resource) {
         throw new Error(`Resource ${uri} not found`);
@@ -363,12 +380,22 @@ export class MCPServer {
       try {
         const result = await resource.method.call(resource.instance);
 
+        // Extract text from result - support { text: string } format
+        let text: string;
+        if (typeof result === 'string') {
+          text = result;
+        } else if (result && typeof result === 'object' && 'text' in result) {
+          text = result.text;
+        } else {
+          text = JSON.stringify(result, null, 2);
+        }
+
         return {
           contents: [
             {
               uri,
               mimeType: resource.mimeType,
-              text: typeof result === 'string' ? result : JSON.stringify(result, null, 2),
+              text,
             },
           ],
         };
@@ -380,7 +407,7 @@ export class MCPServer {
     // List available prompts
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       const prompts: any[] = [];
-      
+
       for (const [name, prompt] of this.prompts.entries()) {
         prompts.push({
           name,
@@ -388,14 +415,14 @@ export class MCPServer {
           arguments: prompt.arguments,
         });
       }
-      
+
       return { prompts };
     });
 
     // Get a specific prompt
     this.server.setRequestHandler(GetPromptRequestSchema, async (request: any) => {
       const promptName = request.params.name;
-      
+
       const prompt = this.prompts.get(promptName);
       if (!prompt) {
         throw new Error(`Prompt ${promptName} not found`);
@@ -403,12 +430,12 @@ export class MCPServer {
 
       try {
         const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
-        
+
         // If result is already in proper format, return it
         if (result && result.messages) {
           return result;
         }
-        
+
         // Otherwise, format it
         return {
           description: prompt.description,
@@ -447,11 +474,11 @@ export class MCPServer {
    * });
    */
   async autoRegisterServices(
-    mcpDir: string, 
+    mcpDir: string,
     serviceFactories?: Record<string, () => any>
   ) {
     this.logger.debug(`Auto-registering services from: ${mcpDir}`);
-    
+
     if (!fs.existsSync(mcpDir)) {
       this.logger.warn(`MCP directory not found: ${mcpDir}`);
       return;
@@ -474,12 +501,12 @@ export class MCPServer {
    */
   private findServiceFiles(dir: string): string[] {
     const files: string[] = [];
-    
+
     const entries = fs.readdirSync(dir, { withFileTypes: true });
-    
+
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      
+
       if (entry.isDirectory()) {
         // Recursively search subdirectories
         files.push(...this.findServiceFiles(fullPath));
@@ -490,7 +517,7 @@ export class MCPServer {
         }
       }
     }
-    
+
     return files;
   }
 
@@ -502,13 +529,13 @@ export class MCPServer {
     serviceFactories?: Record<string, () => any>
   ) {
     this.logger.debug(`Loading service from: ${filePath}`);
-    
+
     // Convert to file URL for dynamic import
     const fileUrl = pathToFileURL(filePath).href;
-    
+
     // Dynamic import the module
     const module = await import(fileUrl);
-    
+
     // Find all exported classes
     let registeredCount = 0;
     for (const [exportName, exportValue] of Object.entries(module)) {
@@ -516,7 +543,7 @@ export class MCPServer {
       if (typeof exportValue === 'function' && exportValue.prototype) {
         try {
           let instance: any;
-          
+
           // Check if a factory function is provided for this service
           if (serviceFactories && serviceFactories[exportName]) {
             instance = serviceFactories[exportName]();
@@ -525,7 +552,7 @@ export class MCPServer {
             // Try to instantiate with no-args constructor
             instance = new (exportValue as any)();
           }
-          
+
           this.registerService(instance);
           registeredCount++;
           this.logger.debug(`Registered service: ${exportName} from ${path.basename(filePath)}`);
@@ -534,7 +561,7 @@ export class MCPServer {
         }
       }
     }
-    
+
     if (registeredCount === 0) {
       this.logger.warn(`No services registered from ${filePath}`);
     }
@@ -550,16 +577,19 @@ export class MCPServer {
     const toolMethods = getDecoratedMethods(cls, "tool:name");
     for (const { method, propertyKey } of toolMethods) {
       const methodMeta = getMethodMetadata(method);
-      
+
       // Check if this is a class-based schema (automatic type inference)
       const inputClass = (Reflect as any).getMetadata?.("tool:inputClass", method);
-      
+
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
         // Generate JSON Schema from TypeScript class
         inputSchema = classToJsonSchemaWithConstraints(inputClass);
       }
-      
+
+      // Read _meta from the method (set by @UIApp or similar decorators)
+      const toolMeta = (Reflect as any).getMetadata?.('tool:meta', method) || {};
+
       this.tools.set(methodMeta.toolName!, {
         name: methodMeta.toolName!,
         description: methodMeta.toolDescription || "",
@@ -567,10 +597,12 @@ export class MCPServer {
         method,
         instance,
         propertyKey,
+        _meta: Object.keys(toolMeta).length > 0 ? toolMeta : undefined,
       });
-      
+
       if (this.logging) {
-        this.logger.debug(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+        const hasUi = toolMeta['ui/resourceUri'] ? ' (with UI)' : '';
+        this.logger.debug(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}${hasUi}`);
       }
     }
 
@@ -578,22 +610,22 @@ export class MCPServer {
     const promptMethods = getDecoratedMethods(cls, "prompt:name");
     for (const { method, propertyKey } of promptMethods) {
       const methodMeta = getMethodMetadata(method);
-      
+
       // Check if this is a class-based schema (automatic type inference)
       const inputClass = (Reflect as any).getMetadata?.("prompt:inputClass", method);
-      
+
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
         // Generate JSON Schema from TypeScript class
         inputSchema = classToJsonSchemaWithConstraints(inputClass);
       }
-      
-      const promptArgs = inputSchema?.properties 
+
+      const promptArgs = inputSchema?.properties
         ? Object.keys(inputSchema.properties).map(key => ({
-            name: key,
-            description: inputSchema?.properties?.[key]?.description || "",
-            required: inputSchema?.required?.includes(key) || false,
-          }))
+          name: key,
+          description: inputSchema?.properties?.[key]?.description || "",
+          required: inputSchema?.required?.includes(key) || false,
+        }))
         : [];
 
       this.prompts.set(methodMeta.promptName!, {
@@ -604,7 +636,7 @@ export class MCPServer {
         instance,
         propertyKey,
       });
-      
+
       if (this.logging) {
         this.logger.debug(`Registered prompt: ${methodMeta.promptName}`);
       }
@@ -614,16 +646,16 @@ export class MCPServer {
     const resourceMethods = getDecoratedMethods(cls, "resource:uri");
     for (const { method, propertyKey } of resourceMethods) {
       const methodMeta = getMethodMetadata(method);
-      
+
       // Check if this is a class-based schema (automatic type inference)
       const inputClass = (Reflect as any).getMetadata?.("resource:inputClass", method);
-      
+
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
         // Generate JSON Schema from TypeScript class
         inputSchema = classToJsonSchemaWithConstraints(inputClass);
       }
-      
+
       // Read mimeType from metadata (set by @Resource decorator)
       const mimeType = (Reflect as any).getMetadata?.("resource:mimeType", method) || "application/json";
 
@@ -637,9 +669,67 @@ export class MCPServer {
         instance,
         propertyKey,
       });
-      
+
       if (this.logging) {
         this.logger.debug(`Registered resource: ${methodMeta.resourceUri}`);
+      }
+    }
+  }
+
+  /**
+   * Load UI manifest and auto-register resources for pre-built @UIApp components.
+   * The manifest is generated by `leanmcp dev` or `leanmcp start` commands.
+   */
+  private async loadUIManifest() {
+    try {
+      // Look for manifest in project root dist/ui-manifest.json
+      const manifestPath = path.join(process.cwd(), 'dist', 'ui-manifest.json');
+
+      if (!fs.existsSync(manifestPath)) {
+        // No manifest - UIApp components will fall back to other rendering
+        return;
+      }
+
+      const manifest: Record<string, string> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+
+      for (const [uri, htmlPath] of Object.entries(manifest)) {
+        // Skip if resource already registered (e.g., by explicit @Resource)
+        if (this.resources.has(uri)) {
+          if (this.logging) {
+            this.logger.debug(`Skipping UI resource ${uri} - already registered`);
+          }
+          continue;
+        }
+
+        // Check if HTML file exists
+        if (!fs.existsSync(htmlPath)) {
+          if (this.logging) {
+            this.logger.warn(`UI HTML file not found: ${htmlPath}`);
+          }
+          continue;
+        }
+
+        // Create a resource handler that reads the pre-built HTML
+        const html = fs.readFileSync(htmlPath, 'utf-8');
+
+        this.resources.set(uri, {
+          uri,
+          name: uri.replace('ui://', '').replace(/\//g, '-'),
+          description: `Auto-generated UI resource from pre-built HTML`,
+          mimeType: 'text/html;profile=mcp-app',
+          inputSchema: undefined,
+          method: async () => ({ text: html }),
+          instance: null,
+          propertyKey: 'getUI',
+        });
+
+        if (this.logging) {
+          this.logger.debug(`Registered UI resource from manifest: ${uri}`);
+        }
+      }
+    } catch (error: any) {
+      if (this.logging) {
+        this.logger.warn(`Failed to load UI manifest: ${error.message}`);
       }
     }
   }
@@ -690,7 +780,7 @@ export class MCPServerRuntime {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: any[] = [];
-      
+
       for (const [name, tool] of this.tools.entries()) {
         tools.push({
           name,
@@ -701,14 +791,14 @@ export class MCPServerRuntime {
           },
         });
       }
-      
+
       return { tools };
     });
 
     // Call a tool
     this.server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
       const toolName = request.params.name;
-      
+
       const tool = this.tools.get(toolName);
       if (!tool) {
         throw new Error(`Tool ${toolName} not found`);
@@ -737,7 +827,7 @@ export class MCPServerRuntime {
         // Extract _meta for authentication (if present) - it's at params level, not arguments level
         const meta = request.params._meta;
         const result = await tool.method.call(tool.instance, request.params.arguments, meta);
-        
+
         // Handle elicitation
         if (result && typeof result === 'object' && result.type === 'elicitation') {
           return {
@@ -785,7 +875,7 @@ export class MCPServerRuntime {
     // List available resources
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       const resources: any[] = [];
-      
+
       for (const [uri, resource] of this.resources.entries()) {
         resources.push({
           uri: resource.uri,
@@ -794,14 +884,14 @@ export class MCPServerRuntime {
           mimeType: resource.mimeType,
         });
       }
-      
+
       return { resources };
     });
 
     // Read a resource
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request: any) => {
       const uri = request.params.uri;
-      
+
       const resource = this.resources.get(uri);
       if (!resource) {
         throw new Error(`Resource ${uri} not found`);
@@ -827,7 +917,7 @@ export class MCPServerRuntime {
     // List available prompts
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       const prompts: any[] = [];
-      
+
       for (const [name, prompt] of this.prompts.entries()) {
         prompts.push({
           name,
@@ -835,14 +925,14 @@ export class MCPServerRuntime {
           arguments: prompt.arguments,
         });
       }
-      
+
       return { prompts };
     });
 
     // Get a specific prompt
     this.server.setRequestHandler(GetPromptRequestSchema, async (request: any) => {
       const promptName = request.params.name;
-      
+
       const prompt = this.prompts.get(promptName);
       if (!prompt) {
         throw new Error(`Prompt ${promptName} not found`);
@@ -851,12 +941,12 @@ export class MCPServerRuntime {
       try {
         // Call the prompt method to get the prompt template/messages
         const result = await prompt.method.call(prompt.instance, request.params.arguments || {});
-        
+
         // If result is already in proper format, return it
         if (result && result.messages) {
           return result;
         }
-        
+
         // Otherwise, format it
         return {
           description: prompt.description,
@@ -878,7 +968,7 @@ export class MCPServerRuntime {
 
   async loadServices() {
     const absPath = path.resolve(this.options.servicesDir);
-    
+
     if (!fs.existsSync(absPath)) {
       this.logger.error(`Services directory not found: ${absPath}`);
       return;
@@ -892,10 +982,10 @@ export class MCPServerRuntime {
     for (const dir of files) {
       const modulePath = path.join(absPath, dir, "index.ts");
       const modulePathJs = path.join(absPath, dir, "index.js");
-      
-      const finalPath = fs.existsSync(modulePath) ? modulePath : 
-                       fs.existsSync(modulePathJs) ? modulePathJs : null;
-      
+
+      const finalPath = fs.existsSync(modulePath) ? modulePath :
+        fs.existsSync(modulePathJs) ? modulePathJs : null;
+
       if (finalPath) {
         try {
           // Convert absolute path to file:// URL (works on all platforms)
@@ -908,7 +998,7 @@ export class MCPServerRuntime {
           for (const cls of exportedClasses) {
             // Create instance
             const instance = new (cls as any)();
-            
+
             // Inject user envs if decorator is present
             const envsPropKey = (Reflect as any).getMetadata?.("userenvs:propertyKey", cls);
             if (envsPropKey) {
@@ -919,17 +1009,17 @@ export class MCPServerRuntime {
             const toolMethods = getDecoratedMethods(cls, "tool:name");
             for (const { method, propertyKey, metadata } of toolMethods) {
               const methodMeta = getMethodMetadata(method);
-              
+
               // Check if this is a class-based schema (automatic type inference)
               const inputClass = (Reflect as any).getMetadata?.("tool:inputClass", method);
               const outputClass = (Reflect as any).getMetadata?.("tool:outputClass", method);
-              
+
               let inputSchema = methodMeta.inputSchema;
               if (inputClass) {
                 // Generate JSON Schema from TypeScript class
                 inputSchema = classToJsonSchemaWithConstraints(inputClass);
               }
-              
+
               this.tools.set(methodMeta.toolName!, {
                 name: methodMeta.toolName!,
                 description: methodMeta.toolDescription || "",
@@ -948,14 +1038,14 @@ export class MCPServerRuntime {
             const promptMethods = getDecoratedMethods(cls, "prompt:name");
             for (const { method, propertyKey, metadata } of promptMethods) {
               const methodMeta = getMethodMetadata(method);
-              const promptArgs = methodMeta.inputSchema?.properties 
+              const promptArgs = methodMeta.inputSchema?.properties
                 ? Object.keys(methodMeta.inputSchema.properties).map(key => ({
-                    name: key,
-                    description: methodMeta.inputSchema?.properties?.[key]?.description || "",
-                    required: methodMeta.inputSchema?.required?.includes(key) || false,
-                  }))
+                  name: key,
+                  description: methodMeta.inputSchema?.properties?.[key]?.description || "",
+                  required: methodMeta.inputSchema?.required?.includes(key) || false,
+                }))
                 : [];
-              
+
               this.prompts.set(methodMeta.promptName!, {
                 name: methodMeta.promptName!,
                 description: methodMeta.promptDescription || "",

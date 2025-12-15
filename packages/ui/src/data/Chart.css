@@ -1,0 +1,8 @@
+/* Chart Component Styles */
+
+.lui-chart {
+    position: relative;
+    background: var(--lui-bg);
+    border-radius: var(--lui-radius-md);
+    padding: var(--lui-space-4);
+}

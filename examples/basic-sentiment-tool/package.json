@@ -8,7 +8,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.3.0"
+    "@leanmcp/core": "^0.3.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

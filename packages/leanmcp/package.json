@@ -1,0 +1,69 @@
+{
+  "name": "leanmcp",
+  "version": "0.3.1",
+  "description": "LeanMCP SDK - TypeScript SDK for building Model Context Protocol (MCP) servers with type-safe decorators",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    },
+    "./ui": {
+      "types": "./node_modules/@leanmcp/ui/dist/index.d.ts",
+      "require": "./node_modules/@leanmcp/ui/dist/index.js",
+      "import": "./node_modules/@leanmcp/ui/dist/index.mjs"
+    },
+    "./ui/styles.css": "./node_modules/@leanmcp/ui/dist/index.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "test": "jest --passWithNoTests",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@leanmcp/core": "^0.3.1",
+    "@leanmcp/auth": "^0.3.1",
+    "@leanmcp/ui": "^0.1.0",
+    "@leanmcp/utils": "^0.1.0",
+    "@leanmcp/elicitation": "^0.1.0",
+    "@leanmcp/env-injection": "^0.1.0"
+  },
+  "devDependencies": {
+    "@leanmcp/cli": "^0.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/leanmcp"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "decorators",
+    "server",
+    "runtime",
+    "sdk",
+    "authentication",
+    "ui",
+    "react"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

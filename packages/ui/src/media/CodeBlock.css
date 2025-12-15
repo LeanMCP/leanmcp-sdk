@@ -1,0 +1,59 @@
+/* CodeBlock Component Styles */
+
+.lui-code-block {
+    position: relative;
+    border-radius: var(--lui-radius-md);
+    overflow: hidden;
+}
+
+.lui-code-block-pre {
+    margin: 0;
+    padding: var(--lui-space-4);
+    font-family: var(--lui-font-mono);
+    font-size: var(--lui-text-sm);
+    line-height: 1.6;
+    overflow-x: auto;
+}
+
+.lui-code-block-copy {
+    position: absolute;
+    top: var(--lui-space-2);
+    right: var(--lui-space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    color: #94a3b8;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: var(--lui-radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--lui-transition);
+}
+
+.lui-code-block:hover .lui-code-block-copy {
+    opacity: 1;
+}
+
+.lui-code-block-copy:hover {
+    color: #f1f5f9;
+    background: rgba(30, 41, 59, 1);
+    border-color: rgba(148, 163, 184, 0.4);
+}
+
+.lui-code-block-copy svg {
+    width: 16px;
+    height: 16px;
+}
+
+.lui-code-block-line-number {
+    display: inline-block;
+    width: 2em;
+    margin-right: var(--lui-space-3);
+    color: #64748b;
+    text-align: right;
+    user-select: none;
+}
