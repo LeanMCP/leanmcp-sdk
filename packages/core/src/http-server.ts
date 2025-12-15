@@ -13,6 +13,7 @@ export interface HTTPServerOptions {
   logging?: boolean;
   logger?: Logger;
   sessionTimeout?: number;
+  stateless?: boolean;  // Enable stateless mode for Lambda/serverless (default: true)
 }
 
 export interface MCPServerFactory {
@@ -63,7 +64,8 @@ export async function createHTTPServer(
       port: (serverOptions as any).port,
       cors: (serverOptions as any).cors,
       logging: serverOptions.logging,
-      sessionTimeout: (serverOptions as any).sessionTimeout
+      sessionTimeout: (serverOptions as any).sessionTimeout,
+      stateless: (serverOptions as any).stateless
     };
   }
   // Dynamic imports for optional peer dependencies
@@ -174,19 +176,22 @@ export async function createHTTPServer(
 
   app.use(express.json());
 
-  console.log("Starting LeanMCP HTTP Server...");
+  const isStateless = httpOptions.stateless !== false;  // Default: true (stateless)
+  
+  console.log(`Starting LeanMCP HTTP Server (${isStateless ? 'STATELESS' : 'STATEFUL'})...`);
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
     res.json({
       status: 'ok',
-      activeSessions: Object.keys(transports).length,
+      mode: isStateless ? 'stateless' : 'stateful',
+      activeSessions: isStateless ? 0 : Object.keys(transports).length,
       uptime: process.uptime()
     });
   });
 
-  // MCP endpoint handler
-  const handleMCPRequest = async (req: any, res: any) => {
+  // MCP endpoint handler - STATEFUL mode
+  const handleMCPRequestStateful = async (req: any, res: any) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let transport: any;
 
@@ -258,8 +263,69 @@ export async function createHTTPServer(
     }
   };
 
-  app.post('/mcp', handleMCPRequest);
-  app.delete('/mcp', handleMCPRequest);
+  // MCP endpoint handler - STATELESS mode (Lambda/serverless compatible)
+  const handleMCPRequestStateless = async (req: any, res: any) => {
+    // Log incoming request
+    const method = req.body?.method || 'unknown';
+    const params = req.body?.params;
+    let logMessage = `${req.method} /mcp - ${method}`;
+    if (params?.name) logMessage += ` [${params.name}]`;
+    else if (params?.uri) logMessage += ` [${params.uri}]`;
+    logger.info(logMessage);
+
+    try {
+      // Create fresh server instance for each request
+      const freshServer = await serverFactory();
+      if (freshServer && typeof (freshServer as any).waitForInit === 'function') {
+        await (freshServer as any).waitForInit();
+      }
+
+      // Create transport with no session ID (stateless)
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,  // No session IDs in stateless mode
+      });
+
+      await (freshServer as Server).connect(transport);
+      await transport.handleRequest(req, res, req.body);
+
+      // Cleanup after response completes
+      res.on('close', () => {
+        transport.close();
+        (freshServer as Server).close();
+      });
+    } catch (error: any) {
+      logger.error('Error handling MCP request:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Internal server error' },
+          id: null
+        });
+      }
+    }
+  };
+
+  // Route handlers based on mode
+  if (isStateless) {
+    app.post('/mcp', handleMCPRequestStateless);
+    app.get('/mcp', (_req: any, res: any) => {
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed (stateless mode)' },
+        id: null
+      });
+    });
+    app.delete('/mcp', (_req: any, res: any) => {
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed (stateless mode)' },
+        id: null
+      });
+    });
+  } else {
+    app.post('/mcp', handleMCPRequestStateful);
+    app.delete('/mcp', handleMCPRequestStateful);
+  }
 
   return new Promise(async (resolve, reject) => {
     let activeListener: any;
