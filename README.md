@@ -1,20 +1,112 @@
+
 # LeanMCP SDK 
 
+## What LeanMCP Is
 
+LeanMCP SDK is a TypeScript SDK for building Model Context Protocol (MCP) servers with type-safe decorators and streamable HTTP support.
 
+It does not introduce a new protocol.  
+It does not change MCP semantics.
 
-A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type-safe decorators and streamable HTTP support.
+Instead, LeanMCP defines **how MCP servers should be structured and run** once they move beyond experimentation.
 
-## Features
+> MCP defines *what* an agent can call.  
+> LeanMCP focuses on *how those calls execute in a production environment*.
 
-- **Type-safe decorators** - Full TypeScript support with compile-time validation
-- **Declarative schema definition** - Define JSON Schema using `@SchemaConstraint` decorators on class properties
-- **Clean API** - Function names become tool/prompt/resource names automatically
-- **MCP compliant** - Built on official @modelcontextprotocol/sdk
-- **Streamable HTTP** - Production-ready HTTP server with session management
-- **Authentication** - Built-in `@Authenticated` decorator with multi-provider support (AWS Cognito, Clerk, Auth0)
-- **Interactive CLI** - Guided project setup with dependency installation and dev server options
-- **Built-in validation** - Automatic input validation using defined schemas
+---
+
+## The Problem LeanMCP Solves
+
+In practice, MCP servers often fail for reasons unrelated to models or prompts:
+
+- Tool inputs and outputs lack explicit structure
+- Validation and authentication are mixed into business logic
+- Context handling is implicit and inconsistent
+- Each MCP server follows a different internal pattern
+- Debugging and observability rely on logs and guesswork
+
+These issues arise because **MCP intentionally avoids prescribing a server runtime model**.
+
+LeanMCP fills this missing layer.
+
+---
+
+## What LeanMCP Enforces
+
+LeanMCP is opinionated by design.  
+It favors **explicit structure over flexibility**.
+
+With LeanMCP, MCP servers are built around:
+
+- **Explicit input and output schemas**  
+  Tool contracts are defined up front, not inferred at runtime.
+
+- **Clear separation of concerns**  
+  Authentication, validation, and context management are treated as runtime responsibilities—not tool logic.
+
+- **Consistent execution lifecycle**  
+  Tools, prompts, and resources follow the same execution and registration model across services.
+
+The result is MCP servers that are easier to understand, test, extend, and operate.
+
+---
+
+### `leanmcp-sdk`
+
+This repository contains the **developer-facing SDK**.
+
+It provides:
+- Type-safe decorators for defining tools, prompts, and resources
+- Declarative schema definitions
+- A consistent way to organize MCP services
+- Integration with the LeanMCP runtime
+
+The SDK is responsible for **how you write MCP servers**.
+
+---
+
+### `@leanmcp/core`
+
+`@leanmcp/core` is the **runtime foundation** used by the SDK.
+
+It handles:
+- Tool registration and execution
+- Schema-based validation
+- Context propagation
+- Authentication hooks
+- MCP-compliant request handling
+
+`@leanmcp/core` is **not** a framework.  
+It is a runtime layer that the SDK builds upon.
+
+You typically do not interact with it directly unless you are extending the runtime itself.
+
+---
+
+### Runtime (Conceptual Layer)
+
+The LeanMCP runtime is the **execution model beneath MCP servers**.
+
+It is responsible for:
+- how requests flow through the system
+- how context is scoped and propagated
+- how runtime concerns stay out of business logic
+
+This runtime layer is what allows MCP servers to remain maintainable as systems grow.
+
+---
+
+## What LeanMCP Is Not
+
+To avoid confusion, LeanMCP is **not**:
+
+- a frontend or UI framework
+- a prompt engineering toolkit
+- an agent orchestration platform
+- a replacement for MCP clients or models
+
+LeanMCP focuses exclusively on **the server-side runtime of MCP systems**.
+
 
 ## Table of Contents
 
