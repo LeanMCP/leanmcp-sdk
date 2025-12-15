@@ -1,20 +1,63 @@
-# LeanMCP SDK 
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.svg"
+    alt="LeanMCP Logo"
+    width="500"
+  />
+</p>
 
+<p align="center">
+  <strong>TypeScript SDK for building Model Context Protocol servers</strong><br/>
+  with type-safe decorators and streamable HTTP support
+</p>
+</p>
+  
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/core" alt="npm downloads" />
+  </a>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
+## Why LeanMCP?
 
+A basic MCP connects tools to AI agents. But production means solving real problems:
 
-A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type-safe decorators and streamable HTTP support.
+| Problem | LeanMCP Solution |
+|---------|------------------|
+| **Auth** | Integrate with Auth0, Supabase, Cognito, Firebase, or custom |
+| **Multi-tenancy** | Per-user API keys and permissions |
+| **Elicitation** | Handle user input during tool execution |
+| **Audit** | Logging, monitoring, production observability |
 
-## Features
+## Core Principles
 
-- **Type-safe decorators** - Full TypeScript support with compile-time validation
-- **Declarative schema definition** - Define JSON Schema using `@SchemaConstraint` decorators on class properties
-- **Clean API** - Function names become tool/prompt/resource names automatically
-- **MCP compliant** - Built on official @modelcontextprotocol/sdk
-- **Streamable HTTP** - Production-ready HTTP server with session management
-- **Authentication** - Built-in `@Authenticated` decorator with multi-provider support (AWS Cognito, Clerk, Auth0)
-- **Interactive CLI** - Guided project setup with dependency installation and dev server options
-- **Built-in validation** - Automatic input validation using defined schemas
+- **Developer Experience first** — decorators, auto-discovery
+- **Convention over configuration** — sensible defaults  
+- **Type-safe by default** — TypeScript + schema validation
+- **Production-ready** — HTTP transport, session management
+
+## Building MCPs is Easy. Production MCPs are Hard.
+
+Building a basic MCP that connects tools to an AI agent is straightforward — define your tools, add descriptions, done. But the make-or-break features that separate a toy from production are much harder:
+
+- **Authentication** — OAuth integration, token validation, scope management
+- **Elicitation** — User input collection with validation
+- **Payments** — Stripe integration, subscription checks, usage-based billing
+- **MCP Apps & UI** — Rendering UI components inside ChatGPT, Claude, and other clients
+
+These features require deep MCP protocol knowledge and weeks of implementation. LeanMCP handles them out of the box with `@leanmcp/auth`, `@leanmcp/elicitation`, and built-in UI support.
 
 ## Table of Contents
 
