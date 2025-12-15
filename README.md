@@ -1,5 +1,11 @@
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.svg"
+    alt="LeanMCP Logo"
+    width="500"
+  />
+</p>
 
-# LeanMCP SDK 
 <p align="center">
   <a href="https://www.npmjs.com/package/@leanmcp/core">
     <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
@@ -17,7 +23,6 @@
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
   </a>
 </p>
-
 
 
 
