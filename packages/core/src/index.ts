@@ -48,6 +48,7 @@ export interface MCPServerConstructorOptions {
     credentials?: boolean;
   };
   sessionTimeout?: number;
+  stateless?: boolean;     // Stateless mode for Lambda/serverless (default: true)
 }
 
 interface RegisteredTool {

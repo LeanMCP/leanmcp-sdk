@@ -13,6 +13,7 @@ export interface HTTPServerOptions {
   logging?: boolean;
   logger?: Logger;
   sessionTimeout?: number;
+  stateless?: boolean;  // Enable stateless mode for Lambda/serverless (default: true)
 }
 
 export interface MCPServerFactory {
@@ -24,6 +25,62 @@ export type HTTPServerInput = MCPServerFactory | MCPServerConstructorOptions;
 // Helper to check if request is initialize
 function isInitializeRequest(body: any): boolean {
   return body && body.method === 'initialize';
+}
+
+/**
+ * Get the file path of the caller (the file that invoked createHTTPServer)
+ * This is used to resolve the mcp directory for auto-discovery in stateless mode
+ */
+function getCallerFile(): string | null {
+  const originalPrepareStackTrace = Error.prepareStackTrace;
+  try {
+    const err = new Error();
+    Error.prepareStackTrace = (_, stack) => stack;
+    const stack = err.stack as any;
+
+    // Find the first stack frame that's not from the @leanmcp/core package
+    for (let i = 0; i < stack.length; i++) {
+      let fileName = stack[i].getFileName();
+      if (!fileName) continue;
+
+      // Convert file:// URL to regular path first
+      if (fileName.startsWith('file://')) {
+        try {
+          const url = new URL(fileName);
+          fileName = decodeURIComponent(url.pathname);
+          // On Windows, remove leading slash (e.g., /C:/path -> C:/path)
+          if (process.platform === 'win32' && fileName.startsWith('/')) {
+            fileName = fileName.substring(1);
+          }
+        } catch (e) {
+          fileName = fileName.replace('file://', '');
+          if (process.platform === 'win32' && fileName.startsWith('/')) {
+            fileName = fileName.substring(1);
+          }
+        }
+      }
+
+      // Normalize path separators to forward slashes for OS-agnostic comparison
+      const normalizedPath = fileName.replace(/\\/g, '/');
+
+      // Check if this file is NOT from the @leanmcp/core package
+      const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') ||
+        normalizedPath.includes('leanmcp-sdk/packages/core');
+
+      // Check if this is a valid TypeScript/JavaScript file
+      const isValidExtension = fileName.endsWith('.ts') ||
+        fileName.endsWith('.js') ||
+        fileName.endsWith('.mjs');
+
+      if (!isLeanMCPCore && isValidExtension) {
+        return fileName;
+      }
+    }
+
+    return null;
+  } finally {
+    Error.prepareStackTrace = originalPrepareStackTrace;
+  }
 }
 
 /**
@@ -40,6 +97,7 @@ export async function createHTTPServer(
   // Determine if we're using the new simplified API or legacy factory pattern
   let serverFactory: MCPServerFactory;
   let httpOptions: HTTPServerOptions;
+  let resolvedMcpDir: string | undefined; // Capture mcpDir at startup for stateless mode
 
   if (typeof serverInput === 'function') {
     // Legacy factory pattern
@@ -52,9 +110,28 @@ export async function createHTTPServer(
     // Dynamically import MCPServer to avoid circular dependency
     const { MCPServer } = await import('./index.js');
 
-    // Create factory that instantiates MCPServer
+    // IMPORTANT: Resolve the mcpDir NOW, while user code is still on the call stack
+    // This is needed because in stateless mode, fresh servers are created during request
+    // handling when only @leanmcp/core files are on the stack, causing getCallerFile() to fail
+    if (!serverOptions.mcpDir) {
+      // Resolve the caller file path while user code is still on the stack
+      const callerFile = getCallerFile();
+      if (callerFile) {
+        // Import path dynamically for directory resolution
+        const path = await import('path');
+        const callerDir = path.dirname(callerFile);
+        resolvedMcpDir = path.join(callerDir, 'mcp');
+      }
+    } else {
+      resolvedMcpDir = serverOptions.mcpDir;
+    }
+
+    // Create factory that instantiates MCPServer with explicit mcpDir
     serverFactory = async () => {
-      const mcpServer = new MCPServer(serverOptions);
+      const mcpServer = new MCPServer({
+        ...serverOptions,
+        mcpDir: resolvedMcpDir || serverOptions.mcpDir,
+      });
       return mcpServer.getServer();
     };
 
@@ -63,7 +140,8 @@ export async function createHTTPServer(
       port: (serverOptions as any).port,
       cors: (serverOptions as any).cors,
       logging: serverOptions.logging,
-      sessionTimeout: (serverOptions as any).sessionTimeout
+      sessionTimeout: (serverOptions as any).sessionTimeout,
+      stateless: (serverOptions as any).stateless
     };
   }
   // Dynamic imports for optional peer dependencies
@@ -89,6 +167,7 @@ export async function createHTTPServer(
 
   const transports: Record<string, any> = {};
   let mcpServer: Server | null = null; // Store the MCP server instance
+  let statelessServerFactory: MCPServerFactory | null = null; // Factory with pre-resolved mcpDir for stateless mode
 
   // Initialize logger
   const logger = httpOptions.logger || new Logger({
@@ -174,19 +253,22 @@ export async function createHTTPServer(
 
   app.use(express.json());
 
-  console.log("Starting LeanMCP HTTP Server...");
+  const isStateless = httpOptions.stateless !== false;  // Default: true (stateless)
+
+  console.log(`Starting LeanMCP HTTP Server (${isStateless ? 'STATELESS' : 'STATEFUL'})...`);
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
     res.json({
       status: 'ok',
-      activeSessions: Object.keys(transports).length,
+      mode: isStateless ? 'stateless' : 'stateful',
+      activeSessions: isStateless ? 0 : Object.keys(transports).length,
       uptime: process.uptime()
     });
   });
 
-  // MCP endpoint handler
-  const handleMCPRequest = async (req: any, res: any) => {
+  // MCP endpoint handler - STATEFUL mode
+  const handleMCPRequestStateful = async (req: any, res: any) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
     let transport: any;
 
@@ -258,8 +340,70 @@ export async function createHTTPServer(
     }
   };
 
-  app.post('/mcp', handleMCPRequest);
-  app.delete('/mcp', handleMCPRequest);
+  // MCP endpoint handler - STATELESS mode (Lambda/serverless compatible)
+  const handleMCPRequestStateless = async (req: any, res: any) => {
+    // Log incoming request
+    const method = req.body?.method || 'unknown';
+    const params = req.body?.params;
+    let logMessage = `${req.method} /mcp - ${method}`;
+    if (params?.name) logMessage += ` [${params.name}]`;
+    else if (params?.uri) logMessage += ` [${params.uri}]`;
+    logger.info(logMessage);
+
+    try {
+      // Create fresh server instance for each request
+      // Use statelessServerFactory which has the pre-resolved mcpDir
+      const freshServer = await statelessServerFactory!();
+      if (freshServer && typeof (freshServer as any).waitForInit === 'function') {
+        await (freshServer as any).waitForInit();
+      }
+
+      // Create transport with no session ID (stateless)
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,  // No session IDs in stateless mode
+      });
+
+      await (freshServer as Server).connect(transport);
+      await transport.handleRequest(req, res, req.body);
+
+      // Cleanup after response completes
+      res.on('close', () => {
+        transport.close();
+        (freshServer as Server).close();
+      });
+    } catch (error: any) {
+      logger.error('Error handling MCP request:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: { code: -32603, message: 'Internal server error' },
+          id: null
+        });
+      }
+    }
+  };
+
+  // Route handlers based on mode
+  if (isStateless) {
+    app.post('/mcp', handleMCPRequestStateless);
+    app.get('/mcp', (_req: any, res: any) => {
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed (stateless mode)' },
+        id: null
+      });
+    });
+    app.delete('/mcp', (_req: any, res: any) => {
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'Method not allowed (stateless mode)' },
+        id: null
+      });
+    });
+  } else {
+    app.post('/mcp', handleMCPRequestStateful);
+    app.delete('/mcp', handleMCPRequestStateful);
+  }
 
   return new Promise(async (resolve, reject) => {
     let activeListener: any;
@@ -271,6 +415,11 @@ export async function createHTTPServer(
       // If the server has a waitForInit method (from MCPServer wrapper), wait for it
       if (mcpServer && typeof (mcpServer as any).waitForInit === 'function') {
         await (mcpServer as any).waitForInit();
+      }
+
+      // In stateless mode, use the same factory (with pre-resolved mcpDir) for fresh servers
+      if (isStateless) {
+        statelessServerFactory = serverFactory;
       }
 
       // Now start the HTTP listener - all services are discovered and ready
