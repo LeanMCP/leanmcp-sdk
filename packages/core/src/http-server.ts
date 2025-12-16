@@ -14,6 +14,7 @@ export interface HTTPServerOptions {
   logger?: Logger;
   sessionTimeout?: number;
   stateless?: boolean;  // Enable stateless mode for Lambda/serverless (default: true)
+  dashboard?: boolean;  // Serve dashboard UI at / and /mcp GET endpoints (default: true)
 }
 
 export interface MCPServerFactory {
@@ -141,7 +142,8 @@ export async function createHTTPServer(
       cors: (serverOptions as any).cors,
       logging: serverOptions.logging,
       sessionTimeout: (serverOptions as any).sessionTimeout,
-      stateless: (serverOptions as any).stateless
+      stateless: (serverOptions as any).stateless,
+      dashboard: (serverOptions as any).dashboard
     };
   }
   // Dynamic imports for optional peer dependencies
@@ -256,6 +258,55 @@ export async function createHTTPServer(
   const isStateless = httpOptions.stateless !== false;  // Default: true (stateless)
 
   console.log(`Starting LeanMCP HTTP Server (${isStateless ? 'STATELESS' : 'STATEFUL'})...`);
+
+  // Dashboard configuration
+  const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://s3-dashboard-build.s3.us-west-2.amazonaws.com/out/index.html';
+  let cachedDashboard: string | null = null;
+  let cacheTimestamp: number = 0;
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  // Helper function to fetch dashboard from S3
+  async function fetchDashboard(): Promise<string> {
+    const now = Date.now();
+
+    // Return cached version if still valid
+    if (cachedDashboard && (now - cacheTimestamp) < CACHE_DURATION) {
+      return cachedDashboard;
+    }
+
+    try {
+      const response = await fetch(DASHBOARD_URL);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch dashboard: ${response.status}`);
+      }
+
+      const html = await response.text();
+
+      // Update cache
+      cachedDashboard = html;
+      cacheTimestamp = now;
+
+      return html;
+    } catch (error) {
+      logger.error('Error fetching dashboard from S3:', error);
+      throw error;
+    }
+  }
+
+  // Dashboard endpoints - serve MCP UI at / and /mcp GET (if enabled)
+  const isDashboardEnabled = httpOptions.dashboard !== false;  // Default: true
+
+  if (isDashboardEnabled) {
+    app.get('/', async (req: any, res: any) => {
+      try {
+        const html = await fetchDashboard();
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+      } catch (error) {
+        res.status(500).send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
+      }
+    });
+  }
 
   // Health check endpoint
   app.get('/health', (req: any, res: any) => {
@@ -384,15 +435,21 @@ export async function createHTTPServer(
   };
 
   // Route handlers based on mode
+  // GET /mcp serves the dashboard in BOTH modes (if enabled)
+  if (isDashboardEnabled) {
+    app.get('/mcp', async (req: any, res: any) => {
+      try {
+        const html = await fetchDashboard();
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
+      } catch (error) {
+        res.status(500).send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
+      }
+    });
+  }
+
   if (isStateless) {
     app.post('/mcp', handleMCPRequestStateless);
-    app.get('/mcp', (_req: any, res: any) => {
-      res.status(405).json({
-        jsonrpc: '2.0',
-        error: { code: -32000, message: 'Method not allowed (stateless mode)' },
-        id: null
-      });
-    });
     app.delete('/mcp', (_req: any, res: any) => {
       res.status(405).json({
         jsonrpc: '2.0',
