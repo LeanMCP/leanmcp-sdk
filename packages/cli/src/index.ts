@@ -35,6 +35,7 @@ program
   .command("create <projectName>")
   .description("Create a new LeanMCP project with Streamable HTTP transport")
   .option("--allow-all", "Skip interactive confirmations and assume Yes")
+  .option("--no-dashboard", "Disable dashboard UI at / and /mcp GET endpoints")
   .action(async (projectName, options) => {
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
@@ -94,154 +95,140 @@ program
     await fs.writeJSON(path.join(targetDir, "tsconfig.json"), tsconfig, { spaces: 2 });
 
     // --- Main Entry Point (main.ts) ---
+    const dashboardLine = options.dashboard === false ? `\n  dashboard: false,  // Dashboard disabled via --no-dashboard` : '';
     const mainTs = `import dotenv from "dotenv";
-import { createHTTPServer, MCPServer } from "@leanmcp/core";
+import { createHTTPServer } from "@leanmcp/core";
 
 // Load environment variables
 dotenv.config();
 
-const PORT = Number(process.env.PORT) || 3001;
-
-/**
- * Create and configure the MCP server
- * Services are automatically discovered from ./mcp directory
- */
-const serverFactory = async () => {
-  const server = new MCPServer({ 
-    name: "${projectName}", 
-    version: "1.0.0",
-    logging: true
-  });
-
-  // Services are automatically discovered and registered from ./mcp
-  return server.getServer();
-};
-
-// Start the HTTP server
-await createHTTPServer(serverFactory, {
-  port: PORT,
+// Services are automatically discovered from ./mcp directory
+await createHTTPServer({
+  name: "${projectName}",
+  version: "1.0.0",
+  port: 3001,
   cors: true,
-  logging: true  // Log HTTP requests
+  logging: true${dashboardLine}
 });
 
-console.log(\`\\n${projectName} MCP Server\`);
+console.log("\\n${projectName} MCP Server");
 `;
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
     // Create an example service file
     const exampleServiceTs = `import { Tool, Resource, Prompt, SchemaConstraint, Optional } from "@leanmcp/core";
 
-/**
- * Example service demonstrating LeanMCP SDK decorators
- * 
- * This is a simple example to get you started. Add your own tools, resources, and prompts here!
- */
+    /**
+     * Example service demonstrating LeanMCP SDK decorators
+     * 
+     * This is a simple example to get you started. Add your own tools, resources, and prompts here!
+     */
 
-// Input schema with validation decorators
-class CalculateInput {
-  @SchemaConstraint({ description: "First number" })
-  a!: number;
+    // Input schema with validation decorators
+    class CalculateInput {
+      @SchemaConstraint({ description: "First number" })
+      a!: number;
 
-  @SchemaConstraint({ description: "Second number" })
-  b!: number;
+      @SchemaConstraint({ description: "Second number" })
+      b!: number;
 
-  @Optional()
-  @SchemaConstraint({ 
-    description: "Operation to perform",
-    enum: ["add", "subtract", "multiply", "divide"],
-    default: "add"
-  })
-  operation?: string;
-}
-
-class EchoInput {
-  @SchemaConstraint({ 
-    description: "Message to echo back",
-    minLength: 1
-  })
-  message!: string;
-}
-
-export class ExampleService {
-  @Tool({ 
-    description: "Perform arithmetic operations with automatic schema validation",
-    inputClass: CalculateInput
-  })
-  async calculate(input: CalculateInput) {
-    // Ensure numerical operations by explicitly converting to numbers
-    const a = Number(input.a);
-    const b = Number(input.b);
-    let result: number;
-    
-    switch (input.operation || "add") {
-      case "add":
-        result = a + b;
-        break;
-      case "subtract":
-        result = a - b;
-        break;
-      case "multiply":
-        result = a * b;
-        break;
-      case "divide":
-        if (b === 0) throw new Error("Cannot divide by zero");
-        result = a / b;
-        break;
-      default:
-        throw new Error("Invalid operation");
+      @Optional()
+      @SchemaConstraint({
+        description: "Operation to perform",
+        enum: ["add", "subtract", "multiply", "divide"],
+        default: "add"
+      })
+      operation?: string;
     }
 
-    return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify({
-          operation: input.operation || "add",
-          operands: { a: input.a, b: input.b },
-          result
-        }, null, 2)
-      }]
-    };
-  }
+    class EchoInput {
+      @SchemaConstraint({
+        description: "Message to echo back",
+        minLength: 1
+      })
+      message!: string;
+    }
 
-  @Tool({ 
-    description: "Echo a message back",
-    inputClass: EchoInput
-  })
-  async echo(input: EchoInput) {
-    return {
-      content: [{
-        type: "text" as const,
-        text: JSON.stringify({
-          echoed: input.message,
-          timestamp: new Date().toISOString()
-        }, null, 2)
-      }]
-    };
-  }
+    export class ExampleService {
+      @Tool({
+        description: "Perform arithmetic operations with automatic schema validation",
+        inputClass: CalculateInput
+      })
+      async calculate(input: CalculateInput) {
+        // Ensure numerical operations by explicitly converting to numbers
+        const a = Number(input.a);
+        const b = Number(input.b);
+        let result: number;
 
-  @Resource({ description: "Get server information" })
-  async serverInfo() {
-    return {
-      contents: [{
-        uri: "server://info",
-        mimeType: "application/json",
-        text: JSON.stringify({
-          name: "${projectName}",
-          version: "1.0.0",
-          uptime: process.uptime()
-        }, null, 2)
-      }]
-    };
-  }
+        switch (input.operation || "add") {
+          case "add":
+            result = a + b;
+            break;
+          case "subtract":
+            result = a - b;
+            break;
+          case "multiply":
+            result = a * b;
+            break;
+          case "divide":
+            if (b === 0) throw new Error("Cannot divide by zero");
+            result = a / b;
+            break;
+          default:
+            throw new Error("Invalid operation");
+        }
 
-  @Prompt({ description: "Generate a greeting prompt" })
-  async greeting(args: { name?: string }) {
-    return {
-      messages: [{
-        role: "user" as const,
-        content: {
-          type: "text" as const,
-          text: \`Hello \${args.name || 'there'}! Welcome to ${projectName}.\`
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              operation: input.operation || "add",
+              operands: { a: input.a, b: input.b },
+              result
+            }, null, 2)
+          }]
+        };
+      }
+
+      @Tool({
+        description: "Echo a message back",
+        inputClass: EchoInput
+      })
+      async echo(input: EchoInput) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              echoed: input.message,
+              timestamp: new Date().toISOString()
+            }, null, 2)
+          }]
+        };
+      }
+
+      @Resource({ description: "Get server information" })
+      async serverInfo() {
+        return {
+          contents: [{
+            uri: "server://info",
+            mimeType: "application/json",
+            text: JSON.stringify({
+              name: "${projectName}",
+              version: "1.0.0",
+              uptime: process.uptime()
+            }, null, 2)
+          }]
+        };
+      }
+
+      @Prompt({ description: "Generate a greeting prompt" })
+      async greeting(args: { name?: string }) {
+        return {
+          messages: [{
+            role: "user" as const,
+            content: {
+              type: "text" as const,
+              text: \`Hello \${args.name || 'there'}! Welcome to ${projectName}.\`
         }
       }]
     };
