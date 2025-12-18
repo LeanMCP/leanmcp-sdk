@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
+import os from 'os';
 import archiver from 'archiver';
 import { input, confirm } from '@inquirer/prompts';
 import { getApiKey, getApiUrl } from './login';
@@ -328,7 +329,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const uploadSpinner = ora('Packaging and uploading...').start();
   try {
     // Create temp zip file
-    const tempZip = path.join(require('os').tmpdir(), `leanmcp-${Date.now()}.zip`);
+    const tempZip = path.join(os.tmpdir(), `leanmcp-${Date.now()}.zip`);
     const zipSize = await createZipArchive(absolutePath, tempZip);
     uploadSpinner.text = `Packaging... (${Math.round(zipSize / 1024)}KB)`;
 
