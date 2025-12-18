@@ -11,6 +11,19 @@ import fs from 'fs-extra';
 import os from 'os';
 import { input, confirm } from '@inquirer/prompts';
 
+// Debug mode flag - set via CLI --debug option
+let DEBUG_MODE = false;
+
+export function setDebugMode(enabled: boolean) {
+  DEBUG_MODE = enabled;
+}
+
+function debug(message: string, ...args: any[]) {
+  if (DEBUG_MODE) {
+    console.log(chalk.gray(`[DEBUG] ${message}`), ...args);
+  }
+}
+
 // Config directory and file paths
 const CONFIG_DIR = path.join(os.homedir(), '.leanmcp');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
@@ -111,7 +124,7 @@ export async function getApiUrl(): Promise<string> {
  * Login command implementation
  */
 export async function loginCommand() {
-  console.log(chalk.cyan('\n🔐 LeanMCP Login\n'));
+  console.log(chalk.cyan('\nLeanMCP Login\n'));
 
   // Check if already logged in
   const existingConfig = await loadConfig();
@@ -155,18 +168,32 @@ export async function loginCommand() {
 
   try {
     const apiUrl = await getApiUrl();
-    const response = await fetch(`${apiUrl}/api-keys/validate`, {
+    const validateUrl = `${apiUrl}/api-keys/validate`;
+    
+    debug('API URL:', apiUrl);
+    debug('Validate URL:', validateUrl);
+    debug('Making validation request...');
+    
+    const response = await fetch(validateUrl, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey.trim()}`,
         'Content-Type': 'application/json',
       },
     });
+    
+    debug('Response status:', response.status);
+    debug('Response ok:', response.ok);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      debug('Error response:', errorText);
       spinner.fail('Invalid API key');
       console.error(chalk.red('\nThe API key is invalid or has expired.'));
       console.log(chalk.gray('Please check your API key and try again.'));
+      if (DEBUG_MODE) {
+        console.log(chalk.gray(`Debug: Status ${response.status}, Response: ${errorText}`));
+      }
       process.exit(1);
     }
 
@@ -179,7 +206,7 @@ export async function loginCommand() {
 
     spinner.succeed('API key validated and saved');
 
-    console.log(chalk.green('\n✅ Login successful!'));
+    console.log(chalk.green('\nLogin successful!'));
     console.log(chalk.gray(`   Config saved to: ${CONFIG_FILE}\n`));
     console.log(chalk.cyan('You can now use:'));
     console.log(chalk.gray('  leanmcp deploy <folder>   - Deploy your MCP server'));
@@ -187,12 +214,16 @@ export async function loginCommand() {
 
   } catch (error) {
     spinner.fail('Failed to validate API key');
+    debug('Error:', error);
     
     if (error instanceof Error && error.message.includes('fetch')) {
       console.error(chalk.red('\nCould not connect to LeanMCP servers.'));
       console.log(chalk.gray('Please check your internet connection and try again.'));
     } else {
       console.error(chalk.red(`\nError: ${error instanceof Error ? error.message : String(error)}`));
+    }
+    if (DEBUG_MODE) {
+      console.log(chalk.gray(`\nDebug: Full error: ${error}`));
     }
     process.exit(1);
   }
@@ -202,7 +233,7 @@ export async function loginCommand() {
  * Logout command implementation
  */
 export async function logoutCommand() {
-  console.log(chalk.cyan('\n🔓 LeanMCP Logout\n'));
+  console.log(chalk.cyan('\nLeanMCP Logout\n'));
 
   const config = await loadConfig();
   
@@ -228,7 +259,7 @@ export async function logoutCommand() {
     lastUpdated: new Date().toISOString(),
   });
 
-  console.log(chalk.green('\n✅ Logged out successfully!'));
+  console.log(chalk.green('\nLogged out successfully!'));
   console.log(chalk.gray(`   API key removed from: ${CONFIG_FILE}`));
 }
 
@@ -244,8 +275,8 @@ export async function whoamiCommand() {
     return;
   }
 
-  console.log(chalk.cyan('\n🔐 LeanMCP Authentication Status\n'));
-  console.log(chalk.green('✓ Logged in'));
+  console.log(chalk.cyan('\nLeanMCP Authentication Status\n'));
+  console.log(chalk.green('Logged in'));
   console.log(chalk.gray(`  API Key: ${config.apiKey.substring(0, 15)}...`));
   console.log(chalk.gray(`  API URL: ${config.apiUrl || 'https://ship.leanmcp.com'}`));
   if (config.lastUpdated) {

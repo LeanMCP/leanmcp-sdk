@@ -436,13 +436,13 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   }
 
   // Success!
-  console.log(chalk.green('\n' + '═'.repeat(60)));
-  console.log(chalk.green.bold('  ✅ DEPLOYMENT SUCCESSFUL!'));
-  console.log(chalk.green('═'.repeat(60) + '\n'));
+  console.log(chalk.green('\n' + '='.repeat(60)));
+  console.log(chalk.green.bold('  DEPLOYMENT SUCCESSFUL!'));
+  console.log(chalk.green('='.repeat(60) + '\n'));
 
   console.log(chalk.white('  Your MCP server is now live:\n'));
-  console.log(chalk.cyan(`  🌐 Custom Domain:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.dev`));
-  console.log(chalk.cyan(`  🔗 Lambda URL:     `) + chalk.gray(functionUrl));
+  console.log(chalk.cyan(`  Custom Domain:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.dev`));
+  console.log(chalk.cyan(`  Lambda URL:     `) + chalk.gray(functionUrl));
   console.log();
   console.log(chalk.gray('  Test endpoints:'));
   console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.dev/health`));

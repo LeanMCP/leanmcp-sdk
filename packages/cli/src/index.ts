@@ -8,7 +8,7 @@ import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
-import { loginCommand, logoutCommand, whoamiCommand } from "./commands/login";
+import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
 import { deployCommand } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
 
@@ -694,7 +694,13 @@ program
 program
   .command("login")
   .description("Authenticate with LeanMCP cloud using an API key")
-  .action(loginCommand);
+  .option("--debug", "Enable debug logging")
+  .action(async (options) => {
+    if (options.debug) {
+      setDebugMode(true);
+    }
+    await loginCommand();
+  });
 
 program
   .command("logout")

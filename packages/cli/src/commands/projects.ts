@@ -50,7 +50,7 @@ export async function projectsListCommand() {
       return;
     }
 
-    console.log(chalk.cyan(`\n📁 Your Projects (${projects.length})\n`));
+    console.log(chalk.cyan(`\nYour Projects (${projects.length})\n`));
     console.log(chalk.gray('─'.repeat(60)));
 
     for (const project of projects) {
@@ -98,7 +98,7 @@ export async function projectsGetCommand(projectId: string) {
     const project: Project = await response.json();
     spinner.stop();
 
-    console.log(chalk.cyan('\n📁 Project Details\n'));
+    console.log(chalk.cyan('\nProject Details\n'));
     console.log(chalk.gray('─'.repeat(60)));
     console.log(chalk.white.bold(`  Name: ${project.name}`));
     console.log(chalk.gray(`  ID: ${project.id}`));
