@@ -8,6 +8,8 @@ import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
+import { loginCommand, logoutCommand, whoamiCommand } from "./commands/login";
+import { deployCommand } from "./commands/deploy";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -651,6 +653,36 @@ program
   .command("start")
   .description("Build UI components and start production server")
   .action(startCommand);
+
+// === Cloud Deployment Commands ===
+
+program
+  .command("login")
+  .description("Authenticate with LeanMCP cloud using an API key")
+  .action(loginCommand);
+
+program
+  .command("logout")
+  .description("Remove stored API key and logout from LeanMCP cloud")
+  .action(logoutCommand);
+
+program
+  .command("whoami")
+  .description("Show current authentication status")
+  .action(whoamiCommand);
+
+program
+  .command("deploy [folder]")
+  .description("Deploy an MCP server to LeanMCP cloud")
+  .option("-s, --subdomain <subdomain>", "Subdomain for deployment")
+  .option("-y, --yes", "Skip confirmation prompts")
+  .action(async (folder, options) => {
+    const targetFolder = folder || ".";
+    await deployCommand(targetFolder, {
+      subdomain: options.subdomain,
+      skipConfirm: options.yes,
+    });
+  });
 
 program.parse();
 
