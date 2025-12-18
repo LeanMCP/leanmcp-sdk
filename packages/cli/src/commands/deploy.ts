@@ -11,6 +11,38 @@ import archiver from 'archiver';
 import { input, confirm } from '@inquirer/prompts';
 import { getApiKey, getApiUrl } from './login';
 
+// Debug mode flag
+let DEBUG_MODE = false;
+
+export function setDeployDebugMode(enabled: boolean) {
+  DEBUG_MODE = enabled;
+}
+
+function debug(message: string, ...args: any[]) {
+  if (DEBUG_MODE) {
+    console.log(chalk.gray(`[DEBUG] ${message}`), ...args);
+  }
+}
+
+async function debugFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  debug(`HTTP ${options.method || 'GET'} ${url}`);
+  if (options.body && typeof options.body === 'string') {
+    try {
+      const body = JSON.parse(options.body);
+      debug('Request body:', JSON.stringify(body, null, 2));
+    } catch {
+      debug('Request body:', options.body);
+    }
+  }
+  
+  const startTime = Date.now();
+  const response = await fetch(url, options);
+  const duration = Date.now() - startTime;
+  
+  debug(`Response: ${response.status} ${response.statusText} (${duration}ms)`);
+  return response;
+}
+
 // API endpoints (relative to base URL)
 const API_ENDPOINTS = {
   // Projects
@@ -78,7 +110,7 @@ async function waitForBuild(
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const response = await fetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
+    const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
       headers: { 'Authorization': `Bearer ${apiKey}` },
     });
 
@@ -117,7 +149,7 @@ async function waitForDeployment(
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const response = await fetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
+    const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
       headers: { 'Authorization': `Bearer ${apiKey}` },
     });
 
@@ -147,7 +179,9 @@ async function waitForDeployment(
  * Deploy command implementation
  */
 export async function deployCommand(folderPath: string, options: DeployOptions = {}) {
-  console.log(chalk.cyan('\n🚀 LeanMCP Deploy\n'));
+  console.log(chalk.cyan('\nLeanMCP Deploy\n'));
+  
+  debug('Starting deployment...');
 
   // Check authentication
   const apiKey = await getApiKey();
@@ -158,6 +192,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   }
 
   const apiUrl = await getApiUrl();
+  debug('API URL:', apiUrl);
 
   // Resolve folder path
   const absolutePath = path.resolve(process.cwd(), folderPath);
@@ -223,7 +258,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   // Check subdomain availability
   const checkSpinner = ora('Checking subdomain availability...').start();
   try {
-    const checkResponse = await fetch(`${apiUrl}${API_ENDPOINTS.checkSubdomain}/${subdomain}`, {
+    debug('Checking subdomain:', subdomain);
+    const checkResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.checkSubdomain}/${subdomain}`, {
       headers: { 'Authorization': `Bearer ${apiKey}` },
     });
 
@@ -264,7 +300,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const projectSpinner = ora('Creating project...').start();
   let projectId: string;
   try {
-    const createResponse = await fetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
+    debug('Step 1: Creating project:', projectName);
+    const createResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -296,7 +333,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     uploadSpinner.text = `Packaging... (${Math.round(zipSize / 1024)}KB)`;
 
     // Get presigned URL
-    const uploadUrlResponse = await fetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}/upload-url`, {
+    debug('Step 2a: Getting upload URL for project:', projectId);
+    const uploadUrlResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}/upload-url`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -316,19 +354,22 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const { uploadUrl, s3Location } = await uploadUrlResponse.json();
 
     // Upload to S3
+    debug('Step 2b: Uploading to S3...');
     const zipBuffer = await fs.readFile(tempZip);
     const s3Response = await fetch(uploadUrl, {
       method: 'PUT',
       body: zipBuffer,
       headers: { 'Content-Type': 'application/zip' },
     });
+    debug('S3 upload response:', s3Response.status);
 
     if (!s3Response.ok) {
       throw new Error('Failed to upload to S3');
     }
 
     // Update project with S3 location
-    await fetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}`, {
+    debug('Step 2c: Updating project with S3 location:', s3Location);
+    await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -352,7 +393,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   let buildId: string;
   let imageUri: string;
   try {
-    const buildResponse = await fetch(`${apiUrl}${API_ENDPOINTS.triggerBuild}/${projectId}`, {
+    debug('Step 3: Triggering build for project:', projectId);
+    const buildResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.triggerBuild}/${projectId}`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}` },
     });
@@ -381,7 +423,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   let deploymentId: string;
   let functionUrl: string;
   try {
-    const deployResponse = await fetch(`${apiUrl}${API_ENDPOINTS.createDeployment}`, {
+    debug('Step 4: Creating deployment for build:', buildId);
+    const deployResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.createDeployment}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -412,7 +455,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   // Step 5: Create subdomain mapping
   const mappingSpinner = ora('Configuring subdomain...').start();
   try {
-    const mappingResponse = await fetch(`${apiUrl}${API_ENDPOINTS.createMapping}`, {
+    debug('Step 5: Creating subdomain mapping:', subdomain);
+    const mappingResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.createMapping}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

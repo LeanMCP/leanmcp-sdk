@@ -9,7 +9,7 @@ import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
-import { deployCommand } from "./commands/deploy";
+import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
 
 const require = createRequire(import.meta.url);
@@ -717,7 +717,12 @@ program
   .description("Deploy an MCP server to LeanMCP cloud")
   .option("-s, --subdomain <subdomain>", "Subdomain for deployment")
   .option("-y, --yes", "Skip confirmation prompts")
+  .option("--debug", "Enable debug logging for network calls")
   .action(async (folder, options) => {
+    if (options.debug) {
+      setDebugMode(true);
+      setDeployDebugMode(true);
+    }
     const targetFolder = folder || ".";
     await deployCommand(targetFolder, {
       subdomain: options.subdomain,
