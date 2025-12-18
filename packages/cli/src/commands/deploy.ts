@@ -13,14 +13,18 @@ import { getApiKey, getApiUrl } from './login';
 
 // API endpoints (relative to base URL)
 const API_ENDPOINTS = {
-  checkSubdomain: '/sdk/lambda-mapping/check',
-  createProject: '/sdk/projects',
-  getUploadUrl: '/sdk/projects',
-  triggerBuild: '/sdk/lambda-builds/trigger',
-  getBuild: '/sdk/lambda-builds',
-  createDeployment: '/sdk/lambda-deploy',
-  getDeployment: '/sdk/lambda-deploy',
-  createMapping: '/sdk/lambda-mapping',
+  // Projects
+  projects: '/api/projects',
+  getUploadUrl: '/api/projects',
+  // Lambda builds
+  triggerBuild: '/api/lambda-builds/trigger',
+  getBuild: '/api/lambda-builds',
+  // Lambda deployments
+  createDeployment: '/api/lambda-deploy',
+  getDeployment: '/api/lambda-deploy',
+  // Lambda mapping
+  checkSubdomain: '/api/lambda-mapping/check',
+  createMapping: '/api/lambda-mapping',
 };
 
 interface DeployOptions {
@@ -260,7 +264,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const projectSpinner = ora('Creating project...').start();
   let projectId: string;
   try {
-    const createResponse = await fetch(`${apiUrl}/projects`, {
+    const createResponse = await fetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -292,7 +296,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     uploadSpinner.text = `Packaging... (${Math.round(zipSize / 1024)}KB)`;
 
     // Get presigned URL
-    const uploadUrlResponse = await fetch(`${apiUrl}/projects/${projectId}/upload-url`, {
+    const uploadUrlResponse = await fetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}/upload-url`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -324,7 +328,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     }
 
     // Update project with S3 location
-    await fetch(`${apiUrl}/projects/${projectId}`, {
+    await fetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

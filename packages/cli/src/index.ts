@@ -10,6 +10,7 @@ import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
 import { loginCommand, logoutCommand, whoamiCommand } from "./commands/login";
 import { deployCommand } from "./commands/deploy";
+import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -29,7 +30,14 @@ program
     "after",
     `
 Examples:
-  $ leanmcp create my-app --allow-all    # Scaffold without interactive prompts
+  $ leanmcp create my-app                # Create new project (interactive)
+  $ leanmcp create my-app --install      # Create and install deps (non-interactive)
+  $ leanmcp create my-app --no-install   # Create without installing deps
+  $ leanmcp dev                          # Start development server
+  $ leanmcp login                        # Authenticate with LeanMCP cloud
+  $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
+  $ leanmcp projects list                # List your cloud projects
+  $ leanmcp projects delete <id>         # Delete a cloud project
 `
   );
 
@@ -38,6 +46,8 @@ program
   .description("Create a new LeanMCP project with Streamable HTTP transport")
   .option("--allow-all", "Skip interactive confirmations and assume Yes")
   .option("--no-dashboard", "Disable dashboard UI at / and /mcp GET endpoints")
+  .option("--install", "Install dependencies automatically (non-interactive, no dev server)")
+  .option("--no-install", "Skip dependency installation (non-interactive)")
   .action(async (projectName, options) => {
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
@@ -478,8 +488,25 @@ MIT
     console.log(chalk.green("\nSuccess! Your MCP server is ready.\n"));
     console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
 
-    // Ask if user wants to install dependencies
-    const shouldInstall = options.allowAll
+    // Determine install behavior based on flags
+    // --no-install: Skip install entirely (non-interactive)
+    // --install: Install but don't start dev server (non-interactive)
+    // --allow-all: Install and start dev server (non-interactive)
+    // default: Interactive prompts
+    
+    const isNonInteractive = options.install !== undefined || options.allowAll;
+    
+    // If --no-install flag is set (options.install === false), skip entirely
+    if (options.install === false) {
+      console.log(chalk.cyan("\nTo get started:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  npm install`));
+      console.log(chalk.gray(`  npm run dev`));
+      return;
+    }
+
+    // Ask if user wants to install dependencies (unless non-interactive)
+    const shouldInstall = isNonInteractive
       ? true
       : await confirm({
         message: "Would you like to install dependencies now?",
@@ -510,7 +537,15 @@ MIT
 
         installSpinner.succeed("Dependencies installed successfully!");
 
-        // Ask if user wants to start dev server
+        // If --install flag was used, exit without starting dev server
+        if (options.install === true) {
+          console.log(chalk.cyan("\nTo start the development server:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  npm run dev`));
+          return;
+        }
+
+        // Ask if user wants to start dev server (unless --allow-all)
         const shouldStartDev = options.allowAll
           ? true
           : await confirm({
@@ -683,6 +718,30 @@ program
       skipConfirm: options.yes,
     });
   });
+
+// === Projects Management Commands ===
+
+const projectsCmd = program
+  .command("projects")
+  .description("Manage LeanMCP cloud projects");
+
+projectsCmd
+  .command("list")
+  .alias("ls")
+  .description("List all your projects")
+  .action(projectsListCommand);
+
+projectsCmd
+  .command("get <projectId>")
+  .description("Get details of a specific project")
+  .action(projectsGetCommand);
+
+projectsCmd
+  .command("delete <projectId>")
+  .alias("rm")
+  .description("Delete a project")
+  .option("-f, --force", "Skip confirmation prompt")
+  .action((projectId, options) => projectsDeleteCommand(projectId, options));
 
 program.parse();
 
