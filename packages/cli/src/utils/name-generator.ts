@@ -16,9 +16,13 @@ const ADJECTIVES = [
 // Scientists from around the world (AI, Physics, Math)
 const SCIENTISTS = [
   // AI & Computer Science
-  'turing', 'hinton', 'lecun', 'bengio', 'ng', 'russell', 'norvig', 'pearl',
-  'minsky', 'mccarthy', 'shannon', 'dijkstra', 'knuth', 'hopper', 'lovelace',
-  'sutton', 'schmid', 'goodfellow', 'vaswani', 'cho', 'li', 'karpathy',
+  'turing', 'shannon', 'mccarthy', 'minsky', 'newell', 'simon',
+  'dijkstra', 'knuth', 'hopper', 'lovelace',
+  'hinton', 'lecun', 'bengio', 'schmidhuber', 'hochreiter', 'sutskever',
+  'salakhutdinov', 'goodfellow', 'vaswani', 'bahdanau', 'mikolov',
+  'pearl', 'jordan', 'bishop', 'russell', 'norvig', 'ng',
+  'koller', 'murphy', 'bottou', 'hassabis', 'silver', 'hopfield',
+  'feifei', 'karpathy', 'li',
   // Physics
   'einstein', 'newton', 'hawking', 'feynman', 'bohr', 'planck', 'dirac',
   'heisenberg', 'schrodinger', 'maxwell', 'faraday', 'curie', 'fermi',
