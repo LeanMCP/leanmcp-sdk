@@ -1,0 +1,97 @@
+.lui-select-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    min-width: 160px;
+    background: var(--lui-bg-secondary, #f5f5f5);
+    border: 1px solid var(--lui-border, #e0e0e0);
+    border-radius: var(--lui-radius-md, 6px);
+    font-size: 0.875rem;
+    font-family: var(--lui-font-sans);
+    color: var(--lui-text-primary, #1a1a1a);
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lui-select-trigger:hover:not(:disabled) {
+    border-color: var(--lui-border-hover, #999);
+}
+
+.lui-select-trigger:focus {
+    outline: none;
+    border-color: var(--lui-primary, #3b82f6);
+    box-shadow: 0 0 0 2px var(--lui-primary-alpha, rgba(59, 130, 246, 0.2));
+}
+
+.lui-select-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lui-select-icon {
+    color: var(--lui-text-secondary, #666);
+}
+
+.lui-select-content {
+    background: var(--lui-bg-primary, #fff);
+    border: 1px solid var(--lui-border, #e0e0e0);
+    border-radius: var(--lui-radius-md, 6px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 1000;
+    font-family: var(--lui-font-sans);
+}
+
+.lui-select-viewport {
+    padding: 0.25rem;
+}
+
+.lui-select-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-family: var(--lui-font-sans);
+    color: var(--lui-text-primary, #1a1a1a);
+    border-radius: var(--lui-radius-sm, 4px);
+    cursor: pointer;
+    user-select: none;
+}
+
+.lui-select-item:hover,
+.lui-select-item[data-highlighted] {
+    background: var(--lui-bg-hover, #f0f0f0);
+    outline: none;
+}
+
+.lui-select-item[data-disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.lui-select-item-indicator {
+    color: var(--lui-primary, #3b82f6);
+}
+
+[data-theme="dark"] .lui-select-trigger {
+    background: var(--lui-bg-secondary, #2a2a2a);
+    border-color: var(--lui-border, #444);
+    color: var(--lui-text-primary, #f5f5f5);
+}
+
+[data-theme="dark"] .lui-select-content {
+    background: var(--lui-bg-primary, #1a1a1a);
+    border-color: var(--lui-border, #444);
+}
+
+[data-theme="dark"] .lui-select-item {
+    color: var(--lui-text-primary, #f5f5f5);
+}
+
+[data-theme="dark"] .lui-select-item:hover,
+[data-theme="dark"] .lui-select-item[data-highlighted] {
+    background: var(--lui-bg-hover, #333);
+}

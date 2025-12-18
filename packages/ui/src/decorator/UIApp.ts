@@ -20,8 +20,12 @@ export const UI_APP_OPTIONS_KEY = 'ui:app:options';
  * Options for @UIApp decorator
  */
 export interface UIAppOptions {
-    /** React component to render for this tool's UI */
-    component: React.ComponentType<any>;
+    /** 
+     * React component or path to component file (relative to service file).
+     * - Use path string (e.g., './WeatherCard') for CLI build - avoids importing browser code in server
+     * - Use component reference for direct SSR rendering
+     */
+    component: React.ComponentType<any> | string;
     /** Custom resource URI (auto-generated if not provided) */
     uri?: string;
     /** HTML document title */
@@ -29,6 +33,7 @@ export interface UIAppOptions {
     /** Additional CSS styles */
     styles?: string;
 }
+
 
 /**
  * Decorator that links a tool to a UI component.

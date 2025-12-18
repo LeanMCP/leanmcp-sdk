@@ -1,0 +1,44 @@
+.lui-progress {
+    width: 100%;
+    background: var(--lui-bg-tertiary, #e0e0e0);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.lui-progress--sm {
+    height: 4px;
+}
+
+.lui-progress--md {
+    height: 8px;
+}
+
+.lui-progress--lg {
+    height: 12px;
+}
+
+.lui-progress-bar {
+    height: 100%;
+    background: var(--lui-primary, #3b82f6);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.lui-progress-bar--indeterminate {
+    width: 30%;
+    animation: lui-progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes lui-progress-indeterminate {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(400%);
+    }
+}
+
+[data-theme="dark"] .lui-progress {
+    background: var(--lui-bg-tertiary, #444);
+}

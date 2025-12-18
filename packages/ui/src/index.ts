@@ -1,73 +1,190 @@
 /**
- * @leanmcp/ui - React UI components for MCP Apps
+ * @leanmcp/ui - MCP-Native UI SDK for React
  * 
- * Build rich, interactive MCP Apps with components designed for ext-apps.
+ * Build rich, interactive MCP Apps with components designed for the
+ * Model Context Protocol. Features first-class tool integration,
+ * streaming support, and shadcn-style theming.
  * 
- * ## Decorator
- * - `@UIApp` decorator to link tools with UI components
+ * ## Quick Start
+ * ```tsx
+ * import { AppProvider, ToolButton } from '@leanmcp/ui';
  * 
- * ## Hooks (client-side)
- * - `useToolResult`, `useToolInput`, `useHostContext`, `useTool`
+ * function MyApp() {
+ *   return (
+ *     <AppProvider appInfo={{ name: 'MyApp', version: '1.0.0' }}>
+ *       <ToolButton tool="refresh-data">Refresh</ToolButton>
+ *     </AppProvider>
+ *   );
+ * }
+ * ```
  * 
- * ## Components
- * - `Card`, `Button`, `Input`, `DataGrid`, `Chart`
+ * ## Modules
+ * - MCP Components - ToolButton, ToolSelect, ToolInput, ToolForm, etc.
+ * - MCP Hooks - useTool, useResource, useMessage, useToolStream
+ * - UI Components - shadcn-based Card, Button, Input, Alert, etc.
+ * - Data Components - DataGrid, Chart
  * 
  * @packageDocumentation
  */
 
 // ===========================================
-// Decorator for linking tools to UI components
+// Styles (must be imported by consumers)
+// ===========================================
+// import '@leanmcp/ui/styles.css'
+
+// ===========================================
+// MCP Context & Providers
+// ===========================================
+export {
+    AppProvider,
+    useMcpApp,
+} from './mcp/AppProvider';
+export type {
+    AppProviderProps,
+    McpAppContextValue,
+    AppInfo,
+    AppOptions,
+} from './mcp/AppProvider';
+
+export { ToolProvider, useToolContext } from './mcp/ToolProvider';
+export type { ToolProviderProps, ToolContextValue } from './mcp/ToolProvider';
+
+// ===========================================
+// Core UI Components (shadcn/ui)
+// ===========================================
+export { Toaster } from './components/ui/sonner';
+
+// ===========================================
+// MCP-Native Components
+// ===========================================
+export { ToolButton } from './mcp/ToolButton';
+export type { ToolButtonProps, ToolButtonState } from './mcp/ToolButton';
+
+export { ToolSelect } from './mcp/ToolSelect';
+export type { ToolSelectProps, ToolSelectOption } from './mcp/ToolSelect';
+
+export { ToolInput } from './mcp/ToolInput';
+export type { ToolInputProps, ToolInputSuggestion } from './mcp/ToolInput';
+
+export { ToolForm } from './mcp/ToolForm';
+export type { ToolFormProps, ToolFormField } from './mcp/ToolForm';
+
+export { ResourceView } from './mcp/ResourceView';
+export type { ResourceViewProps, ResourceMeta } from './mcp/ResourceView';
+
+export { StreamingContent } from './mcp/StreamingContent';
+export type { StreamingContentProps } from './mcp/StreamingContent';
+
+export { ToolDataGrid } from './mcp/ToolDataGrid';
+export type {
+    ToolDataGridProps,
+    ToolDataGridColumn,
+    ToolDataGridRowAction,
+} from './mcp/ToolDataGrid';
+
+// Legacy ActionButton (prefer ToolButton for new code)
+export { ActionButton } from './mcp/ActionButton';
+export type { ActionButtonProps } from './mcp/ActionButton';
+
+// ===========================================
+// MCP Utility Components
+// ===========================================
+export { RequireConnection } from './mcp/RequireConnection';
+export type { RequireConnectionProps } from './mcp/RequireConnection';
+
+export { ToolErrorBoundary } from './mcp/ToolErrorBoundary';
+export type { ToolErrorBoundaryProps } from './mcp/ToolErrorBoundary';
+
+// ===========================================
+// MCP Hooks
+// ===========================================
+export { useTool } from './mcp/useTool';
+export type { UseToolOptions, UseToolReturn, ToolState } from './mcp/useTool';
+
+export { useToolStream } from './mcp/useToolStream';
+export type { UseToolStreamOptions, UseToolStreamReturn } from './mcp/useToolStream';
+
+export { useResource } from './mcp/useResource';
+export type { UseResourceOptions, UseResourceReturn } from './mcp/useResource';
+
+export { useMessage } from './mcp/useMessage';
+export type { UseMessageReturn } from './mcp/useMessage';
+
+export { useHostContext, type UseHostContextReturn } from './mcp/useHostContext';
+export { useToolResult, type UseToolResultReturn } from './mcp/useToolResult';
+export { useToolInput, type UseToolInputReturn } from './mcp/useToolInput';
+export { useToolInputPartial, type UseToolInputPartialReturn } from './mcp/useToolInputPartial';
+export { useToolSubscription } from './mcp/useToolSubscription';
+
+// ===========================================
+// MCP Types
+// ===========================================
+export type {
+    ToolBinding,
+    McpActionProps,
+    ToolResultConfig,
+    ConfirmConfig,
+    ResourceBinding,
+    ToolCallState,
+} from './types/mcp-types';
+export { normalizeToolBinding, INITIAL_TOOL_STATE, DEFAULT_RESULT_CONFIG } from './types/mcp-types';
+
+// ===========================================
+// shadcn UI Components
+// ===========================================
+export * from './components/ui';
+
+// ===========================================
+// Utilities
+// ===========================================
+export { cn } from './lib/utils';
+
+// ===========================================
+// Decorator for Server-side UI binding
 // ===========================================
 export { UIApp, getUIAppMetadata, getUIAppUri, type UIAppOptions } from './decorator';
 
 // ===========================================
-// Client-side: Context & Hooks (wrapping ext-apps)
-// ===========================================
-export { AppProvider, useMcpApp, type AppProviderProps, type McpAppContextValue, type AppInfo, type AppOptions } from './mcp/AppProvider';
-export { useTool, type UseToolResult } from './mcp/useTool';
-export { useToolResult, type UseToolResultReturn } from './mcp/useToolResult';
-export { useToolInput, type UseToolInputReturn } from './mcp/useToolInput';
-export { useToolInputPartial, type UseToolInputPartialReturn } from './mcp/useToolInputPartial';
-export { useHostContext, type UseHostContextReturn } from './mcp/useHostContext';
-
-// ===========================================
-// MCP Components (for tool forms, actions)
-// ===========================================
-export { ActionButton, type ActionButtonProps } from './mcp/ActionButton';
-export { ToolForm, type ToolFormProps, type ToolFormField } from './mcp/ToolForm';
-
-// ===========================================
-// Core UI Components
-// ===========================================
-export { Button, type ButtonProps } from './core/Button';
-export { Card, CardHeader, CardContent, CardFooter, type CardProps, type CardHeaderProps, type CardContentProps, type CardFooterProps } from './core/Card';
-export { Input, type InputProps } from './core/Input';
-
-// ===========================================
-// Data Visualization
+// Data Visualization Components  
 // ===========================================
 export { DataGrid, type DataGridProps, type DataGridColumn } from './data/DataGrid';
 export { Chart, type ChartProps, type ChartType } from './data/Chart';
 
 // ===========================================
-// Layout
+// Layout Components
 // ===========================================
 export { AppShell, type AppShellProps } from './layout/AppShell';
+export { Tabs, TabContent, type TabsProps, type TabContentProps, type TabItem } from './layout/Tabs';
+export { Modal, type ModalProps } from './layout/Modal';
 
 // ===========================================
-// Media
+// Media Components
 // ===========================================
 export { CodeBlock, type CodeBlockProps } from './media/CodeBlock';
 
 // ===========================================
+// Core UI Components (legacy components for backwards compatibility)
+// Use shadcn components from './components/ui' for new code
+// ===========================================
+export { Button, type ButtonProps } from './core/Button';
+export { Card, CardHeader, CardContent, CardFooter } from './core/Card';
+export type { CardProps, CardHeaderProps, CardContentProps, CardFooterProps } from './core/Card';
+export { Input, type InputProps } from './core/Input';
+
+// ===========================================
 // Re-export ext-apps types for convenience
 // ===========================================
+export { App, PostMessageTransport } from '@modelcontextprotocol/ext-apps';
+export { AppBridge } from '@modelcontextprotocol/ext-apps/app-bridge';
+
 export type {
-    App,
     McpUiHostContext,
     McpUiToolInputNotification,
     McpUiToolInputPartialNotification,
     McpUiToolResultNotification,
+    McpUiToolCancelledNotification,
     McpUiAppCapabilities,
+    McpUiDisplayMode,
+    McpUiStyles,
+    McpUiHostStyles,
 } from '@modelcontextprotocol/ext-apps';
-

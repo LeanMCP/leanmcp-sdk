@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { useTool, type UseToolResult } from './useTool';
+import { useEffect, useRef, useCallback, useState } from 'react';
+import { useTool, type UseToolReturn } from './useTool';
 
 export interface UseToolSubscriptionOptions {
     /** Polling interval in milliseconds */
@@ -10,7 +10,13 @@ export interface UseToolSubscriptionOptions {
     args?: Record<string, unknown>;
 }
 
-export interface UseToolSubscriptionResult<T = unknown> extends UseToolResult<T> {
+export interface UseToolSubscriptionResult<T = unknown> {
+    /** Tool call result data */
+    result: T | null;
+    /** Loading state */
+    loading: boolean;
+    /** Error if any */
+    error: Error | null;
     /** Start polling */
     start: () => void;
     /** Stop polling */
@@ -48,21 +54,21 @@ export function useToolSubscription<T = unknown>(
     options: UseToolSubscriptionOptions = {}
 ): UseToolSubscriptionResult<T> {
     const { interval = 10000, enabled = true, args = {} } = options;
-    const toolHook = useTool<T>(toolName);
+    const toolHook = useTool<Record<string, unknown>, T>(toolName);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
-    const isPollingRef = useRef(false);
+    const [isPolling, setIsPolling] = useState(false);
 
     const stop = useCallback(() => {
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
-        isPollingRef.current = false;
+        setIsPolling(false);
     }, []);
 
     const start = useCallback(() => {
         stop();
-        isPollingRef.current = true;
+        setIsPolling(true);
 
         // Initial call
         toolHook.call(args).catch(() => { });
@@ -73,7 +79,7 @@ export function useToolSubscription<T = unknown>(
         }, interval);
     }, [toolHook.call, args, interval, stop]);
 
-    const refresh = useCallback(async () => {
+    const refresh = useCallback(async (): Promise<T> => {
         return toolHook.call(args);
     }, [toolHook.call, args]);
 
@@ -86,10 +92,12 @@ export function useToolSubscription<T = unknown>(
     }, [enabled, start, stop]);
 
     return {
-        ...toolHook,
+        result: toolHook.result,
+        loading: toolHook.loading,
+        error: toolHook.error,
         start,
         stop,
-        isPolling: isPollingRef.current,
+        isPolling,
         refresh,
     };
 }
