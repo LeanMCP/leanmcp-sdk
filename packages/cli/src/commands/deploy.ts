@@ -11,44 +11,7 @@ import os from 'os';
 import archiver from 'archiver';
 import { input, confirm, select } from '@inquirer/prompts';
 import { getApiKey, getApiUrl } from './login';
-
-// Word lists for generating readable random project names
-const ADJECTIVES = [
-  'swift', 'bright', 'calm', 'bold', 'cool', 'crisp', 'dark', 'dawn',
-  'deep', 'fair', 'fast', 'fine', 'glad', 'gold', 'good', 'gray',
-  'green', 'happy', 'keen', 'kind', 'late', 'lean', 'light', 'long',
-  'loud', 'mild', 'neat', 'new', 'nice', 'old', 'pale', 'pink',
-  'plain', 'prime', 'pure', 'quick', 'quiet', 'rare', 'red', 'rich',
-  'rough', 'royal', 'safe', 'sharp', 'shy', 'silver', 'slim', 'slow',
-  'smart', 'smooth', 'soft', 'solid', 'still', 'sunny', 'super', 'sweet',
-  'tall', 'tidy', 'tiny', 'true', 'warm', 'wild', 'wise', 'young',
-];
-
-const NOUNS = [
-  'ant', 'api', 'app', 'arc', 'ark', 'atom', 'base', 'beam', 'bear',
-  'bird', 'bit', 'boat', 'bolt', 'bond', 'book', 'boot', 'box', 'brew',
-  'byte', 'cast', 'chip', 'clay', 'clip', 'code', 'coil', 'core', 'crab',
-  'cube', 'data', 'dawn', 'disk', 'dock', 'door', 'drop', 'dust', 'echo',
-  'edge', 'elm', 'fern', 'fire', 'fish', 'flux', 'foam', 'fork', 'frog',
-  'gate', 'glow', 'grid', 'hawk', 'hive', 'hook', 'hub', 'jade', 'jazz',
-  'key', 'kite', 'knot', 'lake', 'lamp', 'lane', 'leaf', 'lens', 'link',
-  'lion', 'lock', 'loom', 'lynx', 'mcp', 'mesa', 'mint', 'moon', 'moss',
-  'moth', 'nest', 'node', 'nova', 'oak', 'opal', 'orb', 'owl', 'palm',
-  'path', 'peak', 'pine', 'pipe', 'plan', 'pond', 'port', 'pulse', 'rain',
-  'reef', 'ring', 'rock', 'root', 'rose', 'ruby', 'rust', 'sail', 'seed',
-  'silk', 'snow', 'soil', 'spark', 'star', 'stem', 'stone', 'stream', 'sun',
-  'swan', 'teal', 'tide', 'tree', 'vine', 'wave', 'wind', 'wing', 'wolf',
-];
-
-/**
- * Generate a random readable project name like "swift-mcp-42"
- */
-function generateProjectName(): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-  const num = Math.floor(Math.random() * 100);
-  return `${adj}-${noun}-${num}`;
-}
+import { generateProjectName } from '../utils';
 
 // Debug mode flag
 let DEBUG_MODE = false;
@@ -218,6 +181,8 @@ async function waitForDeployment(
  * Deploy command implementation
  */
 export async function deployCommand(folderPath: string, options: DeployOptions = {}) {
+  const deployStartTime = Date.now();
+  
   console.log(chalk.cyan('\nLeanMCP Deploy\n'));
   
   debug('Starting deployment...');
@@ -500,7 +465,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   }
 
   // Step 3: Trigger build
-  const buildSpinner = ora('Building Docker image...').start();
+  const buildSpinner = ora('Building...').start();
+  const buildStartTime = Date.now();
   let buildId: string;
   let imageUri: string;
   try {
@@ -522,15 +488,16 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const buildResult = await waitForBuild(apiUrl, apiKey, buildId, buildSpinner);
     imageUri = buildResult.imageUri;
 
-    buildSpinner.succeed('Build complete');
+    const buildDuration = Math.round((Date.now() - buildStartTime) / 1000);
+    buildSpinner.succeed(`Build complete (${buildDuration}s)`);
   } catch (error) {
     buildSpinner.fail('Build failed');
     console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
     process.exit(1);
   }
 
-  // Step 4: Deploy to Lambda
-  const deploySpinner = ora('Deploying to Lambda...').start();
+  // Step 4: Deploy to LeanMCP
+  const deploySpinner = ora('Deploying to LeanMCP...').start();
   let deploymentId: string;
   let functionUrl: string;
   try {
@@ -556,7 +523,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const deployResult = await waitForDeployment(apiUrl, apiKey, deploymentId, deploySpinner);
     functionUrl = deployResult.functionUrl;
 
-    deploySpinner.succeed('Lambda deployed');
+    deploySpinner.succeed('Deployed');
   } catch (error) {
     deploySpinner.fail('Deployment failed');
     console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
@@ -596,12 +563,14 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   console.log(chalk.green('='.repeat(60) + '\n'));
 
   console.log(chalk.white('  Your MCP server is now live:\n'));
-  console.log(chalk.cyan(`  Custom Domain:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.dev`));
-  console.log(chalk.cyan(`  Lambda URL:     `) + chalk.gray(functionUrl));
+  console.log(chalk.cyan(`  URL:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.dev`));
   console.log();
   console.log(chalk.gray('  Test endpoints:'));
   console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.dev/health`));
   console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.dev/mcp`));
+  console.log();
+  const totalDuration = Math.round((Date.now() - deployStartTime) / 1000);
+  console.log(chalk.gray(`  Total time: ${totalDuration}s`));
   console.log();
   console.log(chalk.gray(`  Project ID:    ${projectId}`));
   console.log(chalk.gray(`  Build ID:      ${buildId}`));
