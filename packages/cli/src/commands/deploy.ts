@@ -9,8 +9,46 @@ import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
 import archiver from 'archiver';
-import { input, confirm } from '@inquirer/prompts';
+import { input, confirm, select } from '@inquirer/prompts';
 import { getApiKey, getApiUrl } from './login';
+
+// Word lists for generating readable random project names
+const ADJECTIVES = [
+  'swift', 'bright', 'calm', 'bold', 'cool', 'crisp', 'dark', 'dawn',
+  'deep', 'fair', 'fast', 'fine', 'glad', 'gold', 'good', 'gray',
+  'green', 'happy', 'keen', 'kind', 'late', 'lean', 'light', 'long',
+  'loud', 'mild', 'neat', 'new', 'nice', 'old', 'pale', 'pink',
+  'plain', 'prime', 'pure', 'quick', 'quiet', 'rare', 'red', 'rich',
+  'rough', 'royal', 'safe', 'sharp', 'shy', 'silver', 'slim', 'slow',
+  'smart', 'smooth', 'soft', 'solid', 'still', 'sunny', 'super', 'sweet',
+  'tall', 'tidy', 'tiny', 'true', 'warm', 'wild', 'wise', 'young',
+];
+
+const NOUNS = [
+  'ant', 'api', 'app', 'arc', 'ark', 'atom', 'base', 'beam', 'bear',
+  'bird', 'bit', 'boat', 'bolt', 'bond', 'book', 'boot', 'box', 'brew',
+  'byte', 'cast', 'chip', 'clay', 'clip', 'code', 'coil', 'core', 'crab',
+  'cube', 'data', 'dawn', 'disk', 'dock', 'door', 'drop', 'dust', 'echo',
+  'edge', 'elm', 'fern', 'fire', 'fish', 'flux', 'foam', 'fork', 'frog',
+  'gate', 'glow', 'grid', 'hawk', 'hive', 'hook', 'hub', 'jade', 'jazz',
+  'key', 'kite', 'knot', 'lake', 'lamp', 'lane', 'leaf', 'lens', 'link',
+  'lion', 'lock', 'loom', 'lynx', 'mcp', 'mesa', 'mint', 'moon', 'moss',
+  'moth', 'nest', 'node', 'nova', 'oak', 'opal', 'orb', 'owl', 'palm',
+  'path', 'peak', 'pine', 'pipe', 'plan', 'pond', 'port', 'pulse', 'rain',
+  'reef', 'ring', 'rock', 'root', 'rose', 'ruby', 'rust', 'sail', 'seed',
+  'silk', 'snow', 'soil', 'spark', 'star', 'stem', 'stone', 'stream', 'sun',
+  'swan', 'teal', 'tide', 'tree', 'vine', 'wave', 'wind', 'wing', 'wolf',
+];
+
+/**
+ * Generate a random readable project name like "swift-mcp-42"
+ */
+function generateProjectName(): string {
+  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const num = Math.floor(Math.random() * 100);
+  return `${adj}-${noun}-${num}`;
+}
 
 // Debug mode flag
 let DEBUG_MODE = false;
@@ -214,18 +252,74 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     process.exit(1);
   }
 
-  // Get project name from package.json or folder name
-  let projectName = path.basename(absolutePath);
+  // Check for existing projects first
+  debug('Fetching existing projects...');
+  let existingProjects: Array<{ id: string; name: string; s3Location?: string }> = [];
+  try {
+    const projectsResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
+      headers: { 'Authorization': `Bearer ${apiKey}` },
+    });
+    if (projectsResponse.ok) {
+      existingProjects = await projectsResponse.json();
+      debug(`Found ${existingProjects.length} existing projects`);
+    }
+  } catch (e) {
+    debug('Could not fetch existing projects');
+  }
+
+  // Get project name - check if we should use existing or create new
+  let projectName: string;
+  let existingProject: { id: string; name: string; s3Location?: string } | null = null;
+  let isUpdate = false;
+
+  // Check folder/package name first
+  let folderName = path.basename(absolutePath);
   if (hasPackageJson) {
     try {
       const pkg = await fs.readJSON(path.join(absolutePath, 'package.json'));
-      projectName = pkg.name || projectName;
+      folderName = pkg.name || folderName;
     } catch (e) {
       // Use folder name
     }
   }
 
-  console.log(chalk.white(`Project: ${chalk.bold(projectName)}`));
+  // Check if a project with the folder name exists
+  const matchingProject = existingProjects.find(p => p.name === folderName);
+  
+  if (matchingProject) {
+    console.log(chalk.yellow(`Project '${folderName}' already exists.\n`));
+    
+    const choice = await select({
+      message: 'What would you like to do?',
+      choices: [
+        { value: 'update', name: `Update existing project '${folderName}'` },
+        { value: 'new', name: 'Create a new project with a random name' },
+        { value: 'cancel', name: 'Cancel deployment' },
+      ],
+    });
+
+    if (choice === 'cancel') {
+      console.log(chalk.gray('\nDeployment cancelled.\n'));
+      return;
+    }
+
+    if (choice === 'update') {
+      existingProject = matchingProject;
+      projectName = matchingProject.name;
+      isUpdate = true;
+      console.log(chalk.yellow('\nWARNING: This will replace the existing deployment.'));
+      console.log(chalk.gray('The previous version will be overwritten.\n'));
+    } else {
+      // Generate new random name
+      projectName = generateProjectName();
+      console.log(chalk.cyan(`\nGenerated project name: ${chalk.bold(projectName)}\n`));
+    }
+  } else {
+    // No existing project - generate a new random name
+    projectName = generateProjectName();
+    console.log(chalk.cyan(`Generated project name: ${chalk.bold(projectName)}`));
+  }
+
   console.log(chalk.gray(`Path: ${absolutePath}\n`));
 
   // Get or prompt for subdomain
@@ -297,32 +391,40 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   console.log();
 
-  // Step 1: Create project
-  const projectSpinner = ora('Creating project...').start();
+  // Step 1: Create or use existing project
   let projectId: string;
-  try {
-    debug('Step 1: Creating project:', projectName);
-    const createResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name: projectName }),
-    });
+  
+  if (isUpdate && existingProject) {
+    // Use existing project
+    projectId = existingProject.id;
+    console.log(chalk.gray(`Using existing project: ${projectId.substring(0, 8)}...`));
+  } else {
+    // Create new project
+    const projectSpinner = ora('Creating project...').start();
+    try {
+      debug('Step 1: Creating project:', projectName);
+      const createResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: projectName }),
+      });
 
-    if (!createResponse.ok) {
-      const error = await createResponse.text();
-      throw new Error(`Failed to create project: ${error}`);
+      if (!createResponse.ok) {
+        const error = await createResponse.text();
+        throw new Error(`Failed to create project: ${error}`);
+      }
+
+      const project = await createResponse.json();
+      projectId = project.id;
+      projectSpinner.succeed(`Project created: ${projectId.substring(0, 8)}...`);
+    } catch (error) {
+      projectSpinner.fail('Failed to create project');
+      console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+      process.exit(1);
     }
-
-    const project = await createResponse.json();
-    projectId = project.id;
-    projectSpinner.succeed(`Project created: ${projectId.substring(0, 8)}...`);
-  } catch (error) {
-    projectSpinner.fail('Failed to create project');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
-    process.exit(1);
   }
 
   // Step 2: Create zip and upload
@@ -352,7 +454,15 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       throw new Error('Failed to get upload URL');
     }
 
-    const { uploadUrl, s3Location } = await uploadUrlResponse.json();
+    const uploadResult = await uploadUrlResponse.json();
+    const uploadUrl = uploadResult.url || uploadResult.uploadUrl;
+    const s3Location = uploadResult.s3Location;
+    
+    debug('Upload URL response:', JSON.stringify(uploadResult));
+    
+    if (!uploadUrl) {
+      throw new Error('Backend did not return upload URL');
+    }
 
     // Upload to S3
     debug('Step 2b: Uploading to S3...');
