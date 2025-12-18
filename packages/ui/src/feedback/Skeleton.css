@@ -1,0 +1,32 @@
+.lui-skeleton {
+    background: linear-gradient(90deg,
+            var(--lui-bg-tertiary, #e0e0e0) 25%,
+            var(--lui-bg-secondary, #f0f0f0) 50%,
+            var(--lui-bg-tertiary, #e0e0e0) 75%);
+    background-size: 200% 100%;
+    animation: lui-skeleton-shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--lui-radius-sm, 4px);
+    min-height: 1rem;
+}
+
+.lui-skeleton--circle {
+    border-radius: 9999px;
+}
+
+@keyframes lui-skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+[data-theme="dark"] .lui-skeleton {
+    background: linear-gradient(90deg,
+            var(--lui-bg-tertiary, #333) 25%,
+            var(--lui-bg-secondary, #444) 50%,
+            var(--lui-bg-tertiary, #333) 75%);
+    background-size: 200% 100%;
+}

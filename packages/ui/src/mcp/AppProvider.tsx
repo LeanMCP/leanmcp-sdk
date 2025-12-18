@@ -10,15 +10,23 @@ import React, {
     useEffect,
     useState,
     useCallback,
+    useRef,
     type ReactNode,
 } from 'react';
-import { App, PostMessageTransport } from '@modelcontextprotocol/ext-apps';
+import {
+    App,
+    PostMessageTransport,
+    applyHostStyleVariables,
+    applyDocumentTheme,
+} from '@modelcontextprotocol/ext-apps';
 import type {
     McpUiHostContext,
     McpUiToolResultNotification,
     McpUiToolInputNotification,
     McpUiToolInputPartialNotification,
+    McpUiToolCancelledNotification,
     McpUiAppCapabilities,
+    McpUiDisplayMode,
 } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult, Implementation } from '@modelcontextprotocol/sdk/types.js';
 
@@ -59,6 +67,8 @@ export interface McpAppContextValue {
     toolInputPartial: Record<string, unknown> | null;
     /** Tool result received from host */
     toolResult: CallToolResult | null;
+    /** Whether the tool was cancelled by host */
+    toolCancelled: { cancelled: boolean; reason?: string };
     /** Call a server tool */
     callTool: (name: string, args?: Record<string, unknown>) => Promise<CallToolResult>;
     /** Send a message to the host chat */
@@ -67,9 +77,11 @@ export interface McpAppContextValue {
     sendLog: (level: 'debug' | 'info' | 'warning' | 'error', data: unknown) => Promise<void>;
     /** Open a link in the host */
     openLink: (url: string) => Promise<void>;
+    /** Request a display mode change */
+    requestDisplayMode: (mode: McpUiDisplayMode) => Promise<McpUiDisplayMode>;
 }
 
-const McpAppContext = createContext<McpAppContextValue | null>(null);
+export const McpAppContext = createContext<McpAppContextValue | null>(null);
 
 export interface AppProviderProps {
     /** App name and version */
@@ -78,6 +90,8 @@ export interface AppProviderProps {
     capabilities?: McpUiAppCapabilities;
     /** App options (autoResize, etc.) */
     options?: AppOptions;
+    /** Callback when host requests teardown */
+    onTeardown?: () => void | Promise<void>;
     /** React children */
     children: ReactNode;
 }
@@ -96,6 +110,7 @@ export interface AppProviderProps {
  *       appInfo={{ name: "MyApp", version: "1.0.0" }}
  *       capabilities={{ tools: { listChanged: true } }}
  *       options={{ autoResize: true }}
+ *       onTeardown={() => console.log('Cleaning up...')}
  *     >
  *       <MyContent />
  *     </AppProvider>
@@ -103,7 +118,7 @@ export interface AppProviderProps {
  * }
  * ```
  */
-export function AppProvider({ appInfo, capabilities = {}, options = { autoResize: true }, children }: AppProviderProps) {
+export function AppProvider({ appInfo, capabilities = {}, options = { autoResize: true }, onTeardown, children }: AppProviderProps) {
     const [app, setApp] = useState<App | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -111,6 +126,26 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
     const [toolInput, setToolInput] = useState<Record<string, unknown> | null>(null);
     const [toolInputPartial, setToolInputPartial] = useState<Record<string, unknown> | null>(null);
     const [toolResult, setToolResult] = useState<CallToolResult | null>(null);
+    const [toolCancelled, setToolCancelled] = useState<{ cancelled: boolean; reason?: string }>({ cancelled: false });
+
+    // Track initial styles applied to avoid duplicates
+    const stylesApplied = useRef(false);
+
+    // Helper to apply host styles
+    const applyHostStyles = useCallback((context: McpUiHostContext) => {
+        // Apply theme
+        if (context.theme) {
+            applyDocumentTheme(context.theme);
+        }
+        // Apply style variables
+        if (context.styles?.variables) {
+            applyHostStyleVariables(context.styles.variables);
+        }
+        // TODO: Apply fonts when applyHostFonts is available in ext-apps
+        // if (context.styles?.css?.fonts) {
+        //     applyHostFonts(context.styles.css.fonts);
+        // }
+    }, []);
 
     // Connect to host on mount
     useEffect(() => {
@@ -132,6 +167,8 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                 appInstance.ontoolinput = (params: McpUiToolInputNotification['params']) => {
                     if (mounted) {
                         setToolInput(params.arguments as Record<string, unknown>);
+                        // Reset cancelled state on new input
+                        setToolCancelled({ cancelled: false });
                     }
                 };
 
@@ -148,11 +185,28 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                     }
                 };
 
+                // FIX #3: Handle tool cancellation
+                appInstance.ontoolcancelled = (params: McpUiToolCancelledNotification['params']) => {
+                    if (mounted) {
+                        setToolCancelled({ cancelled: true, reason: params.reason });
+                    }
+                };
+
                 appInstance.onhostcontextchanged = (params: Partial<McpUiHostContext>) => {
                     if (mounted) {
                         setHostContext(prev => ({ ...prev, ...params }));
+                        // FIX #6 & #7: Apply host styles on context change
+                        applyHostStyles(params as McpUiHostContext);
                     }
                 };
+
+                // FIX #9: Handle teardown requests
+                if (onTeardown) {
+                    appInstance.onteardown = async () => {
+                        await onTeardown();
+                        return {};
+                    };
+                }
 
                 await appInstance.connect(transport);
 
@@ -161,9 +215,17 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                     setIsConnected(true);
                     setError(null);
 
-                    // Get host context from initialization (if available via capabilities)
-                    // Note: ext-apps stores hostInfo and hostCapabilities but not hostContext
-                    // hostContext comes via onhostcontextchanged notifications
+                    // FIX #2: Get initial host context from the App after connect
+                    const initialContext = appInstance.getHostContext();
+                    if (initialContext) {
+                        setHostContext(initialContext);
+
+                        // Apply initial styles once
+                        if (!stylesApplied.current) {
+                            applyHostStyles(initialContext);
+                            stylesApplied.current = true;
+                        }
+                    }
                 }
             } catch (err) {
                 if (mounted) {
@@ -181,7 +243,7 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                 appInstance.close();
             }
         };
-    }, [appInfo.name, appInfo.version]);
+    }, [appInfo.name, appInfo.version, applyHostStyles, onTeardown]);
 
     // Context methods
     const callTool = useCallback(
@@ -189,6 +251,8 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
             if (!app) {
                 throw new Error('Not connected to host');
             }
+            // Reset cancelled state when calling a new tool
+            setToolCancelled({ cancelled: false });
             const result = await app.callServerTool({ name, arguments: args });
             // Also update toolResult so useToolResult() sees the new data
             setToolResult(result);
@@ -222,6 +286,7 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
         [app]
     );
 
+    // FIX #4: Use non-deprecated openLink method
     const openLink = useCallback(
         async (url: string) => {
             if (!app) {
@@ -229,7 +294,20 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                 window.open(url, '_blank', 'noopener,noreferrer');
                 return;
             }
-            await app.sendOpenLink({ url });
+            await app.openLink({ url });
+        },
+        [app]
+    );
+
+    // FIX #5: Add requestDisplayMode
+    const requestDisplayMode = useCallback(
+        async (mode: McpUiDisplayMode): Promise<McpUiDisplayMode> => {
+            if (!app) {
+                console.warn('[AppProvider] Not connected - cannot request display mode');
+                return 'inline';
+            }
+            const result = await app.requestDisplayMode({ mode });
+            return result.mode;
         },
         [app]
     );
@@ -242,14 +320,15 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
         toolInput,
         toolInputPartial,
         toolResult,
+        toolCancelled,
         callTool,
         sendMessage,
         sendLog,
         openLink,
+        requestDisplayMode,
     };
 
-    // Theme is applied via CSS custom properties, not imperative DOM manipulation
-    // Users can use hostContext.theme to style their components
+    // Theme is applied via CSS custom properties
     const theme = hostContext.theme ?? 'light';
 
     return (
@@ -272,10 +351,12 @@ const ssrDefaultContext: McpAppContextValue = {
     toolInput: null,
     toolInputPartial: null,
     toolResult: null,
+    toolCancelled: { cancelled: false },
     callTool: async () => { throw new Error('callTool not available during SSR'); },
     sendMessage: async () => { console.warn('sendMessage not available during SSR'); },
     sendLog: async () => { console.warn('sendLog not available during SSR'); },
     openLink: async () => { console.warn('openLink not available during SSR'); },
+    requestDisplayMode: async () => { console.warn('requestDisplayMode not available during SSR'); return 'inline'; },
 };
 
 /**

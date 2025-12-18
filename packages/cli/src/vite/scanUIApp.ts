@@ -45,7 +45,7 @@ export async function scanUIApp(projectDir: string): Promise<UIAppInfo[]> {
         const filePath = path.join(mcpDir, relativeFile);
         const content = await fs.readFile(filePath, 'utf-8');
 
-        // Check if file imports from @leanmcp/ui and uses @UIApp
+        // Check if file imports from @leanmcp/ui (or @leanmcp/ui/server) and uses @UIApp
         if (!content.includes('@UIApp') || !content.includes('@leanmcp/ui')) {
             continue;
         }
@@ -72,7 +72,7 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
     const importMap = parseImports(content, filePath);
 
     // Find @UIApp decorators with component reference
-    // Pattern: @UIApp({ component: ComponentName, ... })
+    // Pattern: @UIApp({ component: ComponentName, ... }) OR @UIApp({ component: './path', ... })
     const uiAppRegex = /@UIApp\s*\(\s*\{([^}]+)\}\s*\)\s*(?:async\s+)?(\w+)/g;
     let match;
 
@@ -80,17 +80,46 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
         const decoratorBody = match[1];
         const methodName = match[2];
 
-        // Extract component name from decorator
-        const componentMatch = decoratorBody.match(/component\s*:\s*(\w+)/);
-        if (!componentMatch) continue;
+        // Try to extract component - can be identifier OR string literal
+        // Pattern 1: component: ComponentName (identifier)
+        // Pattern 2: component: './path' or component: "./path" (string)
+        let componentPath: string | undefined;
+        let componentName: string;
 
-        const componentName = componentMatch[1];
-        const componentPath = importMap[componentName];
+        const stringMatch = decoratorBody.match(/component\s*:\s*['"]([^'"]+)['"]/);
+        if (stringMatch) {
+            // String path like './ProductsDashboard'
+            const relativePath = stringMatch[1];
+            const dir = path.dirname(filePath);
+            let resolvedPath = path.resolve(dir, relativePath);
 
-        if (!componentPath) {
-            console.warn(`[scanUIApp] Could not resolve import for component: ${componentName}`);
-            continue;
+            // Add extension if not present
+            if (!resolvedPath.endsWith('.tsx') && !resolvedPath.endsWith('.ts')) {
+                if (fs.existsSync(resolvedPath + '.tsx')) {
+                    resolvedPath += '.tsx';
+                } else if (fs.existsSync(resolvedPath + '.ts')) {
+                    resolvedPath += '.ts';
+                }
+            }
+
+            componentPath = resolvedPath;
+            // Extract component name from path (e.g., './ProductsDashboard' -> 'ProductsDashboard')
+            componentName = path.basename(relativePath).replace(/\.(tsx?|jsx?)$/, '');
+        } else {
+            // Identifier reference like: component: ProductsDashboard
+            const identifierMatch = decoratorBody.match(/component\s*:\s*(\w+)/);
+            if (!identifierMatch) continue;
+
+            componentName = identifierMatch[1];
+            componentPath = importMap[componentName];
+
+            if (!componentPath) {
+                console.warn(`[scanUIApp] Could not resolve import for component: ${componentName}`);
+                continue;
+            }
         }
+
+        if (!componentPath) continue;
 
         // Generate resource URI: ui://<service-lowercase>/<methodName>
         const servicePrefix = serviceName.replace(/Service$/i, '').toLowerCase();
@@ -108,6 +137,7 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
 
     return results;
 }
+
 
 /**
  * Parse import statements to map component names to file paths
