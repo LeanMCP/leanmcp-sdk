@@ -7,17 +7,20 @@ export function ChannelsList() {
       <div style={{ padding: '20px' }}>
         <h1>Slack Channels</h1>
         <ToolDataGrid
-          toolName="listChannels"
-          dataPath="channels"
+          dataTool="listChannels"
+          transformData={(result: any) => ({
+            rows: result.channels || [],
+            total: (result.channels || []).length
+          })}
           columns={[
-            { field: 'name', headerName: 'Channel Name', width: 200 },
-            { field: 'is_private', headerName: 'Private', width: 100 },
-            { field: 'is_member', headerName: 'Member', width: 100 },
-            { field: 'num_members', headerName: 'Members', width: 100 },
-            { field: 'topic', headerName: 'Topic', width: 300 },
-            { field: 'purpose', headerName: 'Purpose', width: 300 },
+            { key: 'name', header: 'Channel Name', width: '200px' },
+            { key: 'is_private', header: 'Private', width: '100px' },
+            { key: 'is_member', header: 'Member', width: '100px' },
+            { key: 'num_members', header: 'Members', width: '100px' },
+            { key: 'topic', header: 'Topic', width: '300px' },
+            { key: 'purpose', header: 'Purpose', width: '300px' },
           ]}
-          autoRefresh={30000}
+          refreshInterval={30000}
         />
       </div>
     </RequireConnection>

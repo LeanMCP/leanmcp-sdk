@@ -169,6 +169,8 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
                         setToolInput(params.arguments as Record<string, unknown>);
                         // Reset cancelled state on new input
                         setToolCancelled({ cancelled: false });
+                        // Note: Don't set isConnected here - it's set after connect() completes
+                        // This handler is for when the host sends tool input (Tools tab context)
                     }
                 };
 
@@ -212,6 +214,9 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
 
                 if (mounted) {
                     setApp(appInstance);
+                    // Set connected after successful connection
+                    // This allows RequireConnection to render children (ToolDataGrid)
+                    // ToolDataGrid will handle its own loading state while fetching data
                     setIsConnected(true);
                     setError(null);
 

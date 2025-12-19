@@ -96,8 +96,12 @@ export function RequireConnection({
 }: RequireConnectionProps) {
     const { isConnected, error, app } = useMcpApp();
 
+    // Debug logging
+    console.log('[RequireConnection] State:', { hasApp: !!app, isConnected, hasError: !!error });
+
     // Still initializing (no app yet, no error)
     if (!app && !error && !isConnected) {
+        console.log('[RequireConnection] Rendering: Initial Loading');
         if (loadingContent) {
             return <div className={className}>{loadingContent}</div>;
         }
@@ -110,6 +114,7 @@ export function RequireConnection({
 
     // Error state
     if (error) {
+        console.log('[RequireConnection] Rendering: Error');
         if (errorContent) {
             if (typeof errorContent === 'function') {
                 return <div className={className}>{errorContent(error)}</div>;
@@ -125,6 +130,7 @@ export function RequireConnection({
 
     // Not connected (but has app - transitional state)
     if (!isConnected) {
+        console.log('[RequireConnection] Rendering: Disconnected/Loading');
         if (disconnectedContent) {
             return <div className={className}>{disconnectedContent}</div>;
         }
@@ -138,6 +144,7 @@ export function RequireConnection({
         );
     }
 
-    // Connected - render children
+    // Connected - render children directly without wrapper
+    console.log('[RequireConnection] Rendering: Children (Connected)');
     return <>{children}</>;
 }

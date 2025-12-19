@@ -23,6 +23,41 @@ export interface BuildResult {
 }
 
 /**
+ * Resolve React dependency path (monorepo-safe)
+ * Checks project's node_modules first, then walks up for workspace setups
+ */
+function resolveReactDependency(startDir: string, packageName: string): string {
+    // First check project's local node_modules (most common case, no traversal needed)
+    const localPath = path.join(startDir, 'node_modules', packageName);
+    if (fs.existsSync(localPath)) {
+        return localPath;
+    }
+
+    // If not found locally, walk up for monorepo workspaces (hoisted dependencies)
+    let currentDir = path.dirname(startDir);
+    const maxDepth = 10; // Prevent infinite loops
+    let depth = 0;
+
+    while (depth < maxDepth) {
+        const nodeModulesPath = path.join(currentDir, 'node_modules', packageName);
+        if (fs.existsSync(nodeModulesPath)) {
+            return nodeModulesPath;
+        }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+            // Reached root directory
+            break;
+        }
+        currentDir = parentDir;
+        depth++;
+    }
+
+    // Fallback: return local path (will fail gracefully if not found)
+    return localPath;
+}
+
+/**
  * Build a UI component to a single-file HTML
  */
 export async function buildUIComponent(
@@ -235,6 +270,10 @@ createRoot(document.getElementById('root')!).render(
 `);
 
     try {
+        // Resolve React dependencies (monorepo-safe: checks workspace root too)
+        const reactPath = resolveReactDependency(projectDir, 'react');
+        const reactDomPath = resolveReactDependency(projectDir, 'react-dom');
+
         // Build with Vite
         await vite.build({
             root: tempDir,
@@ -244,11 +283,11 @@ createRoot(document.getElementById('root')!).render(
             ],
             resolve: {
                 alias: {
-                    // Resolve React from user's project node_modules
-                    'react': path.join(projectDir, 'node_modules', 'react'),
-                    'react-dom': path.join(projectDir, 'node_modules', 'react-dom'),
-                    'react/jsx-runtime': path.join(projectDir, 'node_modules', 'react', 'jsx-runtime'),
-                    'react/jsx-dev-runtime': path.join(projectDir, 'node_modules', 'react', 'jsx-dev-runtime'),
+                    // Resolve React from project or workspace root node_modules
+                    'react': reactPath,
+                    'react-dom': reactDomPath,
+                    'react/jsx-runtime': path.join(reactPath, 'jsx-runtime'),
+                    'react/jsx-dev-runtime': path.join(reactPath, 'jsx-dev-runtime'),
                 },
             },
             css: {
