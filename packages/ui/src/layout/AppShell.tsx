@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, type ReactNode, type HTMLAttributes } from 'react';
 import { clsx } from 'clsx';
+import { useMcpApp } from '../mcp/AppProvider';
 import './AppShell.css';
 
 export interface AppShellProps extends HTMLAttributes<HTMLDivElement> {
@@ -13,7 +14,7 @@ export interface AppShellProps extends HTMLAttributes<HTMLDivElement> {
     sidebarPosition?: 'left' | 'right';
     /** Sidebar width */
     sidebarWidth?: number | string;
-    /** Enable auto-resize to content */
+    /** Enable auto-resize to content (uses ext-apps sendSizeChanged) */
     autoResize?: boolean;
     /** Padding */
     padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -23,6 +24,7 @@ export interface AppShellProps extends HTMLAttributes<HTMLDivElement> {
  * AppShell - Root layout container for MCP Apps
  * 
  * Provides header, sidebar, main content, and footer areas with auto-resize support.
+ * Uses the ext-apps protocol for proper size change notifications.
  * 
  * @example
  * ```tsx
@@ -48,31 +50,53 @@ export function AppShell({
     ...props
 }: AppShellProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const { app } = useMcpApp();
 
-    // Auto-resize effect
+    // Auto-resize effect - FIX #1: Use proper ext-apps sendSizeChanged
     useEffect(() => {
+        // Skip if autoResize is disabled or no container
         if (!autoResize || !containerRef.current) return;
 
-        const resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const { height } = entry.contentRect;
-                // Send resize message to parent (host)
-                window.parent.postMessage(
-                    {
-                        type: 'resize',
-                        height: Math.ceil(height),
-                    },
-                    '*'
-                );
-            }
-        });
+        // Skip if app not connected - the App's built-in autoResize handles this
+        // This effect is for cases where we want additional resize triggers
+        if (!app) return;
 
+        let lastWidth = 0;
+        let lastHeight = 0;
+        let scheduled = false;
+
+        const sendSizeChanged = () => {
+            if (scheduled) return;
+            scheduled = true;
+
+            requestAnimationFrame(() => {
+                scheduled = false;
+                if (!containerRef.current) return;
+
+                const rect = containerRef.current.getBoundingClientRect();
+                const width = Math.ceil(rect.width);
+                const height = Math.ceil(rect.height);
+
+                // Only send if size actually changed
+                if (width !== lastWidth || height !== lastHeight) {
+                    lastWidth = width;
+                    lastHeight = height;
+                    // Use the proper ext-apps protocol method
+                    app.sendSizeChanged({ width, height });
+                }
+            });
+        };
+
+        const resizeObserver = new ResizeObserver(sendSizeChanged);
         resizeObserver.observe(containerRef.current);
+
+        // Initial send
+        sendSizeChanged();
 
         return () => {
             resizeObserver.disconnect();
         };
-    }, [autoResize]);
+    }, [autoResize, app]);
 
     const sidebarStyle = {
         width: typeof sidebarWidth === 'number' ? `${sidebarWidth}px` : sidebarWidth,
