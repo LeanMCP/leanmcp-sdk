@@ -435,9 +435,34 @@ export async function createHTTPServer(
   };
 
   // Route handlers based on mode
-  // GET /mcp serves the dashboard in BOTH modes (if enabled)
-  if (isDashboardEnabled) {
-    app.get('/mcp', async (req: any, res: any) => {
+  // GET /mcp: serves dashboard HTML unless client requests SSE (text/event-stream)
+  // StreamableHTTPClientTransport uses GET with Accept: text/event-stream for server-to-client streaming
+  app.get('/mcp', async (req: any, res: any) => {
+    const acceptHeader = req.headers['accept'] || '';
+    
+    // If client requests SSE, handle as MCP streaming request
+    if (acceptHeader.includes('text/event-stream')) {
+      // SSE requests need session handling - only supported in stateful mode
+      if (!isStateless) {
+        const sessionId = req.headers['mcp-session-id'] as string | undefined;
+        if (sessionId && transports[sessionId]) {
+          const transport = transports[sessionId];
+          logger.info(`GET /mcp SSE request (session: ${sessionId.substring(0, 8)}...)`);
+          await transport.handleRequest(req, res);
+          return;
+        }
+      }
+      // Stateless mode or no valid session - return 405 Method Not Allowed
+      res.status(405).json({
+        jsonrpc: '2.0',
+        error: { code: -32000, message: 'SSE streaming not supported in stateless mode or invalid session' },
+        id: null
+      });
+      return;
+    }
+    
+    // Otherwise serve dashboard HTML (if enabled)
+    if (isDashboardEnabled) {
       try {
         const html = await fetchDashboard();
         res.setHeader('Content-Type', 'text/html');
@@ -445,8 +470,10 @@ export async function createHTTPServer(
       } catch (error) {
         res.status(500).send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
       }
-    });
-  }
+    } else {
+      res.status(404).json({ error: 'Dashboard disabled' });
+    }
+  });
 
   if (isStateless) {
     app.post('/mcp', handleMCPRequestStateless);

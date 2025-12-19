@@ -44,22 +44,15 @@ export {
 // ============================================================================
 // UI Package - React components for MCP Apps
 // ============================================================================
+// Re-export everything from @leanmcp/ui
 export * from '@leanmcp/ui';
 
+// Named exports for commonly used items (for better IDE autocomplete)
 export {
-    // Providers
+    // Core providers and hooks
     AppProvider,
     useMcpApp,
-
-    // Layout Components
-    AppShell,
-
-    // Transport
-    HTTPTransport,
-
-    // Hooks
     useTool,
-    useToolSubscription,
 
     // Components
     ActionButton,
@@ -73,14 +66,15 @@ export {
     DataGrid,
     Chart,
     CodeBlock,
+    AppShell,
+    UIApp,
+    getUIAppMetadata,
+    getUIAppUri,
 
     // Types
     type AppProviderProps,
     type AppShellProps,
-    type HTTPTransportConfig,
-    type MCPTool,
-    type MCPResource,
-    type MCPPrompt,
+    type UIAppOptions,
 } from '@leanmcp/ui';
 
 // ============================================================================

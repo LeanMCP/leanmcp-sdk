@@ -23,6 +23,41 @@ export interface BuildResult {
 }
 
 /**
+ * Resolve React dependency path (monorepo-safe)
+ * Checks project's node_modules first, then walks up for workspace setups
+ */
+function resolveReactDependency(startDir: string, packageName: string): string {
+    // First check project's local node_modules (most common case, no traversal needed)
+    const localPath = path.join(startDir, 'node_modules', packageName);
+    if (fs.existsSync(localPath)) {
+        return localPath;
+    }
+
+    // If not found locally, walk up for monorepo workspaces (hoisted dependencies)
+    let currentDir = path.dirname(startDir);
+    const maxDepth = 10; // Prevent infinite loops
+    let depth = 0;
+
+    while (depth < maxDepth) {
+        const nodeModulesPath = path.join(currentDir, 'node_modules', packageName);
+        if (fs.existsSync(nodeModulesPath)) {
+            return nodeModulesPath;
+        }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+            // Reached root directory
+            break;
+        }
+        currentDir = parentDir;
+        depth++;
+    }
+
+    // Fallback: return local path (will fail gracefully if not found)
+    return localPath;
+}
+
+/**
  * Build a UI component to a single-file HTML
  */
 export async function buildUIComponent(
@@ -66,9 +101,9 @@ export async function buildUIComponent(
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        '${path.join(projectDir, '**/*.{ts,tsx,js,jsx}').replace(/\\/g, '/')}',
-        '${path.join(projectDir, 'mcp/**/*.{ts,tsx,js,jsx}').replace(/\\/g, '/')}',
-        '${path.join(projectDir, 'node_modules/@leanmcp/ui/**/*.{js,mjs}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'src/**/*.{ts,tsx}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'mcp/**/*.{ts,tsx}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'node_modules/@leanmcp/ui/dist/**/*.{js,mjs}').replace(/\\/g, '/')}',
         '${path.join(projectDir, '../../packages/ui/src/**/*.{ts,tsx}').replace(/\\/g, '/')}',
     ],
     darkMode: ['class'],
@@ -126,6 +161,21 @@ module.exports = {
     plugins: [],
 }
 `);
+
+    // Generate tsconfig.json with jsx: react-jsx for proper JSX transformation
+    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
+    await fs.writeFile(tsconfigPath, JSON.stringify({
+        compilerOptions: {
+            target: "ES2020",
+            jsx: "react-jsx",  // Critical: Use modern React JSX transform
+            module: "ESNext",
+            moduleResolution: "bundler",
+            skipLibCheck: true,
+            esModuleInterop: true
+        }
+    }, null, 2));
+
+
 
     // Generate styles.css with Tailwind directives and CSS variables
     const stylesCss = path.join(tempDir, 'styles.css');
@@ -220,6 +270,10 @@ createRoot(document.getElementById('root')!).render(
 `);
 
     try {
+        // Resolve React dependencies (monorepo-safe: checks workspace root too)
+        const reactPath = resolveReactDependency(projectDir, 'react');
+        const reactDomPath = resolveReactDependency(projectDir, 'react-dom');
+
         // Build with Vite
         await vite.build({
             root: tempDir,
@@ -227,6 +281,15 @@ createRoot(document.getElementById('root')!).render(
                 react(),
                 viteSingleFile(),
             ],
+            resolve: {
+                alias: {
+                    // Resolve React from project or workspace root node_modules
+                    'react': reactPath,
+                    'react-dom': reactDomPath,
+                    'react/jsx-runtime': path.join(reactPath, 'jsx-runtime'),
+                    'react/jsx-dev-runtime': path.join(reactPath, 'jsx-dev-runtime'),
+                },
+            },
             css: {
                 postcss: {
                     plugins: [

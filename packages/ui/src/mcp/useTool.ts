@@ -57,7 +57,19 @@ function extractResultData<T>(result: CallToolResult): T | null {
 
         if (textContent) {
             try {
-                return JSON.parse(textContent) as T;
+                const parsed = JSON.parse(textContent);
+
+                // Check if the parsed result has nested content structure
+                // (common pattern: { content: [{ type: 'text', text: '...' }] })
+                if (parsed && typeof parsed === 'object' && 'content' in parsed && Array.isArray(parsed.content)) {
+                    // Recursively extract from nested content
+                    const nested = extractResultData<T>(parsed as CallToolResult);
+                    if (nested !== null) {
+                        return nested;
+                    }
+                }
+
+                return parsed as T;
             } catch {
                 return textContent as T;
             }

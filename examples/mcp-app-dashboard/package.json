@@ -5,7 +5,7 @@
     "scripts": {
         "start": "npx leanmcp start",
         "dev": "npx leanmcp dev",
-        "build": "npx leanmcp build",
+        "build": "tsc",
         "server": "tsx main.ts"
     },
     "dependencies": {
