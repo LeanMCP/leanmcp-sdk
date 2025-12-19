@@ -8,7 +8,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
-import chokidar from 'chokidar';
+import chokidar, { type FSWatcher } from 'chokidar';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
 
 export async function devCommand() {
@@ -75,7 +75,7 @@ export async function devCommand() {
     });
 
     // Step 4: Watch for UI component changes
-    let watcher: chokidar.FSWatcher | null = null;
+    let watcher: FSWatcher | null = null;
 
     if (uiApps.length > 0) {
         const componentPaths = uiApps.map(app => app.componentPath);
@@ -84,7 +84,7 @@ export async function devCommand() {
             ignoreInitial: true,
         });
 
-        watcher.on('change', async (changedPath) => {
+        watcher.on('change', async (changedPath: string) => {
             const app = uiApps.find(a => a.componentPath === changedPath);
             if (!app) return;
 
@@ -103,11 +103,17 @@ export async function devCommand() {
     }
 
     // Handle process termination
+    let isCleaningUp = false;
     const cleanup = () => {
+        if (isCleaningUp) return;
+        isCleaningUp = true;
+
         console.log(chalk.gray('\nShutting down...'));
         if (watcher) watcher.close();
-        devServer.kill();
-        process.exit(0);
+        devServer.kill('SIGTERM');
+
+        // Don't call process.exit here - let the devServer exit handler do it
+        // This prevents terminal crashes on Windows
     };
 
     process.on('SIGINT', cleanup);

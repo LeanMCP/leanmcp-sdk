@@ -100,10 +100,16 @@ export async function startCommand() {
     });
 
     // Handle process termination
+    let isCleaningUp = false;
     const cleanup = () => {
+        if (isCleaningUp) return;
+        isCleaningUp = true;
+
         console.log(chalk.gray('\nShutting down...'));
-        server.kill();
-        process.exit(0);
+        server.kill('SIGTERM');
+
+        // Don't call process.exit here - let the server exit handler do it
+        // This prevents terminal crashes on Windows
     };
 
     process.on('SIGINT', cleanup);

@@ -127,6 +127,21 @@ module.exports = {
 }
 `);
 
+    // Generate tsconfig.json with jsx: react-jsx for proper JSX transformation
+    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
+    await fs.writeFile(tsconfigPath, JSON.stringify({
+        compilerOptions: {
+            target: "ES2020",
+            jsx: "react-jsx",  // Critical: Use modern React JSX transform
+            module: "ESNext",
+            moduleResolution: "bundler",
+            skipLibCheck: true,
+            esModuleInterop: true
+        }
+    }, null, 2));
+
+
+
     // Generate styles.css with Tailwind directives and CSS variables
     const stylesCss = path.join(tempDir, 'styles.css');
     await fs.writeFile(stylesCss, `
@@ -227,6 +242,15 @@ createRoot(document.getElementById('root')!).render(
                 react(),
                 viteSingleFile(),
             ],
+            resolve: {
+                alias: {
+                    // Resolve React from user's project node_modules
+                    'react': path.join(projectDir, 'node_modules', 'react'),
+                    'react-dom': path.join(projectDir, 'node_modules', 'react-dom'),
+                    'react/jsx-runtime': path.join(projectDir, 'node_modules', 'react', 'jsx-runtime'),
+                    'react/jsx-dev-runtime': path.join(projectDir, 'node_modules', 'react', 'jsx-dev-runtime'),
+                },
+            },
             css: {
                 postcss: {
                     plugins: [

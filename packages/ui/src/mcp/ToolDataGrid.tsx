@@ -227,6 +227,11 @@ export function ToolDataGrid<T = Record<string, unknown>>({
     loadingContent,
     className,
 }: ToolDataGridProps<T>) {
+    // Validate dataTool is provided
+    if (!dataTool) {
+        throw new Error('ToolDataGrid: dataTool prop is required');
+    }
+
     // Normalize tool config
     const toolConfig = typeof dataTool === 'string' ? { name: dataTool } : dataTool;
 
@@ -568,6 +573,11 @@ function RowActionButton<T>({
     row: T;
     onRefresh: () => void;
 }) {
+    // Validate action.tool is provided
+    if (!action.tool) {
+        throw new Error('ToolDataGrid: rowAction.tool is required');
+    }
+
     const toolConfig = typeof action.tool === 'string' ? { name: action.tool } : action.tool;
     const args = action.getArgs?.(row) ?? { id: (row as Record<string, unknown>).id };
 
