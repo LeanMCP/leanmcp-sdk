@@ -66,9 +66,9 @@ export async function buildUIComponent(
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        '${path.join(projectDir, '**/*.{ts,tsx,js,jsx}').replace(/\\/g, '/')}',
-        '${path.join(projectDir, 'mcp/**/*.{ts,tsx,js,jsx}').replace(/\\/g, '/')}',
-        '${path.join(projectDir, 'node_modules/@leanmcp/ui/**/*.{js,mjs}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'src/**/*.{ts,tsx}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'mcp/**/*.{ts,tsx}').replace(/\\/g, '/')}',
+        '${path.join(projectDir, 'node_modules/@leanmcp/ui/dist/**/*.{js,mjs}').replace(/\\/g, '/')}',
         '${path.join(projectDir, '../../packages/ui/src/**/*.{ts,tsx}').replace(/\\/g, '/')}',
     ],
     darkMode: ['class'],
