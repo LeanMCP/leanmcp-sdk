@@ -8,8 +8,66 @@ import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
+import crypto from 'crypto';
 import chokidar, { type FSWatcher } from 'chokidar';
-import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
+import { scanUIApp, buildUIComponent, writeUIManifest, deleteUIComponent, type UIAppInfo } from '../vite';
+
+/**
+ * Compute hash of file content for change detection
+ */
+function computeHash(filePath: string): string {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    return crypto.createHash('md5').update(content).digest('hex');
+}
+
+interface UIDiff {
+    removed: string[]; // URIs that were removed
+    added: Set<string>; // URIs that were added
+    addedOrChanged: UIAppInfo[]; // Apps to rebuild (added + changed)
+}
+
+/**
+ * Compute diff between previous and current UIApps
+ */
+function computeDiff(
+    previousUIApps: UIAppInfo[],
+    currentUIApps: UIAppInfo[],
+    hashCache: Map<string, string>
+): UIDiff {
+    const previousURIs = new Set(previousUIApps.map(app => app.resourceUri));
+    const currentURIs = new Set(currentUIApps.map(app => app.resourceUri));
+
+    // Removed: in previous but not in current
+    const removed = Array.from(previousURIs).filter(uri => !currentURIs.has(uri));
+
+    // Added: in current but not in previous
+    const added = new Set(Array.from(currentURIs).filter(uri => !previousURIs.has(uri)));
+
+    // Changed: same URI but component content hash differs
+    const addedOrChanged: UIAppInfo[] = [];
+
+    for (const app of currentUIApps) {
+        const isNew = added.has(app.resourceUri);
+
+        if (isNew) {
+            addedOrChanged.push(app);
+        } else {
+            // Check if component hash changed
+            const oldHash = hashCache.get(app.resourceUri);
+            let newHash: string | undefined;
+
+            if (fs.existsSync(app.componentPath)) {
+                newHash = computeHash(app.componentPath);
+            }
+
+            if (oldHash !== newHash) {
+                addedOrChanged.push(app);
+            }
+        }
+    }
+
+    return { removed, added, addedOrChanged };
+}
 
 export async function devCommand() {
     const cwd = process.cwd();
@@ -21,19 +79,16 @@ export async function devCommand() {
         process.exit(1);
     }
 
-    console.log(chalk.cyan('\n🚀 LeanMCP Development Server\n'));
+    console.log(chalk.cyan('\nLeanMCP Development Server\n'));
 
     // Step 1: Scan for UI components
     const scanSpinner = ora('Scanning for @UIApp components...').start();
     const uiApps = await scanUIApp(cwd);
 
     if (uiApps.length === 0) {
-        scanSpinner.succeed('No @UIApp components found');
+        scanSpinner.info('No @UIApp components found');
     } else {
-        scanSpinner.succeed(`Found ${uiApps.length} @UIApp component(s)`);
-        for (const app of uiApps) {
-            console.log(chalk.gray(`   • ${app.componentName} → ${app.resourceUri}`));
-        }
+        scanSpinner.info(`Found ${uiApps.length} @UIApp component(s)`);
     }
 
     // Step 2: Build UI components
@@ -58,10 +113,10 @@ export async function devCommand() {
         if (errors.length > 0) {
             buildSpinner.warn('Built with warnings');
             for (const error of errors) {
-                console.error(chalk.yellow(`   ⚠ ${error}`));
+                console.error(chalk.yellow(`   ${error}`));
             }
         } else {
-            buildSpinner.succeed('UI components built');
+            buildSpinner.info('UI components built');
         }
     }
 
@@ -74,33 +129,85 @@ export async function devCommand() {
         shell: true,
     });
 
-    // Step 4: Watch for UI component changes
+    // Step 4: Watch mcp directory for all changes (decorators + components)
     let watcher: FSWatcher | null = null;
 
-    if (uiApps.length > 0) {
-        const componentPaths = uiApps.map(app => app.componentPath);
+    // Hash cache for change detection
+    const componentHashCache = new Map<string, string>();
 
-        watcher = chokidar.watch(componentPaths, {
-            ignoreInitial: true,
-        });
-
-        watcher.on('change', async (changedPath: string) => {
-            const app = uiApps.find(a => a.componentPath === changedPath);
-            if (!app) return;
-
-            console.log(chalk.cyan(`\n[UI] Rebuilding ${app.componentName}...`));
-
-            const result = await buildUIComponent(app, cwd, true);
-
-            if (result.success) {
-                manifest[app.resourceUri] = result.htmlPath;
-                await writeUIManifest(manifest, cwd);
-                console.log(chalk.green(`[UI] ${app.componentName} rebuilt successfully`));
-            } else {
-                console.log(chalk.yellow(`[UI] ${app.componentName} build failed: ${result.error}`));
-            }
-        });
+    // Initialize hash cache for current UIApps
+    for (const app of uiApps) {
+        if (await fs.pathExists(app.componentPath)) {
+            componentHashCache.set(app.resourceUri, computeHash(app.componentPath));
+        }
     }
+
+    // Store previous UIApps for diffing
+    let previousUIApps: UIAppInfo[] = uiApps;
+
+    // Watch mcp/**/* for all changes
+    const mcpPath = path.join(cwd, 'mcp');
+    watcher = chokidar.watch(mcpPath, {
+        ignoreInitial: true,
+        ignored: ['**/node_modules/**', '**/*.d.ts'],
+        persistent: true,
+        awaitWriteFinish: {
+            stabilityThreshold: 100,
+            pollInterval: 50
+        }
+    });
+
+    // Debounced handler (150ms coalesce for rapid saves)
+    let debounceTimer: NodeJS.Timeout | null = null;
+
+    watcher.on('all', async (event: string, changedPath: string) => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(async () => {
+            // Re-scan for current UIApps
+            const currentUIApps = await scanUIApp(cwd);
+
+            // Compute diff
+            const diff = computeDiff(previousUIApps, currentUIApps, componentHashCache);
+
+            if (diff.removed.length === 0 && diff.addedOrChanged.length === 0) {
+                return;
+            }
+
+            // Handle removed UIApps
+            for (const uri of diff.removed) {
+                console.log(chalk.yellow(`Removing ${uri}...`));
+                await deleteUIComponent(uri, cwd);
+                delete manifest[uri];
+                componentHashCache.delete(uri);
+            }
+
+            // Handle added or changed UIApps
+            for (const app of diff.addedOrChanged) {
+                const action = diff.added.has(app.resourceUri) ? 'Building' : 'Rebuilding';
+                console.log(chalk.cyan(`${action} ${app.componentName}...`));
+
+                const result = await buildUIComponent(app, cwd, true);
+
+                if (result.success) {
+                    manifest[app.resourceUri] = result.htmlPath;
+                    // Update hash cache
+                    if (await fs.pathExists(app.componentPath)) {
+                        componentHashCache.set(app.resourceUri, computeHash(app.componentPath));
+                    }
+                    console.log(chalk.green(`${app.componentName} ${action.toLowerCase()} complete`));
+                } else {
+                    console.log(chalk.yellow(`Build failed: ${result.error}`));
+                }
+            }
+
+            // Write manifest atomically after all operations
+            await writeUIManifest(manifest, cwd);
+
+            // Update previous UIApps for next diff
+            previousUIApps = currentUIApps;
+        }, 150);
+    });
 
     // Handle process termination
     let isCleaningUp = false;

@@ -340,3 +340,18 @@ export async function writeUIManifest(
     await fs.ensureDir(path.dirname(manifestPath));
     await fs.writeJson(manifestPath, manifest, { spaces: 2 });
 }
+
+/**
+ * Delete a UI component's HTML file and clean up artifacts
+ */
+export async function deleteUIComponent(
+    uri: string,
+    projectDir: string
+): Promise<void> {
+    const safeFileName = uri.replace('ui://', '').replace(/\//g, '-') + '.html';
+    const htmlPath = path.join(projectDir, 'dist', 'ui', safeFileName);
+
+    if (await fs.pathExists(htmlPath)) {
+        await fs.remove(htmlPath);
+    }
+}
