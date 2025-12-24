@@ -16,8 +16,8 @@
   <a href="https://www.npmjs.com/package/@leanmcp/core">
     <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
   </a>
-  <a href="https://www.npmjs.com/package/@leanmcp/core">
-    <img src="https://img.shields.io/npm/dm/@leanmcp/core" alt="npm downloads" />
+  <a href="https://www.npmjs.com/package/@leanmcp/cli">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/cli" alt="npm downloads" />
   </a>
   <a href="https://leanmcp.com/">
     <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
