@@ -7,6 +7,32 @@ import { execSync } from "child_process";
 const POSTHOG_API_KEY = "phc_EoMHKFbx6j2wUFsf8ywqgHntY4vEXC3ZzLFoPJVjRRT";
 const POSTHOG_API_HOST = "https://d18m0xvdtnkibr.cloudfront.net";
 
+// Global debug mode
+let DEBUG_MODE = false;
+
+/**
+ * Enable or disable debug mode globally
+ */
+export function setDebugMode(enabled: boolean): void {
+  DEBUG_MODE = enabled;
+}
+
+/**
+ * Check if debug mode is enabled
+ */
+export function isDebugMode(): boolean {
+  return DEBUG_MODE;
+}
+
+/**
+ * Debug log - only prints when debug mode is enabled
+ */
+export function debug(message: string, ...args: any[]): void {
+  if (DEBUG_MODE) {
+    console.log(chalk.gray(`[DEBUG] ${message}`), ...args);
+  }
+}
+
 // Check if telemetry is disabled
 const isTelemetryDisabled = (): boolean => {
   return process.env.LEANMCP_DISABLE_TELEMETRY === "true";
@@ -56,6 +82,7 @@ const sendToPostHog = (
   properties: Record<string, any> = {}
 ): void => {
   if (isTelemetryDisabled()) {
+    debug("[PostHog] Telemetry disabled, skipping event:", eventName);
     return;
   }
 
@@ -79,12 +106,19 @@ const sendToPostHog = (
         timestamp: new Date().toISOString(),
       };
 
+      const url = `${POSTHOG_API_HOST}/capture/`;
+      
+      // Debug logging for PostHog requests
+      debug(`[PostHog] POST ${url}`);
+      debug(`[PostHog] Event: ${eventName}`);
+      debug(`[PostHog] Payload:`, JSON.stringify(payload, null, 2));
+
       // Create an AbortController with a 3 second timeout
       // This ensures we don't hang on slow networks
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-      fetch(`${POSTHOG_API_HOST}/capture/`, {
+      fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,13 +126,16 @@ const sendToPostHog = (
         body: JSON.stringify(payload),
         signal: controller.signal,
       })
-        .then(() => clearTimeout(timeoutId))
-        .catch(() => {
+        .then((response) => {
           clearTimeout(timeoutId);
-          // Silently ignore - no retries, no logging
+          debug(`[PostHog] Response: ${response.status} ${response.statusText}`);
+        })
+        .catch((err) => {
+          clearTimeout(timeoutId);
+          debug(`[PostHog] Error: ${err.message || err}`);
         });
-    } catch {
-      // Silently ignore telemetry errors - never throw
+    } catch (err: any) {
+      debug(`[PostHog] Exception: ${err.message || err}`);
     }
   });
 };

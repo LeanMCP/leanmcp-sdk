@@ -8,7 +8,7 @@ import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
 import { buildCommand } from "./commands/build";
-import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
+import { loginCommand, logoutCommand, whoamiCommand, setDebugMode as setLoginDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
 import { getReadmeTemplate } from "./templates/readme_v1";
@@ -16,7 +16,7 @@ import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
 import { getMainTsTemplate } from "./templates/main_ts_v1";
 import { getServiceIndexTemplate } from "./templates/service_index_v1";
-import { trackCommand, log, chalk } from "./logger";
+import { trackCommand, log, chalk, setDebugMode, debug } from "./logger";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -28,16 +28,32 @@ function capitalize(str: string): string {
 
 const program = new Command();
 
+// Enable global debug mode based on --debug flag
+function enableDebugIfNeeded() {
+  const args = process.argv;
+  if (args.includes("--debug") || args.includes("-d")) {
+    setDebugMode(true);
+    setLoginDebugMode(true);
+    setDeployDebugMode(true);
+    debug("Debug mode enabled globally");
+  }
+}
+
+// Call early to enable debug mode before any command runs
+enableDebugIfNeeded();
+
 program
   .name("leanmcp")
   .description("LeanMCP CLI — create production-ready MCP servers with Streamable HTTP")
-  .version(pkg.version)
+  .version(pkg.version, "-v, --version", "Output the current version")
+  .helpOption("-h, --help", "Display help for command")
+  .option("-d, --debug", "Enable debug logging for all commands")
   .addHelpText(
     "after",
     `
 Examples:
   $ leanmcp create my-app                # Create new project (interactive)
-  $ leanmcp create my-app --install      # Create and install deps (non-interactive)
+  $ leanmcp create my-app -i             # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
   $ leanmcp build                        # Compile TypeScript
@@ -46,6 +62,11 @@ Examples:
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
   $ leanmcp projects delete <id>         # Delete a cloud project
+
+Global Options:
+  -v, --version    Output the current version
+  -h, --help       Display help for command
+  -d, --debug      Enable debug logging for all commands
 `
   );
 
@@ -54,7 +75,7 @@ program
   .description("Create a new LeanMCP project with Streamable HTTP transport")
   .option("--allow-all", "Skip interactive confirmations and assume Yes")
   .option("--no-dashboard", "Disable dashboard UI at / and /mcp GET endpoints")
-  .option("--install", "Install dependencies automatically (non-interactive, no dev server)")
+  .option("-i, --install", "Install dependencies automatically (non-interactive, no dev server)")
   .option("--no-install", "Skip dependency installation (non-interactive)")
   .action(async (projectName, options) => {
     trackCommand("create", { projectName, ...options });
@@ -322,12 +343,8 @@ program
 program
   .command("login")
   .description("Authenticate with LeanMCP cloud using an API key")
-  .option("--debug", "Enable debug logging")
-  .action(async (options) => {
-    trackCommand("login", { debug: options.debug });
-    if (options.debug) {
-      setDebugMode(true);
-    }
+  .action(async () => {
+    trackCommand("login");
     await loginCommand();
   });
 
@@ -352,13 +369,8 @@ program
   .description("Deploy an MCP server to LeanMCP cloud")
   .option("-s, --subdomain <subdomain>", "Subdomain for deployment")
   .option("-y, --yes", "Skip confirmation prompts")
-  .option("--debug", "Enable debug logging for network calls")
   .action(async (folder, options) => {
     trackCommand("deploy", { folder, subdomain: options.subdomain, yes: options.yes });
-    if (options.debug) {
-      setDebugMode(true);
-      setDeployDebugMode(true);
-    }
     const targetFolder = folder || ".";
     await deployCommand(targetFolder, {
       subdomain: options.subdomain,
