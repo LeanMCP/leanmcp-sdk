@@ -66,6 +66,49 @@ interface DeployOptions {
   skipConfirm?: boolean;
 }
 
+// .leanmcp config interface
+interface LeanMCPConfig {
+  projectId: string;
+  projectName: string;
+  subdomain: string;
+  url: string;
+  lastDeployedAt: string;
+  buildId?: string;
+  deploymentId?: string;
+}
+
+const LEANMCP_CONFIG_DIR = '.leanmcp';
+const LEANMCP_CONFIG_FILE = 'config.json';
+
+/**
+ * Read .leanmcp/config.json if it exists
+ */
+async function readLeanMCPConfig(projectPath: string): Promise<LeanMCPConfig | null> {
+  const configPath = path.join(projectPath, LEANMCP_CONFIG_DIR, LEANMCP_CONFIG_FILE);
+  try {
+    if (await fs.pathExists(configPath)) {
+      const config = await fs.readJSON(configPath);
+      debug('Found existing .leanmcp config:', config);
+      return config;
+    }
+  } catch (e) {
+    debug('Could not read .leanmcp config:', e);
+  }
+  return null;
+}
+
+/**
+ * Write .leanmcp/config.json
+ */
+async function writeLeanMCPConfig(projectPath: string, config: LeanMCPConfig): Promise<void> {
+  const configDir = path.join(projectPath, LEANMCP_CONFIG_DIR);
+  const configPath = path.join(configDir, LEANMCP_CONFIG_FILE);
+  
+  await fs.ensureDir(configDir);
+  await fs.writeJSON(configPath, config, { spaces: 2 });
+  debug('Saved .leanmcp config:', config);
+}
+
 /**
  * Create a zip archive of the project folder
  */
@@ -85,6 +128,7 @@ async function createZipArchive(folderPath: string, outputPath: string): Promise
       ignore: [
         'node_modules/**',
         '.git/**',
+        '.leanmcp/**',
         'dist/**',
         '.next/**',
         '.nuxt/**',
@@ -217,47 +261,26 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     process.exit(1);
   }
 
-  // Check for existing projects first
-  debug('Fetching existing projects...');
-  let existingProjects: Array<{ id: string; name: string; s3Location?: string }> = [];
-  try {
-    const projectsResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
-    });
-    if (projectsResponse.ok) {
-      existingProjects = await projectsResponse.json();
-      debug(`Found ${existingProjects.length} existing projects`);
-    }
-  } catch (e) {
-    debug('Could not fetch existing projects');
-  }
-
+  // Check for existing .leanmcp config first
+  const existingConfig = await readLeanMCPConfig(absolutePath);
+  
   // Get project name - check if we should use existing or create new
   let projectName: string;
   let existingProject: { id: string; name: string; s3Location?: string } | null = null;
   let isUpdate = false;
+  let subdomain = options.subdomain;
 
-  // Check folder/package name first
-  let folderName = path.basename(absolutePath);
-  if (hasPackageJson) {
-    try {
-      const pkg = await fs.readJSON(path.join(absolutePath, 'package.json'));
-      folderName = pkg.name || folderName;
-    } catch (e) {
-      // Use folder name
-    }
-  }
+  if (existingConfig) {
+    // Found existing config - this is a redeployment
+    console.log(chalk.cyan(`Found existing deployment config for '${existingConfig.projectName}'`));
+    console.log(chalk.gray(`  Project ID: ${existingConfig.projectId}`));
+    console.log(chalk.gray(`  URL: ${existingConfig.url}`));
+    console.log(chalk.gray(`  Last deployed: ${existingConfig.lastDeployedAt}\n`));
 
-  // Check if a project with the folder name exists
-  const matchingProject = existingProjects.find(p => p.name === folderName);
-  
-  if (matchingProject) {
-    console.log(chalk.yellow(`Project '${folderName}' already exists.\n`));
-    
     const choice = await select({
       message: 'What would you like to do?',
       choices: [
-        { value: 'update', name: `Update existing project '${folderName}'` },
+        { value: 'update', name: `Update existing deployment '${existingConfig.projectName}'` },
         { value: 'new', name: 'Create a new project with a random name' },
         { value: 'cancel', name: 'Cancel deployment' },
       ],
@@ -269,26 +292,85 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     }
 
     if (choice === 'update') {
-      existingProject = matchingProject;
-      projectName = matchingProject.name;
+      existingProject = { id: existingConfig.projectId, name: existingConfig.projectName };
+      projectName = existingConfig.projectName;
+      subdomain = existingConfig.subdomain;
       isUpdate = true;
-      console.log(chalk.yellow('\nWARNING: This will replace the existing deployment.'));
-      console.log(chalk.gray('The previous version will be overwritten.\n'));
+      console.log(chalk.yellow('\nUpdating existing deployment...'));
+      console.log(chalk.gray('The previous version will be replaced.\n'));
     } else {
       // Generate new random name
       projectName = generateProjectName();
       console.log(chalk.cyan(`\nGenerated project name: ${chalk.bold(projectName)}\n`));
     }
   } else {
-    // No existing project - generate a new random name
-    projectName = generateProjectName();
-    console.log(chalk.cyan(`Generated project name: ${chalk.bold(projectName)}`));
+    // No existing config - check for existing projects on server
+    debug('Fetching existing projects...');
+    let existingProjects: Array<{ id: string; name: string; s3Location?: string }> = [];
+    try {
+      const projectsResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+      });
+      if (projectsResponse.ok) {
+        existingProjects = await projectsResponse.json();
+        debug(`Found ${existingProjects.length} existing projects`);
+      }
+    } catch (e) {
+      debug('Could not fetch existing projects');
+    }
+
+    // Check folder/package name first
+    let folderName = path.basename(absolutePath);
+    if (hasPackageJson) {
+      try {
+        const pkg = await fs.readJSON(path.join(absolutePath, 'package.json'));
+        folderName = pkg.name || folderName;
+      } catch (e) {
+        // Use folder name
+      }
+    }
+
+    // Check if a project with the folder name exists
+    const matchingProject = existingProjects.find(p => p.name === folderName);
+    
+    if (matchingProject) {
+      console.log(chalk.yellow(`Project '${folderName}' already exists.\n`));
+      
+      const choice = await select({
+        message: 'What would you like to do?',
+        choices: [
+          { value: 'update', name: `Update existing project '${folderName}'` },
+          { value: 'new', name: 'Create a new project with a random name' },
+          { value: 'cancel', name: 'Cancel deployment' },
+        ],
+      });
+
+      if (choice === 'cancel') {
+        console.log(chalk.gray('\nDeployment cancelled.\n'));
+        return;
+      }
+
+      if (choice === 'update') {
+        existingProject = matchingProject;
+        projectName = matchingProject.name;
+        isUpdate = true;
+        console.log(chalk.yellow('\nWARNING: This will replace the existing deployment.'));
+        console.log(chalk.gray('The previous version will be overwritten.\n'));
+      } else {
+        // Generate new random name
+        projectName = generateProjectName();
+        console.log(chalk.cyan(`\nGenerated project name: ${chalk.bold(projectName)}\n`));
+      }
+    } else {
+      // No existing project - generate a new random name
+      projectName = generateProjectName();
+      console.log(chalk.cyan(`Generated project name: ${chalk.bold(projectName)}`));
+    }
   }
 
   console.log(chalk.gray(`Path: ${absolutePath}\n`));
 
-  // Get or prompt for subdomain
-  let subdomain = options.subdomain;
+  // Get or prompt for subdomain (if not already set from config)
   if (!subdomain) {
     // Suggest subdomain from project name
     const suggestedSubdomain = projectName
@@ -341,7 +423,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     console.log(chalk.cyan('\nDeployment Details:'));
     console.log(chalk.gray(`  Project: ${projectName}`));
     console.log(chalk.gray(`  Subdomain: ${subdomain}`));
-    console.log(chalk.gray(`  URL: https://${subdomain}.leanmcp.dev\n`));
+    console.log(chalk.gray(`  URL: https://${subdomain}.leanmcp.app\n`));
 
     const shouldDeploy = await confirm({
       message: 'Proceed with deployment?',
@@ -557,17 +639,34 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     mappingSpinner.warn('Subdomain mapping may need manual setup');
   }
 
+  // Save .leanmcp config for future deployments
+  const deploymentUrl = `https://${subdomain}.leanmcp.app`;
+  try {
+    await writeLeanMCPConfig(absolutePath, {
+      projectId,
+      projectName,
+      subdomain,
+      url: deploymentUrl,
+      lastDeployedAt: new Date().toISOString(),
+      buildId,
+      deploymentId,
+    });
+    debug('Saved .leanmcp config');
+  } catch (e) {
+    debug('Could not save .leanmcp config:', e);
+  }
+
   // Success!
   console.log(chalk.green('\n' + '='.repeat(60)));
   console.log(chalk.green.bold('  DEPLOYMENT SUCCESSFUL!'));
   console.log(chalk.green('='.repeat(60) + '\n'));
 
   console.log(chalk.white('  Your MCP server is now live:\n'));
-  console.log(chalk.cyan(`  URL:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.dev`));
+  console.log(chalk.cyan(`  URL:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.app`));
   console.log();
   console.log(chalk.gray('  Test endpoints:'));
-  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.dev/health`));
-  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.dev/mcp`));
+  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.app/health`));
+  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.app/mcp`));
   console.log();
   const totalDuration = Math.round((Date.now() - deployStartTime) / 1000);
   console.log(chalk.gray(`  Total time: ${totalDuration}s`));
