@@ -8,6 +8,7 @@ import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { startCommand } from "./commands/start";
+import { buildCommand } from "./commands/build";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
@@ -39,6 +40,8 @@ Examples:
   $ leanmcp create my-app --install      # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
+  $ leanmcp build                        # Compile TypeScript
+  $ leanmcp start                        # Start production server
   $ leanmcp login                        # Authenticate with LeanMCP cloud
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
@@ -73,9 +76,10 @@ program
       main: "dist/main.js",
       type: "module",
       scripts: {
-        dev: "tsx watch main.ts",
-        build: "tsc",
-        start: "node dist/main.js",
+        dev: "leanmcp dev",
+        build: "leanmcp build",
+        start: "leanmcp start",
+        inspect: "npx @modelcontextprotocol/inspector node dist/main.js",
         clean: "rm -rf dist"
       },
       keywords: ["mcp", "model-context-protocol", "streamable-http", "leanmcp"],
@@ -86,6 +90,7 @@ program
         "dotenv": "^16.5.0"
       },
       devDependencies: {
+        "@leanmcp/cli": "^0.3.0",
         "@types/node": "^20.0.0",
         "tsx": "^4.20.3",
         "typescript": "^5.6.3"
@@ -291,6 +296,11 @@ program
   .command("dev")
   .description("Start development server with UI hot-reload (builds @UIApp components)")
   .action(devCommand);
+
+program
+  .command("build")
+  .description("Compile TypeScript to JavaScript")
+  .action(buildCommand);
 
 program
   .command("start")
