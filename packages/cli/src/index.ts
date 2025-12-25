@@ -14,6 +14,8 @@ import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "
 import { getReadmeTemplate } from "./templates/readme_v1";
 import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
+import { getMainTsTemplate } from "./templates/main_ts_v1";
+import { getServiceIndexTemplate } from "./templates/service_index_v1";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -111,23 +113,7 @@ program
 
     // --- Main Entry Point (main.ts) ---
     const dashboardLine = options.dashboard === false ? `\n  dashboard: false,  // Dashboard disabled via --no-dashboard` : '';
-    const mainTs = `import dotenv from "dotenv";
-import { createHTTPServer } from "@leanmcp/core";
-
-// Load environment variables
-dotenv.config();
-
-// Services are automatically discovered from ./mcp directory
-await createHTTPServer({
-  name: "${projectName}",
-  version: "1.0.0",
-  port: 3001,
-  cors: true,
-  logging: true${dashboardLine}
-});
-
-console.log("\\n${projectName} MCP Server");
-`;
+    const mainTs = getMainTsTemplate(projectName, dashboardLine);
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
     // Create an example service file
@@ -270,65 +256,7 @@ program
 
     await fs.mkdirp(serviceDir);
 
-    const indexTs = `import { Tool, Resource, Prompt, Optional, SchemaConstraint } from "@leanmcp/core";
-
-// Input schema for greeting
-class GreetInput {
-  @SchemaConstraint({
-    description: "Name to greet",
-    minLength: 1
-  })
-  name!: string;
-}
-
-/**
- * ${capitalize(serviceName)} Service
- * 
- * This service demonstrates the three types of MCP primitives:
- * - Tools: Callable functions (like API endpoints)
- * - Prompts: Reusable prompt templates
- * - Resources: Data sources/endpoints
- */
-export class ${capitalize(serviceName)}Service {
-  // TOOL - Callable function
-  // Tool name: "greet" (from function name)
-  @Tool({ 
-    description: "Greet a user by name",
-    inputClass: GreetInput
-  })
-  greet(args: GreetInput) {
-    return { message: \`Hello, \${args.name}! from ${serviceName}\` };
-  }
-
-  // PROMPT - Prompt template
-  // Prompt name: "welcomePrompt" (from function name)
-  @Prompt({ description: "Welcome message prompt template" })
-  welcomePrompt(args: { userName?: string }) {
-    return {
-      messages: [
-        {
-          role: "user",
-          content: {
-            type: "text",
-            text: \`Welcome \${args.userName || 'user'}! How can I help you with ${serviceName}?\`
-          }
-        }
-      ]
-    };
-  }
-
-  // RESOURCE - Data endpoint
-  // Resource URI auto-generated from class and method name
-  @Resource({ description: "${capitalize(serviceName)} service status" })
-  getStatus() {
-    return { 
-      service: "${serviceName}", 
-      status: "active",
-      timestamp: new Date().toISOString()
-    };
-  }
-}
-`;
+    const indexTs = getServiceIndexTemplate(serviceName, capitalize(serviceName));
     await fs.writeFile(serviceFile, indexTs);
 
     console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
