@@ -4,9 +4,10 @@
   "type": "module",
   "description": "Example MCP server with Slack integration and elicitation",
   "scripts": {
-    "start": "node dist/main.js",
-    "dev": "tsx watch main.ts",
-    "build": "tsc"
+    "dev": "leanmcp dev",
+    "start": "leanmcp start",
+    "build": "leanmcp build",
+    "start:node": "node dist/main.js"
   },
   "dependencies": {
     "@leanmcp/core": "^0.3.2",
@@ -15,6 +16,7 @@
     "dotenv": "^16.5.0"
   },
   "devDependencies": {
+    "@leanmcp/cli": "^0.3.1",
     "@types/node": "^20.0.0",
     "tsx": "^4.20.3",
     "typescript": "^5.6.3"
