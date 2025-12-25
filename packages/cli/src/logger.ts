@@ -1,4 +1,7 @@
 import chalk from "chalk";
+import os from "os";
+import crypto from "crypto";
+import { execSync } from "child_process";
 
 // PostHog configuration
 const POSTHOG_API_KEY = "phc_EoMHKFbx6j2wUFsf8ywqgHntY4vEXC3ZzLFoPJVjRRT";
@@ -12,11 +15,40 @@ const isTelemetryDisabled = (): boolean => {
 // Generate a unique anonymous ID for the CLI user
 const getAnonymousId = (): string => {
   // Use a hash of the machine's hostname + username as anonymous ID
-  const os = require("os");
-  const crypto = require("crypto");
   const identifier = `${os.hostname()}-${os.userInfo().username}`;
   return crypto.createHash("sha256").update(identifier).digest("hex").substring(0, 16);
 };
+
+// Get npm version (cached)
+let cachedNpmVersion: string | null = null;
+const getNpmVersion = (): string => {
+  if (cachedNpmVersion) return cachedNpmVersion;
+  try {
+    cachedNpmVersion = execSync("npm --version", { encoding: "utf-8" }).trim();
+  } catch {
+    cachedNpmVersion = "unknown";
+  }
+  return cachedNpmVersion;
+};
+
+// Get system info for telemetry
+const getSystemInfo = (): Record<string, any> => {
+  return {
+    $os: os.platform(),
+    $os_version: os.release(),
+    arch: os.arch(),
+    node_version: process.version,
+    npm_version: getNpmVersion(),
+    cpu_count: os.cpus().length,
+    cpu_model: os.cpus()[0]?.model || "unknown",
+    ram_total_gb: Math.round(os.totalmem() / (1024 * 1024 * 1024) * 10) / 10,
+    ram_free_gb: Math.round(os.freemem() / (1024 * 1024 * 1024) * 10) / 10,
+    hostname_hash: getAnonymousId(),
+  };
+};
+
+// Track if we've sent system info this session
+let systemInfoSent = false;
 
 // Send event to PostHog - completely non-blocking, fire-and-forget
 const sendToPostHog = (
@@ -31,12 +63,17 @@ const sendToPostHog = (
   // and never blocks the main CLI execution
   setImmediate(() => {
     try {
+      // Include system info on first event of session
+      const systemProps = !systemInfoSent ? getSystemInfo() : {};
+      systemInfoSent = true;
+
       const payload = {
         api_key: POSTHOG_API_KEY,
         event: eventName,
         properties: {
           distinct_id: getAnonymousId(),
           $lib: "leanmcp-cli",
+          ...systemProps,
           ...properties,
         },
         timestamp: new Date().toISOString(),
