@@ -17,6 +17,7 @@ import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
 import { getMainTsTemplate } from "./templates/main_ts_v1";
 import { getServiceIndexTemplate } from "./templates/service_index_v1";
+import { trackCommand } from "./logger";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -57,6 +58,7 @@ program
   .option("--install", "Install dependencies automatically (non-interactive, no dev server)")
   .option("--no-install", "Skip dependency installation (non-interactive)")
   .action(async (projectName, options) => {
+    trackCommand("create", { projectName, ...options });
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
 
@@ -295,17 +297,26 @@ program
 program
   .command("dev")
   .description("Start development server with UI hot-reload (builds @UIApp components)")
-  .action(devCommand);
+  .action(() => {
+    trackCommand("dev");
+    devCommand();
+  });
 
 program
   .command("build")
   .description("Compile TypeScript to JavaScript")
-  .action(buildCommand);
+  .action(() => {
+    trackCommand("build");
+    buildCommand();
+  });
 
 program
   .command("start")
   .description("Build UI components and start production server")
-  .action(startCommand);
+  .action(() => {
+    trackCommand("start");
+    startCommand();
+  });
 
 // === Cloud Deployment Commands ===
 
@@ -314,6 +325,7 @@ program
   .description("Authenticate with LeanMCP cloud using an API key")
   .option("--debug", "Enable debug logging")
   .action(async (options) => {
+    trackCommand("login", { debug: options.debug });
     if (options.debug) {
       setDebugMode(true);
     }
@@ -323,12 +335,18 @@ program
 program
   .command("logout")
   .description("Remove stored API key and logout from LeanMCP cloud")
-  .action(logoutCommand);
+  .action(() => {
+    trackCommand("logout");
+    logoutCommand();
+  });
 
 program
   .command("whoami")
   .description("Show current authentication status")
-  .action(whoamiCommand);
+  .action(() => {
+    trackCommand("whoami");
+    whoamiCommand();
+  });
 
 program
   .command("deploy [folder]")
@@ -337,6 +355,7 @@ program
   .option("-y, --yes", "Skip confirmation prompts")
   .option("--debug", "Enable debug logging for network calls")
   .action(async (folder, options) => {
+    trackCommand("deploy", { folder, subdomain: options.subdomain, yes: options.yes });
     if (options.debug) {
       setDebugMode(true);
       setDeployDebugMode(true);
@@ -358,19 +377,28 @@ projectsCmd
   .command("list")
   .alias("ls")
   .description("List all your projects")
-  .action(projectsListCommand);
+  .action(() => {
+    trackCommand("projects_list");
+    projectsListCommand();
+  });
 
 projectsCmd
   .command("get <projectId>")
   .description("Get details of a specific project")
-  .action(projectsGetCommand);
+  .action((projectId) => {
+    trackCommand("projects_get", { projectId });
+    projectsGetCommand(projectId);
+  });
 
 projectsCmd
   .command("delete <projectId>")
   .alias("rm")
   .description("Delete a project")
   .option("-f, --force", "Skip confirmation prompt")
-  .action((projectId, options) => projectsDeleteCommand(projectId, options));
+  .action((projectId, options) => {
+    trackCommand("projects_delete", { projectId, force: options.force });
+    projectsDeleteCommand(projectId, options);
+  });
 
 program.parse();
 
