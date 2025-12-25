@@ -132,7 +132,11 @@ program
 
     spinner.succeed(`Project ${projectName} created!`);
     console.log(chalk.green("\nSuccess! Your MCP server is ready.\n"));
-    console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
+    console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+    console.log(chalk.gray(`  cd ${projectName}`));
+    console.log(chalk.gray(`  leanmcp deploy .\n`));
+    console.log(chalk.cyan("Need help? Join our Discord:"));
+    console.log(chalk.blue("  https://discord.com/invite/DsRcA3GwPy\n"));
 
     // Determine install behavior based on flags
     // --no-install: Skip install entirely (non-interactive)
@@ -144,10 +148,14 @@ program
     
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
-      console.log(chalk.cyan("\nTo get started:"));
+      console.log(chalk.cyan("To get started:"));
       console.log(chalk.gray(`  cd ${projectName}`));
       console.log(chalk.gray(`  npm install`));
       console.log(chalk.gray(`  npm run dev`));
+      console.log();
+      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  leanmcp deploy .`));
       return;
     }
 
@@ -188,6 +196,10 @@ program
           console.log(chalk.cyan("\nTo start the development server:"));
           console.log(chalk.gray(`  cd ${projectName}`));
           console.log(chalk.gray(`  npm run dev`));
+          console.log();
+          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  leanmcp deploy .`));
           return;
         }
 
@@ -218,6 +230,10 @@ program
           console.log(chalk.cyan("\nTo start the development server later:"));
           console.log(chalk.gray(`  cd ${projectName}`));
           console.log(chalk.gray(`  npm run dev`));
+          console.log();
+          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  leanmcp deploy .`));
         }
       } catch (error) {
         installSpinner.fail("Failed to install dependencies");
@@ -231,6 +247,10 @@ program
       console.log(chalk.gray(`  cd ${projectName}`));
       console.log(chalk.gray(`  npm install`));
       console.log(chalk.gray(`  npm run dev`));
+      console.log();
+      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  leanmcp deploy .`));
     }
   });
 

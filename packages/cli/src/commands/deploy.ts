@@ -572,8 +572,16 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const totalDuration = Math.round((Date.now() - deployStartTime) / 1000);
   console.log(chalk.gray(`  Total time: ${totalDuration}s`));
   console.log();
-  console.log(chalk.gray(`  Project ID:    ${projectId}`));
-  console.log(chalk.gray(`  Build ID:      ${buildId}`));
-  console.log(chalk.gray(`  Deployment ID: ${deploymentId}`));
+
+  // Dashboard links
+  const dashboardBaseUrl = 'https://ship.leanmcp.com';
+  console.log(chalk.cyan('  Dashboard links:'));
+  console.log(chalk.gray(`    Project:    ${dashboardBaseUrl}/projects/${projectId}`));
+  console.log(chalk.gray(`    Build:      ${dashboardBaseUrl}/builds/${buildId}`));
+  console.log(chalk.gray(`    Deployment: ${dashboardBaseUrl}/deployments/${deploymentId}`));
+  console.log();
+
+  console.log(chalk.cyan('  Need help? Join our Discord:'));
+  console.log(chalk.blue('    https://discord.com/invite/DsRcA3GwPy'));
   console.log();
 }
