@@ -4,12 +4,12 @@
  * Authenticates with LeanMCP cloud using an API key.
  * Stores the API key in ~/.leanmcp/config.json
  */
-import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
 import os from 'os';
 import { input, confirm } from '@inquirer/prompts';
+import { logger, chalk, debug as loggerDebug, isDebugMode } from '../logger';
 
 // Debug mode flag - set via CLI --debug option
 let DEBUG_MODE = false;
@@ -19,7 +19,7 @@ export function setDebugMode(enabled: boolean) {
 }
 
 function debug(message: string, ...args: any[]) {
-  if (DEBUG_MODE) {
+  if (DEBUG_MODE || isDebugMode()) {
     console.log(chalk.gray(`[DEBUG] ${message}`), ...args);
   }
 }
@@ -124,12 +124,12 @@ export async function getApiUrl(): Promise<string> {
  * Login command implementation
  */
 export async function loginCommand() {
-  console.log(chalk.cyan('\nLeanMCP Login\n'));
+  logger.info('\nLeanMCP Login\n');
 
   // Check if already logged in
   const existingConfig = await loadConfig();
   if (existingConfig.apiKey) {
-    console.log(chalk.yellow('You are already logged in.'));
+    logger.warn('You are already logged in.');
     
     const shouldRelogin = await confirm({
       message: 'Do you want to replace the existing API key?',
@@ -137,17 +137,17 @@ export async function loginCommand() {
     });
 
     if (!shouldRelogin) {
-      console.log(chalk.gray('\nLogin cancelled. Existing API key preserved.'));
+      logger.gray('\nLogin cancelled. Existing API key preserved.');
       return;
     }
   }
 
   // Show instructions
-  console.log(chalk.white('To authenticate, you need an API key from LeanMCP.\n'));
-  console.log(chalk.cyan('Steps:'));
-  console.log(chalk.gray('  1. Go to: ') + chalk.blue.underline('https://ship.leanmcp.com/api-keys'));
-  console.log(chalk.gray('  2. Create a new API key with "BUILD_AND_DEPLOY" scope'));
-  console.log(chalk.gray('  3. Copy the API key and paste it below\n'));
+  logger.log('To authenticate, you need an API key from LeanMCP.\n', chalk.white);
+  logger.info('Steps:');
+  logger.log('  1. Go to: ' + chalk.blue.underline('https://ship.leanmcp.com/api-keys'), chalk.gray);
+  logger.gray('  2. Create a new API key with "BUILD_AND_DEPLOY" scope');
+  logger.gray('  3. Copy the API key and paste it below\n');
 
   // Prompt for API key
   const apiKey = await input({
@@ -189,10 +189,10 @@ export async function loginCommand() {
       const errorText = await response.text();
       debug('Error response:', errorText);
       spinner.fail('Invalid API key');
-      console.error(chalk.red('\nThe API key is invalid or has expired.'));
-      console.log(chalk.gray('Please check your API key and try again.'));
-      if (DEBUG_MODE) {
-        console.log(chalk.gray(`Debug: Status ${response.status}, Response: ${errorText}`));
+      logger.error('\nThe API key is invalid or has expired.');
+      logger.gray('Please check your API key and try again.');
+      if (DEBUG_MODE || isDebugMode()) {
+        logger.gray(`Debug: Status ${response.status}, Response: ${errorText}`);
       }
       process.exit(1);
     }
@@ -206,24 +206,24 @@ export async function loginCommand() {
 
     spinner.succeed('API key validated and saved');
 
-    console.log(chalk.green('\nLogin successful!'));
-    console.log(chalk.gray(`   Config saved to: ${CONFIG_FILE}\n`));
-    console.log(chalk.cyan('You can now use:'));
-    console.log(chalk.gray('  leanmcp deploy <folder>   - Deploy your MCP server'));
-    console.log(chalk.gray('  leanmcp logout            - Remove your API key'));
+    logger.success('\nLogin successful!');
+    logger.gray(`   Config saved to: ${CONFIG_FILE}\n`);
+    logger.info('You can now use:');
+    logger.gray('  leanmcp deploy <folder>   - Deploy your MCP server');
+    logger.gray('  leanmcp logout            - Remove your API key');
 
   } catch (error) {
     spinner.fail('Failed to validate API key');
     debug('Error:', error);
     
     if (error instanceof Error && error.message.includes('fetch')) {
-      console.error(chalk.red('\nCould not connect to LeanMCP servers.'));
-      console.log(chalk.gray('Please check your internet connection and try again.'));
+      logger.error('\nCould not connect to LeanMCP servers.');
+      logger.gray('Please check your internet connection and try again.');
     } else {
-      console.error(chalk.red(`\nError: ${error instanceof Error ? error.message : String(error)}`));
+      logger.error(`\nError: ${error instanceof Error ? error.message : String(error)}`);
     }
-    if (DEBUG_MODE) {
-      console.log(chalk.gray(`\nDebug: Full error: ${error}`));
+    if (DEBUG_MODE || isDebugMode()) {
+      logger.gray(`\nDebug: Full error: ${error}`);
     }
     process.exit(1);
   }
@@ -233,12 +233,12 @@ export async function loginCommand() {
  * Logout command implementation
  */
 export async function logoutCommand() {
-  console.log(chalk.cyan('\nLeanMCP Logout\n'));
+  logger.info('\nLeanMCP Logout\n');
 
   const config = await loadConfig();
   
   if (!config.apiKey) {
-    console.log(chalk.yellow('You are not currently logged in.'));
+    logger.warn('You are not currently logged in.');
     return;
   }
 
@@ -248,7 +248,7 @@ export async function logoutCommand() {
   });
 
   if (!shouldLogout) {
-    console.log(chalk.gray('\nLogout cancelled.'));
+    logger.gray('\nLogout cancelled.');
     return;
   }
 
@@ -259,8 +259,8 @@ export async function logoutCommand() {
     lastUpdated: new Date().toISOString(),
   });
 
-  console.log(chalk.green('\nLogged out successfully!'));
-  console.log(chalk.gray(`   API key removed from: ${CONFIG_FILE}`));
+  logger.success('\nLogged out successfully!');
+  logger.gray(`   API key removed from: ${CONFIG_FILE}`);
 }
 
 /**
@@ -270,17 +270,17 @@ export async function whoamiCommand() {
   const config = await loadConfig();
   
   if (!config.apiKey) {
-    console.log(chalk.yellow('\nYou are not logged in.'));
-    console.log(chalk.gray('Run `leanmcp login` to authenticate.\n'));
+    logger.warn('\nYou are not logged in.');
+    logger.gray('Run `leanmcp login` to authenticate.\n');
     return;
   }
 
-  console.log(chalk.cyan('\nLeanMCP Authentication Status\n'));
-  console.log(chalk.green('Logged in'));
-  console.log(chalk.gray(`  API Key: ${config.apiKey.substring(0, 15)}...`));
-  console.log(chalk.gray(`  API URL: ${config.apiUrl || 'https://ship.leanmcp.com'}`));
+  logger.info('\nLeanMCP Authentication Status\n');
+  logger.success('Logged in');
+  logger.gray(`  API Key: ${config.apiKey.substring(0, 15)}...`);
+  logger.gray(`  API URL: ${config.apiUrl || 'https://ship.leanmcp.com'}`);
   if (config.lastUpdated) {
-    console.log(chalk.gray(`  Last updated: ${new Date(config.lastUpdated).toLocaleString()}`));
+    logger.gray(`  Last updated: ${new Date(config.lastUpdated).toLocaleString()}`);
   }
-  console.log();
+  logger.log('');
 }

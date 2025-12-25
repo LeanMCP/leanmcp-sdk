@@ -3,7 +3,6 @@
  * 
  * Deploys an MCP server to LeanMCP cloud using the stored API key.
  */
-import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
@@ -12,6 +11,7 @@ import archiver from 'archiver';
 import { input, confirm, select } from '@inquirer/prompts';
 import { getApiKey, getApiUrl } from './login';
 import { generateProjectName } from '../utils';
+import { logger, chalk, debug as loggerDebug } from '../logger';
 
 // Debug mode flag
 let DEBUG_MODE = false;
@@ -227,15 +227,15 @@ async function waitForDeployment(
 export async function deployCommand(folderPath: string, options: DeployOptions = {}) {
   const deployStartTime = Date.now();
   
-  console.log(chalk.cyan('\nLeanMCP Deploy\n'));
+  logger.info('\nLeanMCP Deploy\n');
   
   debug('Starting deployment...');
 
   // Check authentication
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.error(chalk.red('Not logged in.'));
-    console.log(chalk.gray('Run `leanmcp login` first to authenticate.\n'));
+    logger.error('Not logged in.');
+    logger.gray('Run `leanmcp login` first to authenticate.\n');
     process.exit(1);
   }
 
@@ -247,7 +247,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   // Validate folder exists
   if (!await fs.pathExists(absolutePath)) {
-    console.error(chalk.red(`Folder not found: ${absolutePath}`));
+    logger.error(`Folder not found: ${absolutePath}`);
     process.exit(1);
   }
 
@@ -256,8 +256,8 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const hasPackageJson = await fs.pathExists(path.join(absolutePath, 'package.json'));
 
   if (!hasMainTs && !hasPackageJson) {
-    console.error(chalk.red('Not a valid project folder.'));
-    console.log(chalk.gray('Expected main.ts or package.json in the folder.\n'));
+    logger.error('Not a valid project folder.');
+    logger.gray('Expected main.ts or package.json in the folder.\n');
     process.exit(1);
   }
 
@@ -272,10 +272,10 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   if (existingConfig) {
     // Found existing config - this is a redeployment
-    console.log(chalk.cyan(`Found existing deployment config for '${existingConfig.projectName}'`));
-    console.log(chalk.gray(`  Project ID: ${existingConfig.projectId}`));
-    console.log(chalk.gray(`  URL: ${existingConfig.url}`));
-    console.log(chalk.gray(`  Last deployed: ${existingConfig.lastDeployedAt}\n`));
+    logger.info(`Found existing deployment config for '${existingConfig.projectName}'`);
+    logger.gray(`  Project ID: ${existingConfig.projectId}`);
+    logger.gray(`  URL: ${existingConfig.url}`);
+    logger.gray(`  Last deployed: ${existingConfig.lastDeployedAt}\n`);
 
     const choice = await select({
       message: 'What would you like to do?',
@@ -287,7 +287,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     });
 
     if (choice === 'cancel') {
-      console.log(chalk.gray('\nDeployment cancelled.\n'));
+      logger.gray('\nDeployment cancelled.\n');
       return;
     }
 
@@ -296,12 +296,12 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       projectName = existingConfig.projectName;
       subdomain = existingConfig.subdomain;
       isUpdate = true;
-      console.log(chalk.yellow('\nUpdating existing deployment...'));
-      console.log(chalk.gray('The previous version will be replaced.\n'));
+      logger.warn('\nUpdating existing deployment...');
+      logger.gray('The previous version will be replaced.\n');
     } else {
       // Generate new random name
       projectName = generateProjectName();
-      console.log(chalk.cyan(`\nGenerated project name: ${chalk.bold(projectName)}\n`));
+      logger.info(`\nGenerated project name: ${chalk.bold(projectName)}\n`);
     }
   } else {
     // No existing config - check for existing projects on server
@@ -334,7 +334,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const matchingProject = existingProjects.find(p => p.name === folderName);
     
     if (matchingProject) {
-      console.log(chalk.yellow(`Project '${folderName}' already exists.\n`));
+      logger.warn(`Project '${folderName}' already exists.\n`);
       
       const choice = await select({
         message: 'What would you like to do?',
@@ -346,7 +346,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       });
 
       if (choice === 'cancel') {
-        console.log(chalk.gray('\nDeployment cancelled.\n'));
+        logger.gray('\nDeployment cancelled.\n');
         return;
       }
 
@@ -354,21 +354,21 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
         existingProject = matchingProject;
         projectName = matchingProject.name;
         isUpdate = true;
-        console.log(chalk.yellow('\nWARNING: This will replace the existing deployment.'));
-        console.log(chalk.gray('The previous version will be overwritten.\n'));
+        logger.warn('\nWARNING: This will replace the existing deployment.');
+        logger.gray('The previous version will be overwritten.\n');
       } else {
         // Generate new random name
         projectName = generateProjectName();
-        console.log(chalk.cyan(`\nGenerated project name: ${chalk.bold(projectName)}\n`));
+        logger.info(`\nGenerated project name: ${chalk.bold(projectName)}\n`);
       }
     } else {
       // No existing project - generate a new random name
       projectName = generateProjectName();
-      console.log(chalk.cyan(`Generated project name: ${chalk.bold(projectName)}`));
+      logger.info(`Generated project name: ${chalk.bold(projectName)}`);
     }
   }
 
-  console.log(chalk.gray(`Path: ${absolutePath}\n`));
+  logger.gray(`Path: ${absolutePath}\n`);
 
   // Get or prompt for subdomain (if not already set from config)
   if (!subdomain) {
@@ -419,13 +419,13 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
         } else if (result.ownedByCurrentUser) {
           // User owns it but for a different project
           checkSpinner.fail(`Subdomain '${subdomain}' is used by your other project`);
-          console.log(chalk.gray(`\nThis subdomain is associated with project: ${result.ownedByProject?.substring(0, 8)}...`));
-          console.log(chalk.gray('Please choose a different subdomain or update that project instead.\n'));
+          logger.gray(`\nThis subdomain is associated with project: ${result.ownedByProject?.substring(0, 8)}...`);
+          logger.gray('Please choose a different subdomain or update that project instead.\n');
           process.exit(1);
         } else {
           // Someone else owns it
           checkSpinner.fail(`Subdomain '${subdomain}' is not available`);
-          console.log(chalk.gray('\nThis subdomain is taken by another user. Please choose a different subdomain.\n'));
+          logger.gray('\nThis subdomain is taken by another user. Please choose a different subdomain.\n');
           process.exit(1);
         }
       } else {
@@ -438,10 +438,10 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   // Confirm deployment
   if (!options.skipConfirm) {
-    console.log(chalk.cyan('\nDeployment Details:'));
-    console.log(chalk.gray(`  Project: ${projectName}`));
-    console.log(chalk.gray(`  Subdomain: ${subdomain}`));
-    console.log(chalk.gray(`  URL: https://${subdomain}.leanmcp.app\n`));
+    logger.info('\nDeployment Details:');
+    logger.gray(`  Project: ${projectName}`);
+    logger.gray(`  Subdomain: ${subdomain}`);
+    logger.gray(`  URL: https://${subdomain}.leanmcp.app\n`);
 
     const shouldDeploy = await confirm({
       message: 'Proceed with deployment?',
@@ -449,12 +449,12 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     });
 
     if (!shouldDeploy) {
-      console.log(chalk.gray('\nDeployment cancelled.\n'));
+      logger.gray('\nDeployment cancelled.\n');
       return;
     }
   }
 
-  console.log();
+  logger.log('');
 
   // Step 1: Create or use existing project
   let projectId: string;
@@ -462,7 +462,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   if (isUpdate && existingProject) {
     // Use existing project
     projectId = existingProject.id;
-    console.log(chalk.gray(`Using existing project: ${projectId.substring(0, 8)}...`));
+    logger.gray(`Using existing project: ${projectId.substring(0, 8)}...`);
   } else {
     // Create new project
     const projectSpinner = ora('Creating project...').start();
@@ -487,7 +487,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       projectSpinner.succeed(`Project created: ${projectId.substring(0, 8)}...`);
     } catch (error) {
       projectSpinner.fail('Failed to create project');
-      console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+      logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
       process.exit(1);
     }
   }
@@ -560,7 +560,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     uploadSpinner.succeed('Project uploaded');
   } catch (error) {
     uploadSpinner.fail('Failed to upload');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 
@@ -592,7 +592,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     buildSpinner.succeed(`Build complete (${buildDuration}s)`);
   } catch (error) {
     buildSpinner.fail('Build failed');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 
@@ -626,7 +626,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     deploySpinner.succeed('Deployed');
   } catch (error) {
     deploySpinner.fail('Deployment failed');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 
@@ -675,30 +675,30 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   }
 
   // Success!
-  console.log(chalk.green('\n' + '='.repeat(60)));
-  console.log(chalk.green.bold('  DEPLOYMENT SUCCESSFUL!'));
-  console.log(chalk.green('='.repeat(60) + '\n'));
+  logger.success('\n' + '='.repeat(60));
+  logger.log('  DEPLOYMENT SUCCESSFUL!', chalk.green.bold);
+  logger.success('='.repeat(60) + '\n');
 
-  console.log(chalk.white('  Your MCP server is now live:\n'));
-  console.log(chalk.cyan(`  URL:  `) + chalk.white.bold(`https://${subdomain}.leanmcp.app`));
-  console.log();
-  console.log(chalk.gray('  Test endpoints:'));
-  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.app/health`));
-  console.log(chalk.gray(`    curl https://${subdomain}.leanmcp.app/mcp`));
-  console.log();
+  logger.log('  Your MCP server is now live:\n', chalk.white);
+  logger.log(`  URL:  ${chalk.white.bold(`https://${subdomain}.leanmcp.app`)}`, chalk.cyan);
+  logger.log('');
+  logger.gray('  Test endpoints:');
+  logger.gray(`    curl https://${subdomain}.leanmcp.app/health`);
+  logger.gray(`    curl https://${subdomain}.leanmcp.app/mcp`);
+  logger.log('');
   const totalDuration = Math.round((Date.now() - deployStartTime) / 1000);
-  console.log(chalk.gray(`  Total time: ${totalDuration}s`));
-  console.log();
+  logger.gray(`  Total time: ${totalDuration}s`);
+  logger.log('');
 
   // Dashboard links
   const dashboardBaseUrl = 'https://ship.leanmcp.com';
-  console.log(chalk.cyan('  Dashboard links:'));
-  console.log(chalk.gray(`    Project:    ${dashboardBaseUrl}/projects/${projectId}`));
-  console.log(chalk.gray(`    Build:      ${dashboardBaseUrl}/builds/${buildId}`));
-  console.log(chalk.gray(`    Deployment: ${dashboardBaseUrl}/deployments/${deploymentId}`));
-  console.log();
+  logger.info('  Dashboard links:');
+  logger.gray(`    Project:    ${dashboardBaseUrl}/projects/${projectId}`);
+  logger.gray(`    Build:      ${dashboardBaseUrl}/builds/${buildId}`);
+  logger.gray(`    Deployment: ${dashboardBaseUrl}/deployments/${deploymentId}`);
+  logger.log('');
 
-  console.log(chalk.cyan('  Need help? Join our Discord:'));
-  console.log(chalk.blue('    https://discord.com/invite/DsRcA3GwPy'));
-  console.log();
+  logger.info('  Need help? Join our Discord:');
+  logger.log('    https://discord.com/invite/DsRcA3GwPy', chalk.blue);
+  logger.log('');
 }

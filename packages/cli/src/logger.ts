@@ -144,23 +144,98 @@ const sendToPostHog = (
 type ChalkFunction = typeof chalk.cyan | typeof chalk.green | typeof chalk.gray | typeof chalk.red | typeof chalk.blue | typeof chalk.yellow | typeof chalk.white | typeof chalk.bold;
 
 /**
- * Logger function that logs to console and sends telemetry to PostHog
- * @param text - The text to log
- * @param styleFn - Optional chalk style function (e.g., chalk.cyan, chalk.green)
+ * Logger class with log, warn, error methods
+ * All methods send telemetry to PostHog with appropriate event names
  */
-export const log = (text: string, styleFn?: ChalkFunction): void => {
-  // Log to console with optional styling
-  if (styleFn) {
-    console.log(styleFn(text));
-  } else {
-    console.log(text);
+class LoggerClass {
+  /**
+   * Log a message to console and send cli_log event to PostHog
+   * @param text - The text to log
+   * @param styleFn - Optional chalk style function (e.g., chalk.cyan, chalk.green)
+   */
+  log(text: string, styleFn?: ChalkFunction): void {
+    if (styleFn) {
+      console.log(styleFn(text));
+    } else {
+      console.log(text);
+    }
+    sendToPostHog("cli_log", {
+      message: text,
+      level: "log",
+    });
   }
 
-  // Send to PostHog telemetry
-  sendToPostHog("cli_log", {
-    message: text,
-    styled: !!styleFn,
-  });
+  /**
+   * Log a warning to console and send cli_warn event to PostHog
+   * @param text - The warning text
+   * @param styleFn - Optional chalk style function (defaults to chalk.yellow)
+   */
+  warn(text: string, styleFn?: ChalkFunction): void {
+    const style = styleFn || chalk.yellow;
+    console.log(style(text));
+    sendToPostHog("cli_warn", {
+      message: text,
+      level: "warn",
+    });
+  }
+
+  /**
+   * Log an error to console and send cli_error event to PostHog
+   * @param text - The error text
+   * @param styleFn - Optional chalk style function (defaults to chalk.red)
+   */
+  error(text: string, styleFn?: ChalkFunction): void {
+    const style = styleFn || chalk.red;
+    console.error(style(text));
+    sendToPostHog("cli_error", {
+      message: text,
+      level: "error",
+    });
+  }
+
+  /**
+   * Log an info message (alias for log with cyan styling)
+   * @param text - The info text
+   */
+  info(text: string): void {
+    console.log(chalk.cyan(text));
+    sendToPostHog("cli_log", {
+      message: text,
+      level: "info",
+    });
+  }
+
+  /**
+   * Log a success message (green styling)
+   * @param text - The success text
+   */
+  success(text: string): void {
+    console.log(chalk.green(text));
+    sendToPostHog("cli_log", {
+      message: text,
+      level: "success",
+    });
+  }
+
+  /**
+   * Log a gray/muted message
+   * @param text - The text to log
+   */
+  gray(text: string): void {
+    console.log(chalk.gray(text));
+    sendToPostHog("cli_log", {
+      message: text,
+      level: "gray",
+    });
+  }
+}
+
+// Export singleton instance
+export const logger = new LoggerClass();
+
+// Keep the old log function for backwards compatibility
+export const log = (text: string, styleFn?: ChalkFunction): void => {
+  logger.log(text, styleFn);
 };
 
 /**
