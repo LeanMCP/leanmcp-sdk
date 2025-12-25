@@ -2,9 +2,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/**/*.{ts,tsx,js,jsx}',
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/mcp/**/*.{ts,tsx,js,jsx}',
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/node_modules/@leanmcp/ui/**/*.{js,mjs}',
+        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/src/**/*.{ts,tsx}',
+        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/mcp/**/*.{ts,tsx}',
+        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/node_modules/@leanmcp/ui/dist/**/*.{js,mjs}',
         'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/packages/ui/src/**/*.{ts,tsx}',
     ],
     darkMode: ['class'],

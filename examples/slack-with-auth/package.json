@@ -4,9 +4,10 @@
   "type": "module",
   "description": "Slack MCP Server with Cognito Authentication",
   "scripts": {
-    "start": "node dist/main.js",
-    "dev": "tsx watch main.ts",
-    "build": "tsc"
+    "dev": "leanmcp dev",
+    "start": "leanmcp start",
+    "build": "leanmcp build",
+    "start:node": "node dist/main.js"
   },
   "keywords": [
     "mcp",
@@ -25,6 +26,7 @@
     "dotenv": "^16.5.0"
   },
   "devDependencies": {
+    "@leanmcp/cli": "^0.3.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/jwk-to-pem": "^2.0.3",
     "@types/node": "^20.0.0",

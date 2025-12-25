@@ -7,6 +7,7 @@ import { createRequire } from "module";
 import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
+import { buildCommand } from "./commands/build";
 import { startCommand } from "./commands/start";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
@@ -39,6 +40,8 @@ Examples:
   $ leanmcp create my-app --install      # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
+  $ leanmcp build                        # Build UI components and compile TypeScript
+  $ leanmcp start                        # Build and start production server
   $ leanmcp login                        # Authenticate with LeanMCP cloud
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
@@ -73,19 +76,23 @@ program
       main: "dist/main.js",
       type: "module",
       scripts: {
-        dev: "tsx watch main.ts",
-        build: "tsc",
-        start: "node dist/main.js",
+        dev: "leanmcp dev",
+        build: "leanmcp build",
+        start: "leanmcp start",
+        "start:node": "node dist/main.js",
         clean: "rm -rf dist"
       },
       keywords: ["mcp", "model-context-protocol", "streamable-http", "leanmcp"],
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.3.5",
+        "@leanmcp/core": "^0.3.9",
+        "@leanmcp/ui": "^0.2.1",
+        "@leanmcp/auth": "^0.3.2",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
+        "@leanmcp/cli": "^0.3.0",
         "@types/node": "^20.0.0",
         "tsx": "^4.20.3",
         "typescript": "^5.6.3"
@@ -143,9 +150,9 @@ program
     // --install: Install but don't start dev server (non-interactive)
     // --allow-all: Install and start dev server (non-interactive)
     // default: Interactive prompts
-    
+
     const isNonInteractive = options.install !== undefined || options.allowAll;
-    
+
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
       console.log(chalk.cyan("To get started:"));
@@ -291,6 +298,11 @@ program
   .command("dev")
   .description("Start development server with UI hot-reload (builds @UIApp components)")
   .action(devCommand);
+
+program
+  .command("build")
+  .description("Build UI components and compile TypeScript for production")
+  .action(buildCommand);
 
 program
   .command("start")

@@ -5,9 +5,10 @@
   "description": "Example MCP server with Auth0 authentication",
   "main": "main.ts",
   "scripts": {
-    "dev": "tsx watch main.ts",
-    "start": "tsx main.ts",
-    "build": "tsc"
+    "dev": "leanmcp dev",
+    "start": "leanmcp start",
+    "build": "leanmcp build",
+    "start:node": "node dist/main.js"
   },
   "dependencies": {
     "@leanmcp/auth": "^0.3.0",
@@ -15,6 +16,7 @@
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
+    "@leanmcp/cli": "^0.3.1",
     "@types/node": "^22.10.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
