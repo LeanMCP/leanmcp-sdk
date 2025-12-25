@@ -11,6 +11,11 @@ import { startCommand } from "./commands/start";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
+import { getReadmeTemplate } from "./templates/readme_v1";
+import { gitignoreTemplate } from "./templates/gitignore_v1";
+import { getExampleServiceTemplate } from "./templates/example_service_v1";
+import { getMainTsTemplate } from "./templates/main_ts_v1";
+import { getServiceIndexTemplate } from "./templates/service_index_v1";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -108,385 +113,30 @@ program
 
     // --- Main Entry Point (main.ts) ---
     const dashboardLine = options.dashboard === false ? `\n  dashboard: false,  // Dashboard disabled via --no-dashboard` : '';
-    const mainTs = `import dotenv from "dotenv";
-import { createHTTPServer } from "@leanmcp/core";
-
-// Load environment variables
-dotenv.config();
-
-// Services are automatically discovered from ./mcp directory
-await createHTTPServer({
-  name: "${projectName}",
-  version: "1.0.0",
-  port: 3001,
-  cors: true,
-  logging: true${dashboardLine}
-});
-
-console.log("\\n${projectName} MCP Server");
-`;
+    const mainTs = getMainTsTemplate(projectName, dashboardLine);
     await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
 
     // Create an example service file
-    const exampleServiceTs = `import { Tool, Resource, Prompt, SchemaConstraint, Optional } from "@leanmcp/core";
-
-    /**
-     * Example service demonstrating LeanMCP SDK decorators
-     * 
-     * This is a simple example to get you started. Add your own tools, resources, and prompts here!
-     */
-
-    // Input schema with validation decorators
-    class CalculateInput {
-      @SchemaConstraint({ description: "First number" })
-      a!: number;
-
-      @SchemaConstraint({ description: "Second number" })
-      b!: number;
-
-      @Optional()
-      @SchemaConstraint({
-        description: "Operation to perform",
-        enum: ["add", "subtract", "multiply", "divide"],
-        default: "add"
-      })
-      operation?: string;
-    }
-
-    class EchoInput {
-      @SchemaConstraint({
-        description: "Message to echo back",
-        minLength: 1
-      })
-      message!: string;
-    }
-
-    export class ExampleService {
-      @Tool({
-        description: "Perform arithmetic operations with automatic schema validation",
-        inputClass: CalculateInput
-      })
-      async calculate(input: CalculateInput) {
-        // Ensure numerical operations by explicitly converting to numbers
-        const a = Number(input.a);
-        const b = Number(input.b);
-        let result: number;
-
-        switch (input.operation || "add") {
-          case "add":
-            result = a + b;
-            break;
-          case "subtract":
-            result = a - b;
-            break;
-          case "multiply":
-            result = a * b;
-            break;
-          case "divide":
-            if (b === 0) throw new Error("Cannot divide by zero");
-            result = a / b;
-            break;
-          default:
-            throw new Error("Invalid operation");
-        }
-
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify({
-              operation: input.operation || "add",
-              operands: { a: input.a, b: input.b },
-              result
-            }, null, 2)
-          }]
-        };
-      }
-
-      @Tool({
-        description: "Echo a message back",
-        inputClass: EchoInput
-      })
-      async echo(input: EchoInput) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify({
-              echoed: input.message,
-              timestamp: new Date().toISOString()
-            }, null, 2)
-          }]
-        };
-      }
-
-      @Resource({ description: "Get server information" })
-      async serverInfo() {
-        return {
-          contents: [{
-            uri: "server://info",
-            mimeType: "application/json",
-            text: JSON.stringify({
-              name: "${projectName}",
-              version: "1.0.0",
-              uptime: process.uptime()
-            }, null, 2)
-          }]
-        };
-      }
-
-      @Prompt({ description: "Generate a greeting prompt" })
-      async greeting(args: { name?: string }) {
-        return {
-          messages: [{
-            role: "user" as const,
-            content: {
-              type: "text" as const,
-              text: \`Hello \${args.name || 'there'}! Welcome to ${projectName}.\`
-        }
-      }]
-    };
-  }
-}
-`;
+    const exampleServiceTs = getExampleServiceTemplate(projectName);
     await fs.writeFile(path.join(targetDir, "mcp", "example", "index.ts"), exampleServiceTs);
 
-    const gitignore = `# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Directory for instrumented libs generated by jscoverage/JSCover
-lib-cov
-
-# Coverage directory used by tools like istanbul
-coverage
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
-.grunt
-
-# Bower dependency directory (https://bower.io/)
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons (https://nodejs.org/api/addons.html)
-build/Release
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Snowpack dependency directory (https://snowpack.dev/)
-web_modules/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variable files
-.env
-.env.*
-!.env.example
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-.output
-
-# Gatsby files
-.cache/
-# Comment in the public line in if your project uses Gatsby and not Next.js
-# https://nextjs.org/blog/next-9-1#public-directory-support
-# public
-
-# vuepress build output
-.vuepress/dist
-
-# vuepress v2.x temp and cache directory
-.temp
-.cache
-
-# Sveltekit cache directory
-.svelte-kit/
-
-# vitepress build output
-**/.vitepress/dist
-
-# vitepress cache directory
-**/.vitepress/cache
-
-# Docusaurus cache and generated files
-.docusaurus
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# Firebase cache directory
-.firebase/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v3
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
-
-# Vite files
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
-.vite/
-`;
+    const gitignore = gitignoreTemplate;
     const env = `# Server Configuration\nPORT=3001\nNODE_ENV=development\n\n# Add your environment variables here\n`;
 
     await fs.writeFile(path.join(targetDir, ".gitignore"), gitignore);
     await fs.writeFile(path.join(targetDir, ".env"), env);
 
     // --- README ---
-    const readme = `# ${projectName}
-
-MCP Server with Streamable HTTP Transport built with LeanMCP SDK
-
-## Quick Start
-
-\`\`\`bash
-# Install dependencies
-npm install
-
-# Start development server (hot reload)
-npm run dev
-
-# Build for production
-npm run build
-
-# Run production server
-npm start
-\`\`\`
-
-## Project Structure
-
-\`\`\`
-${projectName}/
-├── main.ts              # Server entry point
-├── mcp/                 # Services directory (auto-discovered)
-│   └── example/
-│       └── index.ts     # Example service
-├── .env                 # Environment variables
-└── package.json
-\`\`\`
-
-## Adding New Services
-
-Create a new service directory in \`mcp/\`:
-
-\`\`\`typescript
-// mcp/myservice/index.ts
-import { Tool, SchemaConstraint } from "@leanmcp/core";
-
-// Define input schema
-class MyToolInput {
-  @SchemaConstraint({ 
-    description: "Message to process",
-    minLength: 1
-  })
-  message!: string;
-}
-
-export class MyService {
-  @Tool({ 
-    description: "My awesome tool",
-    inputClass: MyToolInput
-  })
-  async myTool(input: MyToolInput) {
-    return {
-      content: [{
-        type: "text",
-        text: \`You said: \${input.message}\`
-      }]
-    };
-  }
-}
-\`\`\`
-
-Services are automatically discovered and registered - no need to modify \`main.ts\`!
-
-## Features
-
-- **Zero-config auto-discovery** - Services automatically registered from \`./mcp\` directory
-- **Type-safe decorators** - \`@Tool\`, \`@Prompt\`, \`@Resource\` with full TypeScript support
-- **Schema validation** - Automatic input validation with \`@SchemaConstraint\`
-- **HTTP transport** - Production-ready HTTP server with session management
-- **Hot reload** - Development mode with automatic restart on file changes
-
-## Testing with MCP Inspector
-
-\`\`\`bash
-npx @modelcontextprotocol/inspector http://localhost:3001/mcp
-\`\`\`
-
-## License
-
-MIT
-`;
+    const readme = getReadmeTemplate(projectName);
     await fs.writeFile(path.join(targetDir, "README.md"), readme);
 
     spinner.succeed(`Project ${projectName} created!`);
     console.log(chalk.green("\nSuccess! Your MCP server is ready.\n"));
-    console.log(chalk.cyan(`Next, navigate to your project:\n  cd ${projectName}\n`));
+    console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+    console.log(chalk.gray(`  cd ${projectName}`));
+    console.log(chalk.gray(`  leanmcp deploy .\n`));
+    console.log(chalk.cyan("Need help? Join our Discord:"));
+    console.log(chalk.blue("  https://discord.com/invite/DsRcA3GwPy\n"));
 
     // Determine install behavior based on flags
     // --no-install: Skip install entirely (non-interactive)
@@ -498,10 +148,14 @@ MIT
     
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
-      console.log(chalk.cyan("\nTo get started:"));
+      console.log(chalk.cyan("To get started:"));
       console.log(chalk.gray(`  cd ${projectName}`));
       console.log(chalk.gray(`  npm install`));
       console.log(chalk.gray(`  npm run dev`));
+      console.log();
+      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  leanmcp deploy .`));
       return;
     }
 
@@ -542,6 +196,10 @@ MIT
           console.log(chalk.cyan("\nTo start the development server:"));
           console.log(chalk.gray(`  cd ${projectName}`));
           console.log(chalk.gray(`  npm run dev`));
+          console.log();
+          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  leanmcp deploy .`));
           return;
         }
 
@@ -572,6 +230,10 @@ MIT
           console.log(chalk.cyan("\nTo start the development server later:"));
           console.log(chalk.gray(`  cd ${projectName}`));
           console.log(chalk.gray(`  npm run dev`));
+          console.log();
+          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+          console.log(chalk.gray(`  cd ${projectName}`));
+          console.log(chalk.gray(`  leanmcp deploy .`));
         }
       } catch (error) {
         installSpinner.fail("Failed to install dependencies");
@@ -585,6 +247,10 @@ MIT
       console.log(chalk.gray(`  cd ${projectName}`));
       console.log(chalk.gray(`  npm install`));
       console.log(chalk.gray(`  npm run dev`));
+      console.log();
+      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
+      console.log(chalk.gray(`  cd ${projectName}`));
+      console.log(chalk.gray(`  leanmcp deploy .`));
     }
   });
 
@@ -610,65 +276,7 @@ program
 
     await fs.mkdirp(serviceDir);
 
-    const indexTs = `import { Tool, Resource, Prompt, Optional, SchemaConstraint } from "@leanmcp/core";
-
-// Input schema for greeting
-class GreetInput {
-  @SchemaConstraint({
-    description: "Name to greet",
-    minLength: 1
-  })
-  name!: string;
-}
-
-/**
- * ${capitalize(serviceName)} Service
- * 
- * This service demonstrates the three types of MCP primitives:
- * - Tools: Callable functions (like API endpoints)
- * - Prompts: Reusable prompt templates
- * - Resources: Data sources/endpoints
- */
-export class ${capitalize(serviceName)}Service {
-  // TOOL - Callable function
-  // Tool name: "greet" (from function name)
-  @Tool({ 
-    description: "Greet a user by name",
-    inputClass: GreetInput
-  })
-  greet(args: GreetInput) {
-    return { message: \`Hello, \${args.name}! from ${serviceName}\` };
-  }
-
-  // PROMPT - Prompt template
-  // Prompt name: "welcomePrompt" (from function name)
-  @Prompt({ description: "Welcome message prompt template" })
-  welcomePrompt(args: { userName?: string }) {
-    return {
-      messages: [
-        {
-          role: "user",
-          content: {
-            type: "text",
-            text: \`Welcome \${args.userName || 'user'}! How can I help you with ${serviceName}?\`
-          }
-        }
-      ]
-    };
-  }
-
-  // RESOURCE - Data endpoint
-  // Resource URI auto-generated from class and method name
-  @Resource({ description: "${capitalize(serviceName)} service status" })
-  getStatus() {
-    return { 
-      service: "${serviceName}", 
-      status: "active",
-      timestamp: new Date().toISOString()
-    };
-  }
-}
-`;
+    const indexTs = getServiceIndexTemplate(serviceName, capitalize(serviceName));
     await fs.writeFile(serviceFile, indexTs);
 
     console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
