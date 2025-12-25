@@ -16,7 +16,7 @@ import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
 import { getMainTsTemplate } from "./templates/main_ts_v1";
 import { getServiceIndexTemplate } from "./templates/service_index_v1";
-import { trackCommand, log, chalk, setDebugMode, debug } from "./logger";
+import { trackCommand, logger, chalk, setDebugMode, debug } from "./logger";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -158,12 +158,12 @@ program
     await fs.writeFile(path.join(targetDir, "README.md"), readme);
 
     spinner.succeed(`Project ${projectName} created!`);
-    log("\nSuccess! Your MCP server is ready.\n", chalk.green);
-    log("To deploy to LeanMCP cloud:", chalk.cyan);
-    log(`  cd ${projectName}`, chalk.gray);
-    log(`  leanmcp deploy .\n`, chalk.gray);
-    log("Need help? Join our Discord:", chalk.cyan);
-    log("  https://discord.com/invite/DsRcA3GwPy\n", chalk.blue);
+    logger.log("\nSuccess! Your MCP server is ready.\n", chalk.green);
+    logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+    logger.log(`  cd ${projectName}`, chalk.gray);
+    logger.log(`  leanmcp deploy .\n`, chalk.gray);
+    logger.log("Need help? Join our Discord:", chalk.cyan);
+    logger.log("  https://discord.com/invite/DsRcA3GwPy\n", chalk.blue);
 
     // Determine install behavior based on flags
     // --no-install: Skip install entirely (non-interactive)
@@ -175,14 +175,14 @@ program
     
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
-      log("To get started:", chalk.cyan);
-      log(`  cd ${projectName}`, chalk.gray);
-      log(`  npm install`, chalk.gray);
-      log(`  npm run dev`, chalk.gray);
-      log("");
-      log("To deploy to LeanMCP cloud:", chalk.cyan);
-      log(`  cd ${projectName}`, chalk.gray);
-      log(`  leanmcp deploy .`, chalk.gray);
+      logger.log("To get started:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  npm install`, chalk.gray);
+      logger.log(`  npm run dev`, chalk.gray);
+      logger.log("");
+      logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  leanmcp deploy .`, chalk.gray);
       return;
     }
 
@@ -220,13 +220,13 @@ program
 
         // If --install flag was used, exit without starting dev server
         if (options.install === true) {
-          log("\nTo start the development server:", chalk.cyan);
-          log(`  cd ${projectName}`, chalk.gray);
-          log(`  npm run dev`, chalk.gray);
-          log("");
-          log("To deploy to LeanMCP cloud:", chalk.cyan);
-          log(`  cd ${projectName}`, chalk.gray);
-          log(`  leanmcp deploy .`, chalk.gray);
+          logger.log("\nTo start the development server:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  npm run dev`, chalk.gray);
+          logger.log("");
+          logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  leanmcp deploy .`, chalk.gray);
           return;
         }
 
@@ -239,7 +239,7 @@ program
           });
 
         if (shouldStartDev) {
-          log("\nStarting development server...\n", chalk.cyan);
+          logger.log("\nStarting development server...\n", chalk.cyan);
 
           // Start dev server with inherited stdio so user can see output and interact
           const devServer = spawn("npm", ["run", "dev"], {
@@ -254,30 +254,30 @@ program
             process.exit(0);
           });
         } else {
-          log("\nTo start the development server later:", chalk.cyan);
-          log(`  cd ${projectName}`, chalk.gray);
-          log(`  npm run dev`, chalk.gray);
-          log("");
-          log("To deploy to LeanMCP cloud:", chalk.cyan);
-          log(`  cd ${projectName}`, chalk.gray);
-          log(`  leanmcp deploy .`, chalk.gray);
+          logger.log("\nTo start the development server later:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  npm run dev`, chalk.gray);
+          logger.log("");
+          logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  leanmcp deploy .`, chalk.gray);
         }
       } catch (error) {
         installSpinner.fail("Failed to install dependencies");
-        log(error instanceof Error ? error.message : String(error), chalk.red);
-        log("\nYou can install dependencies manually:", chalk.cyan);
-        log(`  cd ${projectName}`, chalk.gray);
-        log(`  npm install`, chalk.gray);
+        logger.log(error instanceof Error ? error.message : String(error), chalk.red);
+        logger.log("\nYou can install dependencies manually:", chalk.cyan);
+        logger.log(`  cd ${projectName}`, chalk.gray);
+        logger.log(`  npm install`, chalk.gray);
       }
     } else {
-      log("\nTo get started:", chalk.cyan);
-      log(`  cd ${projectName}`, chalk.gray);
-      log(`  npm install`, chalk.gray);
-      log(`  npm run dev`, chalk.gray);
-      log("");
-      log("To deploy to LeanMCP cloud:", chalk.cyan);
-      log(`  cd ${projectName}`, chalk.gray);
-      log(`  leanmcp deploy .`, chalk.gray);
+      logger.log("\nTo get started:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  npm install`, chalk.gray);
+      logger.log(`  npm run dev`, chalk.gray);
+      logger.log("");
+      logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  leanmcp deploy .`, chalk.gray);
     }
   });
 
@@ -289,7 +289,7 @@ program
     const mcpDir = path.join(cwd, "mcp");
 
     if (!fs.existsSync(path.join(cwd, "main.ts"))) {
-      log("ERROR: Not a LeanMCP project (main.ts missing).", chalk.red);
+      logger.log("ERROR: Not a LeanMCP project (main.ts missing).", chalk.red);
       process.exit(1);
     }
 
@@ -297,7 +297,7 @@ program
     const serviceFile = path.join(serviceDir, "index.ts");
 
     if (fs.existsSync(serviceDir)) {
-      log(`ERROR: Service ${serviceName} already exists.`, chalk.red);
+      logger.log(`ERROR: Service ${serviceName} already exists.`, chalk.red);
       process.exit(1);
     }
 
@@ -306,12 +306,12 @@ program
     const indexTs = getServiceIndexTemplate(serviceName, capitalize(serviceName));
     await fs.writeFile(serviceFile, indexTs);
 
-    log(`\\nCreated new service: ${chalk.bold(serviceName)}`, chalk.green);
-    log(`   File: mcp/${serviceName}/index.ts`, chalk.gray);
-    log(`   Tool: greet`, chalk.gray);
-    log(`   Prompt: welcomePrompt`, chalk.gray);
-    log(`   Resource: getStatus`, chalk.gray);
-    log(`\\nService will be automatically discovered on next server start!`, chalk.green);
+    logger.log(`\\nCreated new service: ${chalk.bold(serviceName)}`, chalk.green);
+    logger.log(`   File: mcp/${serviceName}/index.ts`, chalk.gray);
+    logger.log(`   Tool: greet`, chalk.gray);
+    logger.log(`   Prompt: welcomePrompt`, chalk.gray);
+    logger.log(`   Resource: getStatus`, chalk.gray);
+    logger.log(`\\nService will be automatically discovered on next server start!`, chalk.green);
   });
 
 program
