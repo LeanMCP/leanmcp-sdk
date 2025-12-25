@@ -407,13 +407,31 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
     if (checkResponse.ok) {
       const result = await checkResponse.json();
+      debug('Subdomain check result:', result);
+      
       if (!result.available) {
-        checkSpinner.fail(`Subdomain '${subdomain}' is already taken`);
-        console.log(chalk.gray('\nPlease choose a different subdomain.\n'));
-        process.exit(1);
+        // Subdomain is taken - check ownership
+        const ourProjectId = isUpdate && existingProject ? existingProject.id : null;
+        
+        if (ourProjectId && result.ownedByProject === ourProjectId) {
+          // It's our subdomain from the same project - proceed with update
+          checkSpinner.succeed(`Subdomain '${subdomain}' is yours - will update existing mapping`);
+        } else if (result.ownedByCurrentUser) {
+          // User owns it but for a different project
+          checkSpinner.fail(`Subdomain '${subdomain}' is used by your other project`);
+          console.log(chalk.gray(`\nThis subdomain is associated with project: ${result.ownedByProject?.substring(0, 8)}...`));
+          console.log(chalk.gray('Please choose a different subdomain or update that project instead.\n'));
+          process.exit(1);
+        } else {
+          // Someone else owns it
+          checkSpinner.fail(`Subdomain '${subdomain}' is not available`);
+          console.log(chalk.gray('\nThis subdomain is taken by another user. Please choose a different subdomain.\n'));
+          process.exit(1);
+        }
+      } else {
+        checkSpinner.succeed(`Subdomain '${subdomain}' is available`);
       }
     }
-    checkSpinner.succeed(`Subdomain '${subdomain}' is available`);
   } catch (error) {
     checkSpinner.warn('Could not verify subdomain availability');
   }
