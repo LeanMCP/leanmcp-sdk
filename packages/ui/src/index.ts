@@ -46,6 +46,17 @@ export type {
     AppOptions,
 } from './mcp/AppProvider';
 
+// GPT-specific provider (uses ChatGPT's native window.openai SDK)
+export {
+    GPTAppProvider,
+    useGptApp,
+    useGptTool,
+} from './mcp/GPTAppProvider';
+export type {
+    GptAppContextValue,
+    GPTAppProviderProps,
+} from './mcp/GPTAppProvider';
+
 export { ToolProvider, useToolContext } from './mcp/ToolProvider';
 export type { ToolProviderProps, ToolContextValue } from './mcp/ToolProvider';
 
@@ -143,6 +154,7 @@ export { cn } from './lib/utils';
 // Decorator for Server-side UI binding
 // ===========================================
 export { UIApp, getUIAppMetadata, getUIAppUri, type UIAppOptions } from './decorator';
+export { GPTApp, getGPTAppMetadata, getGPTAppUri, type GPTAppOptions } from './decorator';
 
 // ===========================================
 // Data Visualization Components  
@@ -177,6 +189,17 @@ export { Input, type InputProps } from './core/Input';
 export { App, PostMessageTransport } from '@modelcontextprotocol/ext-apps';
 export { AppBridge } from '@modelcontextprotocol/ext-apps/app-bridge';
 
+// Style utility functions
+export {
+    applyHostStyleVariables,
+    applyDocumentTheme,
+    applyHostFonts,
+    getDocumentTheme,
+} from '@modelcontextprotocol/ext-apps';
+
+// Constants for server-side integration
+export { RESOURCE_URI_META_KEY, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps';
+
 export type {
     McpUiHostContext,
     McpUiToolInputNotification,
@@ -187,4 +210,11 @@ export type {
     McpUiDisplayMode,
     McpUiStyles,
     McpUiHostStyles,
+    // New types in ext-apps 0.2.2
+    McpUiToolMeta,
+    McpUiToolVisibility,
+    McpUiResourceMeta,
+    McpUiResourceCsp,
+    McpUiTheme,
+    McpUiHostCss,
 } from '@modelcontextprotocol/ext-apps';

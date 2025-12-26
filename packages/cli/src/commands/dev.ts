@@ -92,7 +92,7 @@ export async function devCommand() {
     }
 
     // Step 2: Build UI components
-    const manifest: Record<string, string> = {};
+    const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = {};
 
     if (uiApps.length > 0) {
         const buildSpinner = ora('Building UI components...').start();
@@ -101,7 +101,16 @@ export async function devCommand() {
         for (const app of uiApps) {
             const result = await buildUIComponent(app, cwd, true);
             if (result.success) {
-                manifest[app.resourceUri] = result.htmlPath;
+                // Include isGPTApp flag so core uses correct MIME type (text/html+skybridge)
+                if (app.isGPTApp) {
+                    manifest[app.resourceUri] = {
+                        htmlPath: result.htmlPath,
+                        isGPTApp: true,
+                        gptMeta: app.gptOptions
+                    };
+                } else {
+                    manifest[app.resourceUri] = result.htmlPath;
+                }
             } else {
                 errors.push(`${app.componentName}: ${result.error}`);
             }
@@ -190,7 +199,16 @@ export async function devCommand() {
                 const result = await buildUIComponent(app, cwd, true);
 
                 if (result.success) {
-                    manifest[app.resourceUri] = result.htmlPath;
+                    // Include isGPTApp flag so core uses correct MIME type (text/html+skybridge)
+                    if (app.isGPTApp) {
+                        manifest[app.resourceUri] = {
+                            htmlPath: result.htmlPath,
+                            isGPTApp: true,
+                            gptMeta: app.gptOptions
+                        };
+                    } else {
+                        manifest[app.resourceUri] = result.htmlPath;
+                    }
                     // Update hash cache
                     if (await fs.pathExists(app.componentPath)) {
                         componentHashCache.set(app.resourceUri, computeHash(app.componentPath));
@@ -209,26 +227,52 @@ export async function devCommand() {
         }, 150);
     });
 
-    // Handle process termination
+    // Cross-platform graceful shutdown
+    // - Windows with shell:true/stdio:inherit: child process automatically receives SIGINT
+    // - Unix/Mac/Linux: we may need to forward the signal to the child
+    const isWindows = process.platform === 'win32';
     let isCleaningUp = false;
+
     const cleanup = () => {
         if (isCleaningUp) return;
         isCleaningUp = true;
 
         console.log(chalk.gray('\nShutting down...'));
-        if (watcher) watcher.close();
-        devServer.kill('SIGTERM');
 
-        // Don't call process.exit here - let the devServer exit handler do it
-        // This prevents terminal crashes on Windows
+        // Close file watcher
+        if (watcher) {
+            watcher.close();
+            watcher = null;
+        }
+
+        // On non-Windows platforms, explicitly send signal to child process
+        // On Windows, child already received SIGINT from the console
+        if (!isWindows && !devServer.killed) {
+            devServer.kill('SIGTERM');
+        }
     };
 
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
+    // Use 'once' to prevent duplicate handlers
+    process.once('SIGINT', cleanup);
+    process.once('SIGTERM', cleanup);
 
-    // Wait for dev server to exit
-    devServer.on('exit', (code) => {
-        if (watcher) watcher.close();
-        process.exit(code ?? 0);
+    // Handle child process errors
+    devServer.on('error', (err) => {
+        console.error(chalk.red(`Dev server error: ${err.message}`));
+    });
+
+    // Wait for dev server to exit and cleanup
+    devServer.on('exit', (code, signal) => {
+        // Ensure watcher is closed
+        if (watcher) {
+            watcher.close();
+            watcher = null;
+        }
+
+        // Exit with appropriate code
+        // Use setImmediate to ensure event loop can flush on Windows
+        setImmediate(() => {
+            process.exit(code ?? (signal ? 1 : 0));
+        });
     });
 }
