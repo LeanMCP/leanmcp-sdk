@@ -34,7 +34,11 @@ export async function buildCommand() {
     }
 
     // Step 2: Build UI components (production mode)
-    const manifest: Record<string, string> = {};
+    const manifest: Record<string, string | {
+        htmlPath: string;
+        isGPTApp?: boolean;
+        gptMeta?: any
+    }> = {};
 
     if (uiApps.length > 0) {
         const buildSpinner = ora('Building UI components...').start();
@@ -43,7 +47,11 @@ export async function buildCommand() {
         for (const app of uiApps) {
             const result = await buildUIComponent(app, cwd, false);
             if (result.success) {
-                manifest[app.resourceUri] = result.htmlPath;
+                manifest[app.resourceUri] = {
+                    htmlPath: result.htmlPath,
+                    isGPTApp: app.isGPTApp,
+                    gptMeta: app.gptOptions
+                };
             } else {
                 errors.push(`${app.componentName}: ${result.error}`);
             }

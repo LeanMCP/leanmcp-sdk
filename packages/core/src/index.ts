@@ -748,7 +748,7 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
       const currentUIUris = new Set(Object.keys(manifest));
       const registeredUIUris = Array.from(this.resources.keys()).filter(uri => uri.startsWith('ui://'));
 
@@ -763,7 +763,13 @@ export class MCPServer {
       }
 
       // Add or update resources from manifest
-      for (const [uri, htmlPath] of Object.entries(manifest)) {
+      for (const [uri, entry] of Object.entries(manifest)) {
+        // Normalize entry
+        const isString = typeof entry === 'string';
+        const htmlPath = isString ? entry : entry.htmlPath;
+        const isGPTApp = !isString && entry.isGPTApp;
+        const gptMeta = !isString ? entry.gptMeta : undefined;
+
         if (!fs.existsSync(htmlPath)) {
           if (this.logging) {
             this.logger.warn(`UI HTML file not found: ${htmlPath}`);
@@ -773,16 +779,30 @@ export class MCPServer {
 
         const wasRegistered = this.resources.has(uri);
 
+        // Determine mimeType (ChatGPT requires text/html+skybridge)
+        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+
+        // Construct metadata
+        const _meta: Record<string, any> = {};
+        if (isGPTApp) {
+          _meta['openai/outputTemplate'] = uri;
+          if (gptMeta) Object.assign(_meta, gptMeta);
+          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+        }
+
         this.resources.set(uri, {
           uri,
           name: uri.replace('ui://', '').replace(/\//g, '-'),
           description: `Auto-generated UI resource from pre-built HTML`,
-          mimeType: 'text/html;profile=mcp-app',
+          mimeType,
           inputSchema: undefined,
           method: async () => {
             if (fs.existsSync(htmlPath)) {
               const html = fs.readFileSync(htmlPath, 'utf-8');
-              return { text: html };
+              return {
+                text: html,
+                _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+              };
             }
             throw new Error(`UI HTML file not found: ${htmlPath}`);
           },
@@ -816,9 +836,15 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
-      for (const [uri, htmlPath] of Object.entries(manifest)) {
+      for (const [uri, entry] of Object.entries(manifest)) {
+        // Normalize entry
+        const isString = typeof entry === 'string';
+        const htmlPath = isString ? entry : entry.htmlPath;
+        const isGPTApp = !isString && entry.isGPTApp;
+        const gptMeta = !isString ? entry.gptMeta : undefined;
+
         // Skip if resource already registered (e.g., by explicit @Resource)
         if (this.resources.has(uri)) {
           if (this.logging) {
@@ -838,13 +864,27 @@ export class MCPServer {
         // Create a resource handler that reads the pre-built HTML
         const html = fs.readFileSync(htmlPath, 'utf-8');
 
+        // Determine mimeType (ChatGPT requires text/html+skybridge)
+        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+
+        // Construct metadata
+        const _meta: Record<string, any> = {};
+        if (isGPTApp) {
+          _meta['openai/outputTemplate'] = uri;
+          if (gptMeta) Object.assign(_meta, gptMeta);
+          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+        }
+
         this.resources.set(uri, {
           uri,
           name: uri.replace('ui://', '').replace(/\//g, '-'),
           description: `Auto-generated UI resource from pre-built HTML`,
-          mimeType: 'text/html;profile=mcp-app',
+          mimeType,
           inputSchema: undefined,
-          method: async () => ({ text: html }),
+          method: async () => ({
+            text: html,
+            _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+          }),
           instance: null,
           propertyKey: 'getUI',
         });

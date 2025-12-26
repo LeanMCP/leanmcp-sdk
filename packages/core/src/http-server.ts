@@ -439,7 +439,7 @@ export async function createHTTPServer(
   // StreamableHTTPClientTransport uses GET with Accept: text/event-stream for server-to-client streaming
   app.get('/mcp', async (req: any, res: any) => {
     const acceptHeader = req.headers['accept'] || '';
-    
+
     // If client requests SSE, handle as MCP streaming request
     if (acceptHeader.includes('text/event-stream')) {
       // SSE requests need session handling - only supported in stateful mode
@@ -460,7 +460,7 @@ export async function createHTTPServer(
       });
       return;
     }
-    
+
     // Otherwise serve dashboard HTML (if enabled)
     if (isDashboardEnabled) {
       try {
@@ -525,28 +525,48 @@ export async function createHTTPServer(
         reject(error);
       });
 
-      // Cleanup on shutdown
-      const cleanup = () => {
+      // Graceful shutdown handler - cross-platform (Windows/Mac/Linux)
+      let isShuttingDown = false;
+      const cleanup = async () => {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+
         logger.info('\nShutting down server...');
 
-        // Close all MCP transports
-        Object.values(transports).forEach(t => t.close?.());
+        // Close all MCP transports first
+        for (const transport of Object.values(transports)) {
+          try {
+            transport.close?.();
+          } catch (e) {
+            // Ignore transport close errors
+          }
+        }
 
-        // Close the HTTP server
-        activeListener?.close(() => {
-          logger.info('Server closed');
-          process.exit(0);
-        });
-
-        // Force exit after 5 seconds if graceful shutdown fails
-        setTimeout(() => {
-          logger.warn('Forcing shutdown...');
-          process.exit(1);
-        }, 5000);
+        // Close the HTTP server and release the port
+        if (activeListener) {
+          await new Promise<void>((resolveClose) => {
+            activeListener!.close((err: Error | undefined) => {
+              if (err) {
+                logger.warn(`Error closing server: ${err.message}`);
+              } else {
+                logger.info('Server closed');
+              }
+              resolveClose();
+            });
+          });
+        }
       };
 
-      process.on('SIGINT', cleanup);
-      process.on('SIGTERM', cleanup);
+      // Register signal handlers - use 'once' for all platforms
+      const handleShutdown = () => {
+        cleanup().finally(() => {
+          // Let the calling process (CLI) handle exit
+          // This ensures proper cross-platform behavior
+        });
+      };
+
+      process.once('SIGINT', handleShutdown);
+      process.once('SIGTERM', handleShutdown);
     } catch (error) {
       reject(error);
     }

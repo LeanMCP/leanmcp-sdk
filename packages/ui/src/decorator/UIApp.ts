@@ -75,6 +75,11 @@ export function UIApp(options: UIAppOptions): MethodDecorator {
         const existingMeta = Reflect.getMetadata('tool:meta', descriptor.value) || {};
         Reflect.defineMetadata('tool:meta', {
             ...existingMeta,
+            // New nested format (preferred by ext-apps 0.2.2)
+            ui: {
+                resourceUri: uri,
+            },
+            // Legacy flat format (for backwards compatibility)
             'ui/resourceUri': uri,
         }, descriptor.value!);
 

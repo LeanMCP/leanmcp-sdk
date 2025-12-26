@@ -18,6 +18,7 @@ import {
     PostMessageTransport,
     applyHostStyleVariables,
     applyDocumentTheme,
+    applyHostFonts,
 } from '@modelcontextprotocol/ext-apps';
 import type {
     McpUiHostContext,
@@ -141,10 +142,10 @@ export function AppProvider({ appInfo, capabilities = {}, options = { autoResize
         if (context.styles?.variables) {
             applyHostStyleVariables(context.styles.variables);
         }
-        // TODO: Apply fonts when applyHostFonts is available in ext-apps
-        // if (context.styles?.css?.fonts) {
-        //     applyHostFonts(context.styles.css.fonts);
-        // }
+        // Apply fonts
+        if (context.styles?.css?.fonts) {
+            applyHostFonts(context.styles.css.fonts);
+        }
     }, []);
 
     // Connect to host on mount

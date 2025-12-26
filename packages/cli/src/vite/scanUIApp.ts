@@ -20,6 +20,16 @@ export interface UIAppInfo {
     methodName: string;
     /** Service class name */
     serviceName: string;
+    /** True if this is a @GPTApp (ChatGPT-specific) */
+    isGPTApp: boolean;
+    /** GPT-specific options if applicable */
+    gptOptions?: {
+        widgetAccessible?: boolean;
+        visibility?: 'public' | 'private';
+        prefersBorder?: boolean;
+        widgetDomain?: string;
+        widgetDescription?: string;
+    };
 }
 
 /**
@@ -45,8 +55,8 @@ export async function scanUIApp(projectDir: string): Promise<UIAppInfo[]> {
         const filePath = path.join(mcpDir, relativeFile);
         const content = await fs.readFile(filePath, 'utf-8');
 
-        // Check if file imports from @leanmcp/ui (or @leanmcp/ui/server) and uses @UIApp
-        if (!content.includes('@UIApp') || !content.includes('@leanmcp/ui')) {
+        // Check if file imports from @leanmcp/ui (or @leanmcp/ui/server) and uses @UIApp or @GPTApp
+        if ((!content.includes('@UIApp') && !content.includes('@GPTApp')) || !content.includes('@leanmcp/ui')) {
             continue;
         }
 
@@ -71,14 +81,17 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
     // Extract imports to find component paths
     const importMap = parseImports(content, filePath);
 
-    // Find @UIApp decorators with component reference
-    // Pattern: @UIApp({ component: ComponentName, ... }) OR @UIApp({ component: './path', ... })
-    const uiAppRegex = /@UIApp\s*\(\s*\{([^}]+)\}\s*\)\s*(?:async\s+)?(\w+)/g;
+    // Find @UIApp or @GPTApp decorators with component reference
+    // Pattern: @(UIApp|GPTApp)({ component: ComponentName, ... }) OR @(UIApp|GPTApp)({ component: './path', ... })
+    const uiAppRegex = /@(UIApp|GPTApp)\s*\(\s*\{([\s\S]+?)\}\s*\)\s*(?:async\s+)?(\w+)/g;
     let match;
 
     while ((match = uiAppRegex.exec(content)) !== null) {
-        const decoratorBody = match[1];
-        const methodName = match[2];
+        const decoratorName = match[1]; // UIApp or GPTApp
+        const decoratorBody = match[2];
+        const methodName = match[3];
+
+        const isGPTApp = decoratorName === 'GPTApp';
 
         // Try to extract component - can be identifier OR string literal
         // Pattern 1: component: ComponentName (identifier)
@@ -123,7 +136,37 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
 
         // Generate resource URI: ui://<service-lowercase>/<methodName>
         const servicePrefix = serviceName.replace(/Service$/i, '').toLowerCase();
-        const resourceUri = `ui://${servicePrefix}/${methodName}`;
+        let resourceUri = `ui://${servicePrefix}/${methodName}`;
+
+        // Check for custom URI in options
+        const uriMatch = decoratorBody.match(/uri\s*:\s*['"]([^'"]+)['"]/);
+        if (uriMatch) {
+            resourceUri = uriMatch[1];
+        }
+
+        // Extract GPT-specific options if it's a GPTApp
+        let gptOptions: UIAppInfo['gptOptions'] = undefined;
+        if (isGPTApp) {
+            gptOptions = {};
+
+            // Extract booleans
+            if (decoratorBody.includes('widgetAccessible: true')) gptOptions.widgetAccessible = true;
+            if (decoratorBody.includes('prefersBorder: true')) gptOptions.prefersBorder = true;
+
+            // Extract strings
+            const visibilityMatch = decoratorBody.match(/visibility\s*:\s*['"](public|private)['"]/);
+            if (visibilityMatch) gptOptions.visibility = visibilityMatch[1] as 'public' | 'private';
+
+            const domainMatch = decoratorBody.match(/widgetDomain\s*:\s*['"]([^'"]+)['"]/);
+            if (domainMatch) gptOptions.widgetDomain = domainMatch[1];
+
+            const descriptionMatch = decoratorBody.match(/widgetDescription\s*:\s*['"]([^'"]+)['"]/);
+            if (descriptionMatch) gptOptions.widgetDescription = descriptionMatch[1];
+
+            // Note: Complex objects like CSP are hard to regex reliably. 
+            // For build purposes we mainly need to know it IS a GPTApp to set mimeType.
+            // Full metadata is constructed at runtime by the decorator.
+        }
 
         results.push({
             servicePath: filePath,
@@ -132,6 +175,8 @@ function parseUIAppDecorators(content: string, filePath: string): UIAppInfo[] {
             resourceUri,
             methodName,
             serviceName,
+            isGPTApp,
+            gptOptions
         });
     }
 
