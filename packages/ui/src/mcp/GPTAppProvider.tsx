@@ -15,11 +15,29 @@ import React, {
 
 /**
  * ChatGPT's window.openai interface
- * Only includes properties that are confirmed to exist in the ChatGPT Apps SDK
+ * Based on: https://developers.openai.com/apps-sdk/build/chatgpt-ui#understand-the-windowopenai-api
  */
-interface OpenAISDK {
+export interface OpenAISDK {
+    /** Input arguments for the tool */
+    toolInput?: Record<string, unknown>;
+    /** Structured content returned by the tool */
+    toolOutput?: any;
+    /** Metadata returned by the tool */
+    toolResponseMetadata?: Record<string, unknown>;
+    /** Persisted state for this widget instance */
+    widgetState?: Record<string, unknown>;
+
     /** Call a server tool */
     callTool: (name: string, args: Record<string, unknown>) => Promise<any>;
+    /** Send a follow-up message to chat */
+    sendFollowUpMessage?: (options: { prompt: string }) => Promise<void>;
+    /** Upload a file */
+    uploadFile?: (file: File) => Promise<{ fileId: string }>;
+    /** Get download URL for a file */
+    getFileDownloadUrl?: (options: { fileId: string }) => Promise<{ downloadUrl: string }>;
+    /** Persist widget state */
+    setWidgetState?: (state: Record<string, unknown>) => void;
+
     /** Current theme */
     theme?: 'light' | 'dark';
     /** Current locale */
@@ -28,6 +46,10 @@ interface OpenAISDK {
     displayMode?: 'inline' | 'modal' | 'fullscreen';
     /** Maximum height for the widget */
     maxHeight?: number;
+    /** Safe area insets */
+    safeArea?: { top: number; right: number; bottom: number; left: number };
+    /** View type */
+    view?: 'desktop' | 'mobile';
 }
 
 declare global {

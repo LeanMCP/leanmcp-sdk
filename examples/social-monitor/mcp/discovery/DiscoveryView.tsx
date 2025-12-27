@@ -3,12 +3,28 @@
  * Shows only discovery results without tabs
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { useGptTool } from '@leanmcp/ui';
+import { useGptTool, useToolOutput } from '@leanmcp/ui';
 import { MentionCard } from '../components/MentionCard';
 import { Mention, parseToolResult } from '../components/shared';
 
+interface DiscoveryResult {
+    mentions: Mention[];
+    total: number;
+}
+
 export function DiscoveryView() {
-    const [mentions, setMentions] = useState<Mention[]>([]);
+    // Get initial data from window.openai.toolOutput (structuredContent)
+    const initialResult = useToolOutput<DiscoveryResult>();
+
+    // Initialize state with structuredContent if available
+    const [mentions, setMentions] = useState<Mention[]>(initialResult?.mentions || []);
+
+    // Handle latency in structuredContent injection
+    useEffect(() => {
+        if (initialResult?.mentions) {
+            setMentions(initialResult.mentions);
+        }
+    }, [initialResult]);
     const [respondingToId, setRespondingToId] = useState<string | null>(null);
 
     const { call: fetchMentions, loading, error } = useGptTool('discoverMCPOpportunities');
@@ -23,8 +39,11 @@ export function DiscoveryView() {
     }, [fetchMentions]);
 
     useEffect(() => {
-        loadMentions();
-    }, [loadMentions]);
+        // Only fetch if we didn't get initial data
+        if (mentions.length === 0) {
+            loadMentions();
+        }
+    }, [loadMentions]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <div className="min-h-screen bg-gray-50 text-gray-900">

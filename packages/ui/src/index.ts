@@ -127,6 +127,11 @@ export { useToolInput, type UseToolInputReturn } from './mcp/useToolInput';
 export { useToolInputPartial, type UseToolInputPartialReturn } from './mcp/useToolInputPartial';
 export { useToolSubscription } from './mcp/useToolSubscription';
 
+// Spec-compliant hooks
+export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
+export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './mcp/useToolData';
+export { useWidgetState } from './mcp/useWidgetState';
+
 // ===========================================
 // MCP Types
 // ===========================================
