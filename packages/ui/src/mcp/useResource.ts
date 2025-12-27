@@ -150,6 +150,12 @@ export function useResource<T = unknown>(
 
     // Auto-refresh interval
     useEffect(() => {
+        // Cleanup ANY existing interval first (defensive)
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
         if (refreshInterval && refreshInterval > 0 && isConnected && !skip) {
             intervalRef.current = setInterval(() => {
                 fetchResource().catch(() => {

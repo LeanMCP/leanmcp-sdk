@@ -1,6 +1,6 @@
 {
     "name": "@leanmcp/ui",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "MCP-Native UI SDK - React components with first-class tool integration for building MCP Apps",
     "main": "dist/index.js",
     "module": "dist/index.mjs",
