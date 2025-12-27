@@ -1,14 +1,41 @@
-# @leanmcp/env-injection
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.svg"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-Request-scoped environment variable injection for LeanMCP tools. Enables user-specific secrets (API keys, tokens) to be securely fetched and accessed within MCP tool methods.
+<p align="center">
+  <strong>@leanmcp/env-injection</strong><br/>
+  Request-scoped environment variable injection for LeanMCP tools.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/env-injection">
+    <img src="https://img.shields.io/npm/v/@leanmcp/env-injection" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/env-injection">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/env-injection" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com/sdk/env-injection">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
 ## Features
 
-- **Request-scoped isolation** - Each user's secrets are isolated using `AsyncLocalStorage`
-- **@RequireEnv decorator** - Validate required env vars exist before method execution
-- **getEnv() / getAllEnv()** - Access user-specific secrets in your tool code
-- **Type-safe** - Full TypeScript support
-- **Works with @leanmcp/auth** - Integrates with `@Authenticated` decorator
+- **Request-scoped isolation** — Each user's secrets are isolated using `AsyncLocalStorage`
+- **@RequireEnv decorator** — Validate required env vars exist before method execution
+- **getEnv() / getAllEnv()** — Access user-specific secrets in your tool code
+- **Type-safe** — Full TypeScript support
+- **Works with @leanmcp/auth** — Integrates with `@Authenticated` decorator
 
 ## Installation
 
