@@ -418,9 +418,17 @@ export async function createHTTPServer(
       await transport.handleRequest(req, res, req.body);
 
       // Cleanup after response completes
+      // CRITICAL: Must call close() on MCPServer wrapper (if available) to clean Maps/watchers
       res.on('close', () => {
         transport.close();
-        (freshServer as Server).close();
+
+        // Check if this is an MCPServer instance with our close() method
+        if ('close' in freshServer && typeof (freshServer as any).close === 'function') {
+          (freshServer as any).close();
+        } else {
+          // Fallback for raw Server instances
+          (freshServer as Server).close();
+        }
       });
     } catch (error: any) {
       logger.error('Error handling MCP request:', error);

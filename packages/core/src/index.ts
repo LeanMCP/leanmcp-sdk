@@ -683,8 +683,18 @@ export class MCPServer {
 
   /**
    * Watch UI manifest for changes and reload resources dynamically
+   * 
+   * CRITICAL: Only for stateful mode. In stateless mode, each request
+   * creates a fresh server that reads the manifest directly, making
+   * watchers both unnecessary and a memory leak source.
    */
   private watchUIManifest() {
+    // Stateless mode: each request reads manifest directly from disk
+    // Watching is unnecessary (fresh server per request) and causes leaks
+    if (this.options.stateless) {
+      return;
+    }
+
     try {
       const manifestPath = path.join(process.cwd(), 'dist', 'ui-manifest.json');
 
@@ -908,6 +918,32 @@ export class MCPServer {
     // Attach waitForInit to the server instance for HTTP server to use
     (this.server as any).waitForInit = () => this.waitForInit();
     return this.server;
+  }
+
+  /**
+   * Clean up all registered services, watchers, and resources
+   * CRITICAL for stateless mode to prevent memory leaks
+   */
+  close(): void {
+    // Close manifest watcher if exists
+    if (this.manifestWatcher) {
+      try {
+        this.manifestWatcher.close();
+      } catch (e) {
+        // Ignore watcher close errors
+      }
+      this.manifestWatcher = null;
+    }
+
+    // Clear all registrations to enable GC
+    this.tools.clear();
+    this.prompts.clear();
+    this.resources.clear();
+
+    // Close underlying MCP server
+    if (this.server && typeof (this.server as any).close === 'function') {
+      (this.server as any).close();
+    }
   }
 
   /**
