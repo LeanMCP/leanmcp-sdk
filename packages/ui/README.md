@@ -93,6 +93,18 @@ function MyApp() {
 | `useMessage` | Send messages to host chat |
 | `useHostContext` | Access host theme and viewport |
 
+### GPT Apps SDK Hooks
+
+These hooks provide access to the ChatGPT Apps SDK globals (compatible with OpenAI's `window.openai` API):
+
+| Hook | Description |
+|------|-------------|
+| `useToolOutput` | Access `structuredContent` from the tool response |
+| `useToolInput` | Access input arguments passed to the tool |
+| `useWidgetState` | Read/write persistent widget state across sessions |
+| `useToolResponseMetadata` | Access `_meta` from the tool response |
+| `useOpenAiGlobal` | Low-level hook to subscribe to any `window.openai` property |
+
 ## Examples
 
 ### ToolButton with Confirmation
@@ -195,6 +207,34 @@ export class SlackService {
     name: 'slack-composer'
   })
   slackComposer() {}
+}
+```
+
+### GPT Apps SDK Hooks Usage
+
+Access tool output (structuredContent) without making additional API calls:
+
+```tsx
+import { useToolOutput, useWidgetState } from '@leanmcp/ui';
+
+function ChannelsView() {
+  // Access the structured data from the tool response
+  const toolOutput = useToolOutput<{ channels: Channel[] }>();
+  
+  // Persist state across the session
+  const [state, setState] = useWidgetState({ selectedChannel: null });
+  
+  if (!toolOutput?.channels) return <div>Loading...</div>;
+  
+  return (
+    <ul>
+      {toolOutput.channels.map(ch => (
+        <li key={ch.id} onClick={() => setState({ selectedChannel: ch.id })}>
+          {ch.name}
+        </li>
+      ))}
+    </ul>
+  );
 }
 ```
 
