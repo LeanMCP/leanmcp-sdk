@@ -12,6 +12,8 @@
 import * as vite from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 import fs from 'fs-extra';
 import path from 'path';
 import type { UIAppInfo } from './scanUIApp';
@@ -323,8 +325,8 @@ createRoot(document.getElementById('root')!).render(
             css: {
                 postcss: {
                     plugins: [
-                        (await import('tailwindcss') as any).default({ config: tailwindConfig }),
-                        (await import('autoprefixer') as any).default,
+                        tailwindcss({ config: tailwindConfig }),
+                        autoprefixer,
                     ],
                 },
             },
@@ -333,6 +335,8 @@ createRoot(document.getElementById('root')!).render(
                 emptyOutDir: false,
                 sourcemap: isDev ? 'inline' : false,
                 minify: !isDev,
+                // Force cache invalidation between builds to reduce memory accumulation
+                watch: null,  // Disable watch mode artifacts
                 rollupOptions: {
                     input: entryHtml,
                     output: {
