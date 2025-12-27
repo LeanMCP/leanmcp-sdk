@@ -1,6 +1,33 @@
-# LeanMCP SDK
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.svg"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-A TypeScript SDK for building **Model Context Protocol (MCP)** servers with type-safe decorators and streamable HTTP support.
+<p align="center">
+  <strong>leanmcp</strong><br/>
+  TypeScript SDK for building Model Context Protocol (MCP) servers.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/leanmcp">
+    <img src="https://img.shields.io/npm/v/leanmcp" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/leanmcp">
+    <img src="https://img.shields.io/npm/dm/leanmcp" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
 ## Installation
 
@@ -9,12 +36,12 @@ npm install leanmcp
 ```
 
 This meta-package includes all LeanMCP packages:
-- `@leanmcp/core` - Core decorators, server, and runtime
-- `@leanmcp/auth` - Authentication and authorization
-- `@leanmcp/ui` - React UI components for MCP Apps
-- `@leanmcp/utils` - Utility functions
-- `@leanmcp/elicitation` - Interactive prompts and forms
-- `@leanmcp/env-injection` - Environment variable management
+- `@leanmcp/core` — Core decorators (`@Tool`, `@Prompt`, `@Resource`) and HTTP server
+- `@leanmcp/auth` — Authentication with Cognito, Clerk, Auth0, LeanMCP providers
+- `@leanmcp/ui` — MCP-native React components, hooks, and `@UIApp`/`@GPTApp` decorators
+- `@leanmcp/utils` — Utility functions (retry, formatting, async helpers)
+- `@leanmcp/elicitation` — Structured user input collection with `@Elicitation`
+- `@leanmcp/env-injection` — Request-scoped environment variables with `@RequireEnv`
 
 ## Quick Start
 
