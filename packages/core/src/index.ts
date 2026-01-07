@@ -19,6 +19,7 @@ export * from "./schema-generator";
 export * from "./http-server";
 export * from "./logger";
 export * from "./validation";
+export * from "./auth-helpers";
 import { getMethodMetadata, getDecoratedMethods } from "./decorators";
 import { classToJsonSchemaWithConstraints } from "./schema-generator";
 import { Logger, LogLevel } from "./logger";
@@ -313,10 +314,35 @@ export class MCPServer {
 
         // Format result
         let formattedResult = result;
+
+        // Handle structuredContent for objects
+        let structuredContent: any = undefined;
+
         if (methodMeta.renderFormat === 'markdown' && typeof result === 'string') {
           formattedResult = result;
-        } else if (methodMeta.renderFormat === 'json' || typeof result === 'object') {
-          formattedResult = JSON.stringify(result, null, 2);
+        } else if (typeof result === 'object' && result !== null) {
+          // If it's an object, using it as structuredContent
+          // Check if it's explicitly a { structuredContent: ... } wrapper first (unlikely but safe)
+          if ('structuredContent' in result && Object.keys(result).length === 1) {
+            structuredContent = result.structuredContent;
+            formattedResult = JSON.stringify(structuredContent, null, 2);
+          } else if ('content' in result && Array.isArray(result.content)) {
+            // This is a manual MCP response object (e.g., SlackService returning { content: [...] }).
+            // Extract the actual data from content[0].text and set that as structuredContent.
+            const textItem = result.content.find((c: any) => c.type === 'text');
+            try {
+              structuredContent = JSON.parse(textItem.text);
+            } catch {
+              // If not valid JSON, do not set structuredContent (must be an object)
+              structuredContent = undefined;
+            }
+            formattedResult = JSON.stringify(result, null, 2);
+          } else {
+            // Regular data object (gpt-apps pattern like social-monitor).
+            // Set as structuredContent for direct client access.
+            structuredContent = result;
+            formattedResult = JSON.stringify(result, null, 2);
+          }
         } else {
           formattedResult = String(result);
         }
@@ -330,6 +356,13 @@ export class MCPServer {
             },
           ],
         };
+
+        if (structuredContent) {
+          response.structuredContent = structuredContent;
+          if (this.logger) {
+            this.logger.debug(`[MCPServer] Setting structuredContent: ${JSON.stringify(structuredContent).slice(0, 100)}...`);
+          }
+        }
 
         // Include _meta in the result if the tool has it (for ext-apps UI)
         if (tool._meta && Object.keys(tool._meta).length > 0) {

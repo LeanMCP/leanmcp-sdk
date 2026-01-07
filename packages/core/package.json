@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/core",
-  "version": "0.3.11",
+  "version": "0.3.12",
   "description": "Core library implementing decorators, reflection, and MCP runtime server",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -32,7 +32,8 @@
   },
   "peerDependencies": {
     "cors": "^2.8.5",
-    "express": "^5.0.0"
+    "express": "^5.0.0",
+    "@leanmcp/auth": "^0.4.0"
   },
   "peerDependenciesMeta": {
     "express": {
@@ -40,12 +41,16 @@
     },
     "cors": {
       "optional": true
+    },
+    "@leanmcp/auth": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@types/cors": "^2.8.0",
     "@types/express": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "@leanmcp/auth": "^0.4.0"
   },
   "repository": {
     "type": "git",
