@@ -7,7 +7,7 @@
  * - Tab 3: LeanMCP Mentions - Find direct product mentions
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { useGptApp, useGptTool } from '@leanmcp/ui';
+import { useGptApp, useGptTool, useWidgetState, useToolOutput } from '@leanmcp/ui';
 
 // Types
 interface Mention {
@@ -61,10 +61,32 @@ function LoadingScreen() {
     );
 }
 
+interface DashboardState {
+    activeTab: TabMode;
+    [key: string]: unknown;
+}
+
 function DashboardContent() {
-    const [activeTab, setActiveTab] = useState<TabMode>('discovery');
+    const toolOutput = useToolOutput<any>();
+
+    // Prefer toolOutput.initialTab, then fallback to 'discovery'
+    const initialMode = (toolOutput?.initialTab as TabMode);
+    const validInitialTab = ['discovery', 'my-posts', 'mentions'].includes(initialMode) ? initialMode : undefined;
+
+    const [widgetState, setWidgetState] = useWidgetState<DashboardState>({ activeTab: validInitialTab || 'discovery' });
+    const { activeTab } = widgetState;
+    const setActiveTab = (mode: TabMode) => setWidgetState((prev: DashboardState) => ({ ...prev, activeTab: mode }));
+
     const [mentions, setMentions] = useState<Mention[]>([]);
     const [respondingToId, setRespondingToId] = useState<string | null>(null);
+
+    // Sync state when toolOutput arrives (handling latency)
+    useEffect(() => {
+        if (validInitialTab && validInitialTab !== activeTab) {
+            setMentions([]); // Clear stale data from previous tab
+            setActiveTab(validInitialTab);
+        }
+    }, [validInitialTab]); // Only run if the *intent* from toolOutput changes/arrives
 
     const { call: fetchMentions, loading, error } = useGptTool(TAB_TOOLS[activeTab]);
 

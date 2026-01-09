@@ -36,6 +36,7 @@
 - **Schema Generation** — Declarative JSON Schema with `@SchemaConstraint` decorators
 - **HTTP Transport** — Production-ready HTTP server with session management
 - **Input Validation** — Built-in AJV validation for all inputs
+- **Structured Content** — Automatic `structuredContent` for ChatGPT Apps SDK compatibility
 - **MCP Compliant** — Built on official `@modelcontextprotocol/sdk`
 
 ## Installation
@@ -354,6 +355,42 @@ export class SlackService {
     // Implementation
   }
 }
+```
+
+---
+
+## Structured Content
+
+Tool return values are automatically exposed as `structuredContent` in the MCP response, enabling ChatGPT Apps SDK compatibility.
+
+**Automatic Handling:**
+
+```typescript
+@Tool({ description: 'List channels' })
+async listChannels() {
+  // Return a plain object - it becomes structuredContent automatically
+  return { channels: [...] };
+}
+```
+
+The response includes both `content` (text) and `structuredContent` (object):
+
+```json
+{
+  "content": [{ "type": "text", "text": "{\"channels\": [...]}" }],
+  "structuredContent": { "channels": [...] }
+}
+```
+
+**Manual MCP Response:**
+
+If your tool returns a manual MCP response (with `content` array), the SDK extracts data from `content[0].text`:
+
+```typescript
+return {
+  content: [{ type: 'text', text: JSON.stringify({ channels }) }]
+};
+// structuredContent will be { channels: [...] }
 ```
 
 ---

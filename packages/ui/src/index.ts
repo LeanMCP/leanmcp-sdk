@@ -133,6 +133,11 @@ export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
 export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './mcp/useToolData';
 export { useWidgetState } from './mcp/useWidgetState';
 
+// Spec-compliant hooks
+export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
+export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './mcp/useToolData';
+export { useWidgetState } from './mcp/useWidgetState';
+
 // ===========================================
 // MCP Types
 // ===========================================

@@ -330,11 +330,13 @@ export class MCPServer {
             // This is a manual MCP response object (e.g., SlackService returning { content: [...] }).
             // Extract the actual data from content[0].text and set that as structuredContent.
             const textItem = result.content.find((c: any) => c.type === 'text');
-            try {
-              structuredContent = JSON.parse(textItem.text);
-            } catch {
-              // If not valid JSON, do not set structuredContent (must be an object)
-              structuredContent = undefined;
+            if (textItem?.text) {
+              try {
+                structuredContent = JSON.parse(textItem.text);
+              } catch {
+                // If not valid JSON, use the text itself
+                structuredContent = textItem.text;
+              }
             }
             formattedResult = JSON.stringify(result, null, 2);
           } else {
