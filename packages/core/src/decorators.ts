@@ -4,9 +4,38 @@ import "reflect-metadata";
 // Core MCP Decorators - Type-safe with automatic name inference
 // ============================================================================
 
+/**
+ * Security scheme for MCP tools (per MCP authorization spec)
+ * 
+ * @example
+ * ```typescript
+ * @Tool({
+ *   description: 'Fetch user data',
+ *   securitySchemes: [{ type: 'oauth2', scopes: ['read:user'] }],
+ * })
+ * async fetchUser() { ... }
+ * ```
+ */
+export interface SecurityScheme {
+  /** Type of security - 'noauth' for anonymous, 'oauth2' for OAuth */
+  type: 'noauth' | 'oauth2';
+  /** Required OAuth scopes (for oauth2 type) */
+  scopes?: string[];
+}
+
 export interface ToolOptions {
   description?: string;
   inputClass?: any;  // Optional: Explicit input class for schema generation. Omit for tools with no input.
+  /** 
+   * Security schemes for this tool (MCP authorization spec)
+   * 
+   * - `noauth`: Tool is callable anonymously
+   * - `oauth2`: Tool requires OAuth 2.0 access token
+   * 
+   * If both are listed, tool works anonymously but OAuth unlocks more features.
+   * If omitted, tool inherits server-level defaults.
+   */
+  securitySchemes?: SecurityScheme[];
 }
 
 export interface PromptOptions {
@@ -42,6 +71,14 @@ export interface ResourceOptions {
  * async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
  *   // Tool name will be: "analyzeSentiment"
  * }
+ * 
+ * @example
+ * // Tool with OAuth requirement
+ * @Tool({
+ *   description: 'Fetch private user data',
+ *   securitySchemes: [{ type: 'oauth2', scopes: ['read:user'] }],
+ * })
+ * async fetchPrivateData() { ... }
  */
 export function Tool(options: ToolOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
@@ -55,8 +92,14 @@ export function Tool(options: ToolOptions = {}): MethodDecorator {
     if (options.inputClass) {
       Reflect.defineMetadata("tool:inputClass", options.inputClass, descriptor.value!);
     }
+
+    // Store securitySchemes if provided
+    if (options.securitySchemes) {
+      Reflect.defineMetadata("tool:securitySchemes", options.securitySchemes, descriptor.value!);
+    }
   };
 }
+
 
 /**
  * Marks a method as an MCP prompt template

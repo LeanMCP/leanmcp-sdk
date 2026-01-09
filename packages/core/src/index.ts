@@ -19,6 +19,7 @@ export * from "./schema-generator";
 export * from "./http-server";
 export * from "./logger";
 export * from "./validation";
+export * from "./auth-helpers";
 import { getMethodMetadata, getDecoratedMethods } from "./decorators";
 import { classToJsonSchemaWithConstraints } from "./schema-generator";
 import { Logger, LogLevel } from "./logger";
