@@ -40,6 +40,14 @@ export interface HTTPServerAuthOptions {
   oauthServerOptions?: {
     /** Session secret for signing tokens/state */
     sessionSecret: string;
+    /** JWT signing secret (defaults to sessionSecret if not provided) */
+    jwtSigningSecret?: string;
+    /** JWT encryption secret for encrypting upstream tokens */
+    jwtEncryptionSecret?: Buffer;
+    /** Issuer URL for JWTs */
+    issuer?: string;
+    /** Access token TTL in seconds (default: 3600) */
+    tokenTTL?: number;
     /** Upstream OAuth provider configuration */
     upstreamProvider?: {
       id: string;
@@ -407,6 +415,9 @@ export async function createHTTPServer(
         const authServer = new OAuthAuthorizationServer({
           issuer: httpOptions.auth?.resource || `http://localhost:${basePort}`,
           sessionSecret: authOpts.sessionSecret,
+          jwtSigningSecret: authOpts.jwtSigningSecret,
+          jwtEncryptionSecret: authOpts.jwtEncryptionSecret,
+          tokenTTL: authOpts.tokenTTL,
           upstreamProvider: authOpts.upstreamProvider,
           scopesSupported: httpOptions.auth?.scopesSupported,
           enableDCR: true,

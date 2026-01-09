@@ -1,17 +1,10 @@
 import 'dotenv/config';
 import { createHTTPServer } from '@leanmcp/core';
 
-// Debug: log env vars to verify dotenv is working
-console.log('[DEBUG] Environment variables:');
-console.log('  GITHUB_CLIENT_ID:', process.env.GITHUB_CLIENT_ID ? `${process.env.GITHUB_CLIENT_ID.slice(0, 10)}...` : 'NOT SET');
-console.log('  SESSION_SECRET:', process.env.SESSION_SECRET ? 'SET (hidden)' : 'NOT SET');
-console.log('  PUBLIC_URL:', process.env.PUBLIC_URL || 'NOT SET');
-
 // Get public URL from environment (e.g., ngrok URL for ChatGPT)
 const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3300}`;
 
 const oauthEnabled = !!(process.env.GITHUB_CLIENT_ID && process.env.SESSION_SECRET);
-console.log('  OAuth Server:', oauthEnabled ? 'ENABLED' : 'DISABLED (missing GITHUB_CLIENT_ID or SESSION_SECRET)');
 
 await createHTTPServer({
   name: 'github-roast',
@@ -19,6 +12,7 @@ await createHTTPServer({
   port: Number(process.env.PORT) || 3300,
   cors: true,
   logging: true,
+  stateless: true, // CRITICAL: Enable stateless mode for serverless/Lambda
   // MCP Authorization spec configuration
   auth: {
     resource: publicUrl,
@@ -26,7 +20,15 @@ await createHTTPServer({
     // Enable OAuth server that proxies to GitHub
     enableOAuthServer: oauthEnabled,
     oauthServerOptions: process.env.SESSION_SECRET ? {
+      issuer: publicUrl,
       sessionSecret: process.env.SESSION_SECRET,
+      // JWT secrets for stateless operation
+      jwtSigningSecret: process.env.JWT_SIGNING_SECRET || process.env.SESSION_SECRET,
+      jwtEncryptionSecret: process.env.JWT_ENCRYPTION_SECRET
+        ? Buffer.from(process.env.JWT_ENCRYPTION_SECRET, 'hex')
+        : Buffer.from(process.env.SESSION_SECRET.padEnd(64, '0').slice(0, 64), 'hex'),
+      enableDCR: true, // Enable Dynamic Client Registration for ChatGPT
+      tokenTTL: 3600, // 1 hour token lifetime
       upstreamProvider: process.env.GITHUB_CLIENT_ID ? {
         id: 'github',
         authorizationEndpoint: 'https://github.com/login/oauth/authorize',

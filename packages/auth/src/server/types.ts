@@ -159,7 +159,9 @@ export interface TokenVerificationResult {
     /** Whether token is valid */
     valid: boolean;
     /** Extracted claims (if valid) */
-    claims?: TokenClaims;
+    claims?: JWTPayload;
+    /** Decrypted upstream token (if present and valid) */
+    upstreamToken?: string;
     /** Error message (if invalid) */
     error?: string;
     /** Error code */
@@ -171,14 +173,24 @@ export interface TokenVerificationResult {
 // ============================================================================
 
 /**
- * Options for OAuthAuthorizationServer
+ * Types for OAuth Authorization Server
  */
+
+import type { EncryptedToken, JWTPayload } from './jwt-utils';
+
+// Re-export for convenience
+export type { EncryptedToken, JWTPayload };
+
 export interface OAuthAuthorizationServerOptions {
-    /** Issuer URL (your server's public URL) */
+    /** Issuer URL (e.g., https://auth.example.com) */
     issuer: string;
-    /** Session secret for signing state/codes */
+    /** Session secret for signing state parameters */
     sessionSecret: string;
-    /** External OAuth provider to proxy to (e.g., GitHub, Google) */
+    /** JWT signing secret (for HS256) */
+    jwtSigningSecret?: string;
+    /** JWT encryption secret (32 bytes for AES-256) */
+    jwtEncryptionSecret?: Buffer;
+    /** Upstream OAuth provider configuration (e.g., GitHub, Google) */
     upstreamProvider?: {
         id: string;
         authorizationEndpoint: string;
@@ -227,6 +239,8 @@ export interface TokenVerifierOptions {
     jwksUri?: string;
     /** Symmetric secret for HS256 tokens */
     secret?: string;
+    /** Encryption secret for decrypting upstream tokens (32 bytes) */
+    encryptionSecret?: Buffer;
     /** Clock tolerance in seconds for exp/nbf checks */
     clockTolerance?: number;
 }

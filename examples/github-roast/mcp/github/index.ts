@@ -5,24 +5,58 @@
  * Uses MCP authorization spec for OAuth with ChatGPT.
  */
 
-import { Tool, SchemaConstraint, Optional, createAuthError } from '@leanmcp/core';
+import { Tool, createAuthError } from '@leanmcp/core';
 import { TokenVerifier } from '@leanmcp/auth/server';
 
 // Types
 export interface GitHubProfile {
-    // ... existing types ...
+    login: string;
+    name: string | null;
+    avatarUrl: string;
+    bio: string | null;
+    company: string | null;
+    location: string | null;
+    blog: string | null;
+    publicRepos: number;
+    publicGists: number;
+    followers: number;
+    following: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface GitHubRepo {
-    // ... existing types ...
+    name: string;
+    fullName: string;
+    description: string | null;
+    language: string | null;
+    stars: number;
+    forks: number;
+    isPrivate: boolean;
+    isFork: boolean;
+    hasReadme: boolean;
+    hasLicense: boolean;
+    createdAt: string;
+    updatedAt: string;
+    pushedAt: string;
+    size: number;
 }
 
 export interface CommitStats {
-    // ... existing types ...
+    total: number;
+    hourDistribution: Record<number, number>;
+    dayDistribution: Record<number, number>;
+    messagePatterns: {
+        fixes: number;
+        wip: number;
+        short: number;
+        noDescription: number;
+    };
+    recentMessages: string[];
 }
 
 class ProfileInput {
-    // ... existing input class ...
+    username?: string;
 }
 
 /**
@@ -34,38 +68,52 @@ function getResourceMetadataUrl(): string {
 }
 
 export class GitHubService {
-    // configured to match what createHTTPServer uses
-    private verifier = new TokenVerifier({
-        issuer: process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3300}`,
-        audience: process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3300}`,
-    });
+    private verifier: TokenVerifier;
+
+    constructor() {
+        const publicUrl = process.env.PUBLIC_URL || `http://localhost:${process.env.PORT || 3300}`;
+        const jwtSigningSecret = process.env.JWT_SIGNING_SECRET || process.env.SESSION_SECRET;
+        const jwtEncryptionSecret = process.env.JWT_ENCRYPTION_SECRET
+            ? Buffer.from(process.env.JWT_ENCRYPTION_SECRET, 'hex')
+            : Buffer.from((process.env.SESSION_SECRET || '').padEnd(64, '0').slice(0, 64), 'hex');
+
+        if (!jwtSigningSecret) {
+            throw new Error('JWT_SIGNING_SECRET or SESSION_SECRET is required');
+        }
+
+        this.verifier = new TokenVerifier({
+            issuer: publicUrl,
+            audience: publicUrl,
+            secret: jwtSigningSecret,
+            encryptionSecret: jwtEncryptionSecret,
+        });
+    }
 
     /**
-     * Get access token from MCP auth context
-     * ChatGPT sends the token in the _meta of the request
-     * We need to verify this opaque token to get the upstream GitHub token
+     * Get upstream GitHub token from JWT
+     * ChatGPT sends the JWT in the _meta.authToken field
+     * We verify the JWT and decrypt the upstream GitHub token
      */
     private async getAccessToken(meta?: { authToken?: string }): Promise<string | null> {
         // Check if token is in meta (from ChatGPT)
         if (meta?.authToken) {
-            // Check opaque token against local store
             try {
                 const result = await this.verifier.verify(meta.authToken);
-                if (result.valid && result.claims.upstream_token) {
-                    return result.claims.upstream_token as string;
-                }
-            } catch (error) {
-                // Verification failed
-                console.warn('[GitHubService] Token verification failed:', error);
-            }
 
-            // If verification failed but we have a token, return it anyway?
-            // Usually no, but for backward compatibility or if it IS a real token (local test):
-            return meta.authToken;
+                if (result.valid && result.upstreamToken) {
+                    // Successfully decrypted upstream GitHub token from JWT
+                    return result.upstreamToken;
+                } else if (!result.valid) {
+                    console.warn('[GitHubService] Token verification failed:', result.error);
+                }
+            } catch (error: any) {
+                console.warn('[GitHubService] Token verification error:', error.message);
+            }
         }
 
         // Fallback to environment variable for local testing
         if (process.env.GITHUB_TOKEN) {
+            console.warn('[GitHubService] Using GITHUB_TOKEN from environment (for local testing only)');
             return process.env.GITHUB_TOKEN;
         }
 

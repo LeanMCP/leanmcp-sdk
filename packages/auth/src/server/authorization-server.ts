@@ -17,10 +17,10 @@ import type { Router, Request, Response } from 'express';
 import type {
     OAuthAuthorizationServerOptions,
     AuthorizationServerMetadata,
-    TokenClaims,
+    JWTPayload,
 } from './types';
 import { DynamicClientRegistration } from './dcr';
-import { storeOpaqueToken } from './token-verifier';
+import { signJWT, encryptUpstreamToken, generateJTI, type EncryptedToken } from './jwt-utils';
 
 /**
  * Pending authorization request
@@ -125,10 +125,13 @@ export class OAuthAuthorizationServer {
             ...options,
         };
 
+        // Initialize Dynamic Client Registration (if enabled)
+        const jwtSigningSecret = this.options.jwtSigningSecret || this.options.sessionSecret;
         this.dcr = new DynamicClientRegistration({
             clientIdPrefix: 'mcp_',
             clientSecretLength: 32,
             clientTTL: 0, // Never expires (ChatGPT manages its own clients)
+            signingSecret: jwtSigningSecret,
         });
     }
 
@@ -167,26 +170,40 @@ export class OAuthAuthorizationServer {
     }
 
     /**
-     * Generate access token
+     * Generate JWT access token with encrypted upstream credentials
      */
-    private generateAccessToken(claims: Partial<TokenClaims>): string {
+    private generateAccessToken(claims: Partial<JWTPayload>, upstreamToken?: string): string {
         const now = Math.floor(Date.now() / 1000);
-        const payload: TokenClaims = {
+
+        // Get secrets from options
+        const jwtSigningSecret = this.options.jwtSigningSecret || this.options.sessionSecret;
+        const jwtEncryptionSecret = this.options.jwtEncryptionSecret || Buffer.from(this.options.sessionSecret.padEnd(32, '0').slice(0, 32));
+
+        // Encrypt upstream token if provided
+        let encryptedUpstreamToken: EncryptedToken | undefined;
+        if (upstreamToken) {
+            encryptedUpstreamToken = encryptUpstreamToken(upstreamToken, jwtEncryptionSecret);
+        }
+
+        // Build JWT payload
+        const payload: JWTPayload = {
             sub: claims.sub || 'unknown',
             iss: this.options.issuer,
             aud: claims.aud || this.options.issuer,
             iat: now,
             exp: now + (this.options.tokenTTL || 3600),
+            jti: generateJTI(),
             scope: claims.scope,
             client_id: claims.client_id,
-            ...claims,
+            name: claims.name,
+            email: claims.email,
+            picture: claims.picture,
+            upstream_provider: claims.upstream_provider,
+            upstream_token: encryptedUpstreamToken,
         };
 
-        // Generate opaque token and store claims
-        const token = randomBytes(32).toString('hex');
-        storeOpaqueToken(token, payload);
-
-        return token;
+        // Sign and return JWT
+        return signJWT(payload, jwtSigningSecret);
     }
 
     /**
@@ -641,7 +658,7 @@ export class OAuthAuthorizationServer {
         // Extract user ID from userInfo
         const userId = (pending.userInfo.id || pending.userInfo.sub || pending.userInfo.login || 'unknown') as string;
 
-        // Generate our access token
+        // Generate our access token with encrypted upstream credentials
         const accessToken = this.generateAccessToken({
             sub: userId,
             aud: pending.resource || this.options.issuer,
@@ -651,9 +668,8 @@ export class OAuthAuthorizationServer {
             name: pending.userInfo.name as string,
             email: pending.userInfo.email as string,
             picture: (pending.userInfo.avatar_url || pending.userInfo.picture) as string,
-            // CRITICAL: Preserve upstream access token for tools to use
-            upstream_token: tokens.access_token,
-        });
+            upstream_provider: this.options.upstreamProvider?.id,
+        }, tokens.access_token); // Pass upstream token as second parameter
 
         res.json({
             access_token: accessToken,

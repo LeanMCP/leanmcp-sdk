@@ -44,9 +44,6 @@ export { DynamicClientRegistration } from './dcr';
 // Token Verification
 export {
     TokenVerifier,
-    storeOpaqueToken,
-    removeOpaqueToken,
-    clearOpaqueTokens,
 } from './token-verifier';
 
 // Types
