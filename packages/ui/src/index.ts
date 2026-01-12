@@ -126,6 +126,12 @@ export { useToolResult, type UseToolResultReturn } from './mcp/useToolResult';
 export { useToolInput, type UseToolInputReturn } from './mcp/useToolInput';
 export { useToolInputPartial, type UseToolInputPartialReturn } from './mcp/useToolInputPartial';
 export { useToolSubscription } from './mcp/useToolSubscription';
+export { useAuth, type UseAuthReturn, type AuthUser } from './mcp/useAuth';
+
+// Spec-compliant hooks
+export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
+export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './mcp/useToolData';
+export { useWidgetState } from './mcp/useWidgetState';
 
 // Spec-compliant hooks
 export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
