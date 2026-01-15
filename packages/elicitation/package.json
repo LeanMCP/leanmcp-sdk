@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/elicitation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Elicitation support for LeanMCP - structured user input collection",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
