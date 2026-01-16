@@ -1,4 +1,7 @@
-export const gitignoreTemplate = `# Logs
+export const gitignoreTemplate = `# LeanMCP deployment config (contains project-specific IDs)
+.leanmcp/
+
+# Logs
 logs
 *.log
 npm-debug.log*

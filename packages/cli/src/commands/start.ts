@@ -4,23 +4,23 @@
  * Builds UI components, compiles TypeScript, and starts the production server.
  */
 import { spawn } from 'child_process';
-import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
+import { logger, chalk } from '../logger';
 
 export async function startCommand() {
     const cwd = process.cwd();
 
     // Check if this is a LeanMCP project
     if (!await fs.pathExists(path.join(cwd, 'main.ts'))) {
-        console.error(chalk.red('ERROR: Not a LeanMCP project (main.ts not found).'));
-        console.error(chalk.gray('Run this command from your project root.'));
+        logger.error('ERROR: Not a LeanMCP project (main.ts not found).');
+        logger.gray('Run this command from your project root.');
         process.exit(1);
     }
 
-    console.log(chalk.cyan('\n🚀 LeanMCP Production Build\n'));
+    logger.info('\n🚀 LeanMCP Production Build\n');
 
     // Step 1: Scan for UI components
     const scanSpinner = ora('Scanning for @UIApp components...').start();
@@ -63,7 +63,7 @@ export async function startCommand() {
         if (errors.length > 0) {
             buildSpinner.fail('Build failed');
             for (const error of errors) {
-                console.error(chalk.red(`   ✗ ${error}`));
+                logger.error(`   ✗ ${error}`);
             }
             process.exit(1);
         }
@@ -95,12 +95,12 @@ export async function startCommand() {
         tscSpinner.succeed('TypeScript compiled');
     } catch (error) {
         tscSpinner.fail('TypeScript compilation failed');
-        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
     }
 
     // Step 4: Start production server
-    console.log(chalk.cyan('\nStarting production server...\n'));
+    logger.info('\nStarting production server...\n');
 
     const server = spawn('node', ['dist/main.js'], {
         cwd,
@@ -117,7 +117,8 @@ export async function startCommand() {
     const cleanup = () => {
         if (isCleaningUp) return;
         isCleaningUp = true;
-        console.log(chalk.gray('\nShutting down...'));
+
+        logger.gray('\nShutting down...');
 
         // On non-Windows platforms, explicitly send signal to child process
         // On Windows, child already received SIGINT from the console

@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import chalk from "chalk";
 import fs from "fs-extra";
 import path from "path";
 import ora from "ora";
@@ -9,7 +8,8 @@ import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { buildCommand } from "./commands/build";
 import { startCommand } from "./commands/start";
-import { loginCommand, logoutCommand, whoamiCommand, setDebugMode } from "./commands/login";
+import { buildCommand } from "./commands/build";
+import { loginCommand, logoutCommand, whoamiCommand, setDebugMode as setLoginDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
 import { getReadmeTemplate } from "./templates/readme_v1";
@@ -17,6 +17,7 @@ import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
 import { getMainTsTemplate } from "./templates/main_ts_v1";
 import { getServiceIndexTemplate } from "./templates/service_index_v1";
+import { trackCommand, logger, chalk, setDebugMode, debug } from "./logger";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json");
@@ -28,16 +29,32 @@ function capitalize(str: string): string {
 
 const program = new Command();
 
+// Enable global debug mode based on --debug flag
+function enableDebugIfNeeded() {
+  const args = process.argv;
+  if (args.includes("--debug") || args.includes("-d")) {
+    setDebugMode(true);
+    setLoginDebugMode(true);
+    setDeployDebugMode(true);
+    debug("Debug mode enabled globally");
+  }
+}
+
+// Call early to enable debug mode before any command runs
+enableDebugIfNeeded();
+
 program
   .name("leanmcp")
   .description("LeanMCP CLI — create production-ready MCP servers with Streamable HTTP")
-  .version(pkg.version)
+  .version(pkg.version, "-v, --version", "Output the current version")
+  .helpOption("-h, --help", "Display help for command")
+  .option("-d, --debug", "Enable debug logging for all commands")
   .addHelpText(
     "after",
     `
 Examples:
   $ leanmcp create my-app                # Create new project (interactive)
-  $ leanmcp create my-app --install      # Create and install deps (non-interactive)
+  $ leanmcp create my-app -i             # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
   $ leanmcp build                        # Build UI components and compile TypeScript
@@ -46,6 +63,11 @@ Examples:
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
   $ leanmcp projects delete <id>         # Delete a cloud project
+
+Global Options:
+  -v, --version    Output the current version
+  -h, --help       Display help for command
+  -d, --debug      Enable debug logging for all commands
 `
   );
 
@@ -54,9 +76,10 @@ program
   .description("Create a new LeanMCP project with Streamable HTTP transport")
   .option("--allow-all", "Skip interactive confirmations and assume Yes")
   .option("--no-dashboard", "Disable dashboard UI at / and /mcp GET endpoints")
-  .option("--install", "Install dependencies automatically (non-interactive, no dev server)")
+  .option("-i, --install", "Install dependencies automatically (non-interactive, no dev server)")
   .option("--no-install", "Skip dependency installation (non-interactive)")
   .action(async (projectName, options) => {
+    trackCommand("create", { projectName, ...options });
     const spinner = ora(`Creating project ${projectName}...`).start();
     const targetDir = path.join(process.cwd(), projectName);
 
@@ -79,6 +102,7 @@ program
         dev: "leanmcp dev",
         build: "leanmcp build",
         start: "leanmcp start",
+        inspect: "npx @modelcontextprotocol/inspector node dist/main.js",
         "start:node": "node dist/main.js",
         clean: "rm -rf dist"
       },
@@ -138,12 +162,12 @@ program
     await fs.writeFile(path.join(targetDir, "README.md"), readme);
 
     spinner.succeed(`Project ${projectName} created!`);
-    console.log(chalk.green("\nSuccess! Your MCP server is ready.\n"));
-    console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
-    console.log(chalk.gray(`  cd ${projectName}`));
-    console.log(chalk.gray(`  leanmcp deploy .\n`));
-    console.log(chalk.cyan("Need help? Join our Discord:"));
-    console.log(chalk.blue("  https://discord.com/invite/DsRcA3GwPy\n"));
+    logger.log("\nSuccess! Your MCP server is ready.\n", chalk.green);
+    logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+    logger.log(`  cd ${projectName}`, chalk.gray);
+    logger.log(`  leanmcp deploy .\n`, chalk.gray);
+    logger.log("Need help? Join our Discord:", chalk.cyan);
+    logger.log("  https://discord.com/invite/DsRcA3GwPy\n", chalk.blue);
 
     // Determine install behavior based on flags
     // --no-install: Skip install entirely (non-interactive)
@@ -155,14 +179,14 @@ program
 
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
-      console.log(chalk.cyan("To get started:"));
-      console.log(chalk.gray(`  cd ${projectName}`));
-      console.log(chalk.gray(`  npm install`));
-      console.log(chalk.gray(`  npm run dev`));
-      console.log();
-      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
-      console.log(chalk.gray(`  cd ${projectName}`));
-      console.log(chalk.gray(`  leanmcp deploy .`));
+      logger.log("To get started:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  npm install`, chalk.gray);
+      logger.log(`  npm run dev`, chalk.gray);
+      logger.log("");
+      logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  leanmcp deploy .`, chalk.gray);
       return;
     }
 
@@ -200,13 +224,13 @@ program
 
         // If --install flag was used, exit without starting dev server
         if (options.install === true) {
-          console.log(chalk.cyan("\nTo start the development server:"));
-          console.log(chalk.gray(`  cd ${projectName}`));
-          console.log(chalk.gray(`  npm run dev`));
-          console.log();
-          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
-          console.log(chalk.gray(`  cd ${projectName}`));
-          console.log(chalk.gray(`  leanmcp deploy .`));
+          logger.log("\nTo start the development server:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  npm run dev`, chalk.gray);
+          logger.log("");
+          logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  leanmcp deploy .`, chalk.gray);
           return;
         }
 
@@ -219,7 +243,7 @@ program
           });
 
         if (shouldStartDev) {
-          console.log(chalk.cyan("\nStarting development server...\n"));
+          logger.log("\nStarting development server...\n", chalk.cyan);
 
           // Start dev server with inherited stdio so user can see output and interact
           const devServer = spawn("npm", ["run", "dev"], {
@@ -234,30 +258,30 @@ program
             process.exit(0);
           });
         } else {
-          console.log(chalk.cyan("\nTo start the development server later:"));
-          console.log(chalk.gray(`  cd ${projectName}`));
-          console.log(chalk.gray(`  npm run dev`));
-          console.log();
-          console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
-          console.log(chalk.gray(`  cd ${projectName}`));
-          console.log(chalk.gray(`  leanmcp deploy .`));
+          logger.log("\nTo start the development server later:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  npm run dev`, chalk.gray);
+          logger.log("");
+          logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+          logger.log(`  cd ${projectName}`, chalk.gray);
+          logger.log(`  leanmcp deploy .`, chalk.gray);
         }
       } catch (error) {
         installSpinner.fail("Failed to install dependencies");
-        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
-        console.log(chalk.cyan("\nYou can install dependencies manually:"));
-        console.log(chalk.gray(`  cd ${projectName}`));
-        console.log(chalk.gray(`  npm install`));
+        logger.log(error instanceof Error ? error.message : String(error), chalk.red);
+        logger.log("\nYou can install dependencies manually:", chalk.cyan);
+        logger.log(`  cd ${projectName}`, chalk.gray);
+        logger.log(`  npm install`, chalk.gray);
       }
     } else {
-      console.log(chalk.cyan("\nTo get started:"));
-      console.log(chalk.gray(`  cd ${projectName}`));
-      console.log(chalk.gray(`  npm install`));
-      console.log(chalk.gray(`  npm run dev`));
-      console.log();
-      console.log(chalk.cyan("To deploy to LeanMCP cloud:"));
-      console.log(chalk.gray(`  cd ${projectName}`));
-      console.log(chalk.gray(`  leanmcp deploy .`));
+      logger.log("\nTo get started:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  npm install`, chalk.gray);
+      logger.log(`  npm run dev`, chalk.gray);
+      logger.log("");
+      logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  leanmcp deploy .`, chalk.gray);
     }
   });
 
@@ -269,7 +293,7 @@ program
     const mcpDir = path.join(cwd, "mcp");
 
     if (!fs.existsSync(path.join(cwd, "main.ts"))) {
-      console.error(chalk.red("ERROR: Not a LeanMCP project (main.ts missing)."));
+      logger.log("ERROR: Not a LeanMCP project (main.ts missing).", chalk.red);
       process.exit(1);
     }
 
@@ -277,7 +301,7 @@ program
     const serviceFile = path.join(serviceDir, "index.ts");
 
     if (fs.existsSync(serviceDir)) {
-      console.error(chalk.red(`ERROR: Service ${serviceName} already exists.`));
+      logger.log(`ERROR: Service ${serviceName} already exists.`, chalk.red);
       process.exit(1);
     }
 
@@ -286,18 +310,29 @@ program
     const indexTs = getServiceIndexTemplate(serviceName, capitalize(serviceName));
     await fs.writeFile(serviceFile, indexTs);
 
-    console.log(chalk.green(`\\nCreated new service: ${chalk.bold(serviceName)}`));
-    console.log(chalk.gray(`   File: mcp/${serviceName}/index.ts`));
-    console.log(chalk.gray(`   Tool: greet`));
-    console.log(chalk.gray(`   Prompt: welcomePrompt`));
-    console.log(chalk.gray(`   Resource: getStatus`));
-    console.log(chalk.green(`\\nService will be automatically discovered on next server start!`));
+    logger.log(`\\nCreated new service: ${chalk.bold(serviceName)}`, chalk.green);
+    logger.log(`   File: mcp/${serviceName}/index.ts`, chalk.gray);
+    logger.log(`   Tool: greet`, chalk.gray);
+    logger.log(`   Prompt: welcomePrompt`, chalk.gray);
+    logger.log(`   Resource: getStatus`, chalk.gray);
+    logger.log(`\\nService will be automatically discovered on next server start!`, chalk.green);
   });
 
 program
   .command("dev")
   .description("Start development server with UI hot-reload (builds @UIApp components)")
-  .action(devCommand);
+  .action(() => {
+    trackCommand("dev");
+    devCommand();
+  });
+
+program
+  .command("build")
+  .description("Compile TypeScript to JavaScript")
+  .action(() => {
+    trackCommand("build");
+    buildCommand();
+  });
 
 program
   .command("build")
@@ -307,42 +342,44 @@ program
 program
   .command("start")
   .description("Build UI components and start production server")
-  .action(startCommand);
+  .action(() => {
+    trackCommand("start");
+    startCommand();
+  });
 
 // === Cloud Deployment Commands ===
 
 program
   .command("login")
   .description("Authenticate with LeanMCP cloud using an API key")
-  .option("--debug", "Enable debug logging")
-  .action(async (options) => {
-    if (options.debug) {
-      setDebugMode(true);
-    }
+  .action(async () => {
+    trackCommand("login");
     await loginCommand();
   });
 
 program
   .command("logout")
   .description("Remove stored API key and logout from LeanMCP cloud")
-  .action(logoutCommand);
+  .action(() => {
+    trackCommand("logout");
+    logoutCommand();
+  });
 
 program
   .command("whoami")
   .description("Show current authentication status")
-  .action(whoamiCommand);
+  .action(() => {
+    trackCommand("whoami");
+    whoamiCommand();
+  });
 
 program
   .command("deploy [folder]")
   .description("Deploy an MCP server to LeanMCP cloud")
   .option("-s, --subdomain <subdomain>", "Subdomain for deployment")
   .option("-y, --yes", "Skip confirmation prompts")
-  .option("--debug", "Enable debug logging for network calls")
   .action(async (folder, options) => {
-    if (options.debug) {
-      setDebugMode(true);
-      setDeployDebugMode(true);
-    }
+    trackCommand("deploy", { folder, subdomain: options.subdomain, yes: options.yes });
     const targetFolder = folder || ".";
     await deployCommand(targetFolder, {
       subdomain: options.subdomain,
@@ -360,19 +397,28 @@ projectsCmd
   .command("list")
   .alias("ls")
   .description("List all your projects")
-  .action(projectsListCommand);
+  .action(() => {
+    trackCommand("projects_list");
+    projectsListCommand();
+  });
 
 projectsCmd
   .command("get <projectId>")
   .description("Get details of a specific project")
-  .action(projectsGetCommand);
+  .action((projectId) => {
+    trackCommand("projects_get", { projectId });
+    projectsGetCommand(projectId);
+  });
 
 projectsCmd
   .command("delete <projectId>")
   .alias("rm")
   .description("Delete a project")
   .option("-f, --force", "Skip confirmation prompt")
-  .action((projectId, options) => projectsDeleteCommand(projectId, options));
+  .action((projectId, options) => {
+    trackCommand("projects_delete", { projectId, force: options.force });
+    projectsDeleteCommand(projectId, options);
+  });
 
 program.parse();
 

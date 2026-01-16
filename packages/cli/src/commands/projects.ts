@@ -3,9 +3,9 @@
  * 
  * Manage LeanMCP cloud projects via API key authentication.
  */
-import chalk from 'chalk';
 import ora from 'ora';
 import { getApiKey, getApiUrl } from './login';
+import { logger, chalk } from '../logger';
 
 const API_ENDPOINT = '/api/projects';
 
@@ -24,8 +24,8 @@ interface Project {
 export async function projectsListCommand() {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.error(chalk.red('\nNot logged in.'));
-    console.log(chalk.gray('Run `leanmcp login` first to authenticate.\n'));
+    logger.error('\nNot logged in.');
+    logger.gray('Run `leanmcp login` first to authenticate.\n');
     process.exit(1);
   }
 
@@ -45,26 +45,26 @@ export async function projectsListCommand() {
     spinner.stop();
 
     if (projects.length === 0) {
-      console.log(chalk.yellow('\nNo projects found.'));
-      console.log(chalk.gray('Create one with: leanmcp deploy <folder>\n'));
+      logger.warn('\nNo projects found.');
+      logger.gray('Create one with: leanmcp deploy <folder>\n');
       return;
     }
 
-    console.log(chalk.cyan(`\nYour Projects (${projects.length})\n`));
-    console.log(chalk.gray('─'.repeat(60)));
+    logger.info(`\nYour Projects (${projects.length})\n`);
+    logger.gray('─'.repeat(60));
 
     for (const project of projects) {
       const statusColor = project.status === 'ACTIVE' ? chalk.green : chalk.yellow;
-      console.log(chalk.white.bold(`  ${project.name}`));
-      console.log(chalk.gray(`    ID: ${project.id}`));
-      console.log(chalk.gray(`    Status: `) + statusColor(project.status));
-      console.log(chalk.gray(`    Created: ${new Date(project.createdAt).toLocaleDateString()}`));
-      console.log();
+      logger.log(`  ${project.name}`, chalk.white.bold);
+      logger.gray(`    ID: ${project.id}`);
+      logger.log(`    Status: ${statusColor(project.status)}`, chalk.gray);
+      logger.gray(`    Created: ${new Date(project.createdAt).toLocaleDateString()}`);
+      logger.log('');
     }
 
   } catch (error) {
     spinner.fail('Failed to fetch projects');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
@@ -75,8 +75,8 @@ export async function projectsListCommand() {
 export async function projectsGetCommand(projectId: string) {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.error(chalk.red('\nNot logged in.'));
-    console.log(chalk.gray('Run `leanmcp login` first to authenticate.\n'));
+    logger.error('\nNot logged in.');
+    logger.gray('Run `leanmcp login` first to authenticate.\n');
     process.exit(1);
   }
 
@@ -98,23 +98,23 @@ export async function projectsGetCommand(projectId: string) {
     const project: Project = await response.json();
     spinner.stop();
 
-    console.log(chalk.cyan('\nProject Details\n'));
-    console.log(chalk.gray('─'.repeat(60)));
-    console.log(chalk.white.bold(`  Name: ${project.name}`));
-    console.log(chalk.gray(`  ID: ${project.id}`));
-    console.log(chalk.gray(`  Status: ${project.status}`));
+    logger.info('\nProject Details\n');
+    logger.gray('─'.repeat(60));
+    logger.log(`  Name: ${project.name}`, chalk.white.bold);
+    logger.gray(`  ID: ${project.id}`);
+    logger.gray(`  Status: ${project.status}`);
     if (project.s3Location) {
-      console.log(chalk.gray(`  S3 Location: ${project.s3Location}`));
+      logger.gray(`  S3 Location: ${project.s3Location}`);
     }
-    console.log(chalk.gray(`  Created: ${new Date(project.createdAt).toLocaleString()}`));
+    logger.gray(`  Created: ${new Date(project.createdAt).toLocaleString()}`);
     if (project.updatedAt) {
-      console.log(chalk.gray(`  Updated: ${new Date(project.updatedAt).toLocaleString()}`));
+      logger.gray(`  Updated: ${new Date(project.updatedAt).toLocaleString()}`);
     }
-    console.log();
+    logger.log('');
 
   } catch (error) {
     spinner.fail('Failed to fetch project');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }
@@ -125,8 +125,8 @@ export async function projectsGetCommand(projectId: string) {
 export async function projectsDeleteCommand(projectId: string, options: { force?: boolean } = {}) {
   const apiKey = await getApiKey();
   if (!apiKey) {
-    console.error(chalk.red('\nNot logged in.'));
-    console.log(chalk.gray('Run `leanmcp login` first to authenticate.\n'));
+    logger.error('\nNot logged in.');
+    logger.gray('Run `leanmcp login` first to authenticate.\n');
     process.exit(1);
   }
 
@@ -139,7 +139,7 @@ export async function projectsDeleteCommand(projectId: string, options: { force?
     });
 
     if (!shouldDelete) {
-      console.log(chalk.gray('\nDeletion cancelled.\n'));
+      logger.gray('\nDeletion cancelled.\n');
       return;
     }
   }
@@ -161,11 +161,11 @@ export async function projectsDeleteCommand(projectId: string, options: { force?
     }
 
     spinner.succeed('Project deleted successfully');
-    console.log();
+    logger.log('');
 
   } catch (error) {
     spinner.fail('Failed to delete project');
-    console.error(chalk.red(`\n${error instanceof Error ? error.message : String(error)}`));
+    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 }

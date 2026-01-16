@@ -4,13 +4,13 @@
  * Builds UI components with Vite and starts the development server with hot-reload.
  */
 import { spawn } from 'child_process';
-import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
 import crypto from 'crypto';
 import chokidar, { type FSWatcher } from 'chokidar';
 import { scanUIApp, buildUIComponent, writeUIManifest, deleteUIComponent, type UIAppInfo } from '../vite';
+import { logger, chalk } from '../logger';
 
 /**
  * Compute hash of file content for change detection
@@ -74,12 +74,12 @@ export async function devCommand() {
 
     // Check if this is a LeanMCP project
     if (!await fs.pathExists(path.join(cwd, 'main.ts'))) {
-        console.error(chalk.red('ERROR: Not a LeanMCP project (main.ts not found).'));
-        console.error(chalk.gray('Run this command from your project root.'));
+        logger.error('ERROR: Not a LeanMCP project (main.ts not found).');
+        logger.gray('Run this command from your project root.');
         process.exit(1);
     }
 
-    console.log(chalk.cyan('\nLeanMCP Development Server\n'));
+    logger.info('\nLeanMCP Development Server\n');
 
     // Step 1: Scan for UI components
     const scanSpinner = ora('Scanning for @UIApp components...').start();
@@ -122,7 +122,7 @@ export async function devCommand() {
         if (errors.length > 0) {
             buildSpinner.warn('Built with warnings');
             for (const error of errors) {
-                console.error(chalk.yellow(`   ${error}`));
+                logger.warn(`   ${error}`);
             }
         } else {
             buildSpinner.info('UI components built');
@@ -130,7 +130,7 @@ export async function devCommand() {
     }
 
     // Step 3: Start tsx watch for the server
-    console.log(chalk.cyan('\nStarting development server...\n'));
+    logger.info('\nStarting development server...\n');
 
     const devServer = spawn('npx', ['tsx', 'watch', 'main.ts'], {
         cwd,
@@ -185,7 +185,7 @@ export async function devCommand() {
 
             // Handle removed UIApps
             for (const uri of diff.removed) {
-                console.log(chalk.yellow(`Removing ${uri}...`));
+                logger.warn(`Removing ${uri}...`);
                 await deleteUIComponent(uri, cwd);
                 delete manifest[uri];
                 componentHashCache.delete(uri);
@@ -194,7 +194,7 @@ export async function devCommand() {
             // Handle added or changed UIApps
             for (const app of diff.addedOrChanged) {
                 const action = diff.added.has(app.resourceUri) ? 'Building' : 'Rebuilding';
-                console.log(chalk.cyan(`${action} ${app.componentName}...`));
+                logger.info(`${action} ${app.componentName}...`);
 
                 const result = await buildUIComponent(app, cwd, true);
 
@@ -213,9 +213,9 @@ export async function devCommand() {
                     if (await fs.pathExists(app.componentPath)) {
                         componentHashCache.set(app.resourceUri, computeHash(app.componentPath));
                     }
-                    console.log(chalk.green(`${app.componentName} ${action.toLowerCase()} complete`));
+                    logger.success(`${app.componentName} ${action.toLowerCase()} complete`);
                 } else {
-                    console.log(chalk.yellow(`Build failed: ${result.error}`));
+                    logger.warn(`Build failed: ${result.error}`);
                 }
             }
 
@@ -237,7 +237,7 @@ export async function devCommand() {
         if (isCleaningUp) return;
         isCleaningUp = true;
 
-        console.log(chalk.gray('\nShutting down...'));
+        logger.gray('\nShutting down...');
 
         // Close file watcher
         if (watcher) {
