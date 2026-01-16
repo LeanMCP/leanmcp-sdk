@@ -7,7 +7,7 @@
     "scripts": {
         "dev": "leanmcp dev",
         "start": "leanmcp start",
-        "build": "tsc",
+        "build": "leanmcp build",
         "start:node": "node dist/main.js",
         "clean": "rm -rf dist"
     },
@@ -21,14 +21,14 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "@leanmcp/core": "^0.3.7",
-        "@leanmcp/ui": "^0.2.0",
+        "@leanmcp/core": "^0.3.10",
+        "@leanmcp/ui": "^0.3.0",
         "@leanmcp/auth": "^0.3.2",
         "@slack/web-api": "^7.0.0",
         "dotenv": "^16.5.0"
     },
     "devDependencies": {
-        "@leanmcp/cli": "^0.2.11",
+        "@leanmcp/cli": "^0.4.0",
         "@types/node": "^20.0.0",
         "tsx": "^4.20.3",
         "typescript": "^5.6.3"

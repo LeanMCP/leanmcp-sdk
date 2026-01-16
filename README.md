@@ -8,7 +8,7 @@
 
 <p align="center">
   <strong>TypeScript SDK for building Model Context Protocol servers</strong><br/>
-  with type-safe decorators and streamable HTTP support
+  with built-in support for Auth, Elicitation, and MCP-Apps (including ChatGPT Apps).
 </p>
 </p>
   

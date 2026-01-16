@@ -6,6 +6,7 @@ import { createRequire } from "module";
 import { confirm } from "@inquirer/prompts";
 import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
+import { buildCommand } from "./commands/build";
 import { startCommand } from "./commands/start";
 import { buildCommand } from "./commands/build";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode as setLoginDebugMode } from "./commands/login";
@@ -56,8 +57,8 @@ Examples:
   $ leanmcp create my-app -i             # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
-  $ leanmcp build                        # Compile TypeScript
-  $ leanmcp start                        # Start production server
+  $ leanmcp build                        # Build UI components and compile TypeScript
+  $ leanmcp start                        # Build and start production server
   $ leanmcp login                        # Authenticate with LeanMCP cloud
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
@@ -102,13 +103,16 @@ program
         build: "leanmcp build",
         start: "leanmcp start",
         inspect: "npx @modelcontextprotocol/inspector node dist/main.js",
+        "start:node": "node dist/main.js",
         clean: "rm -rf dist"
       },
       keywords: ["mcp", "model-context-protocol", "streamable-http", "leanmcp"],
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.3.5",
+        "@leanmcp/core": "^0.3.9",
+        "@leanmcp/ui": "^0.2.1",
+        "@leanmcp/auth": "^0.3.2",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
@@ -170,9 +174,9 @@ program
     // --install: Install but don't start dev server (non-interactive)
     // --allow-all: Install and start dev server (non-interactive)
     // default: Interactive prompts
-    
+
     const isNonInteractive = options.install !== undefined || options.allowAll;
-    
+
     // If --no-install flag is set (options.install === false), skip entirely
     if (options.install === false) {
       logger.log("To get started:", chalk.cyan);
@@ -329,6 +333,11 @@ program
     trackCommand("build");
     buildCommand();
   });
+
+program
+  .command("build")
+  .description("Build UI components and compile TypeScript for production")
+  .action(buildCommand);
 
 program
   .command("start")

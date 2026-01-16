@@ -29,3 +29,29 @@ export {
     UI_APP_OPTIONS_KEY,
     type UIAppOptions
 } from './decorator';
+
+// ===========================================
+// GPTApp decorator for ChatGPT Apps
+// ===========================================
+export {
+    GPTApp,
+    getGPTAppMetadata,
+    getGPTAppUri,
+    GPT_APP_COMPONENT_KEY,
+    GPT_APP_URI_KEY,
+    GPT_APP_OPTIONS_KEY,
+    type GPTAppOptions
+} from './decorator';
+
+// ===========================================
+// Re-export server helpers from ext-apps
+// ===========================================
+export {
+    registerAppTool,
+    registerAppResource,
+    RESOURCE_URI_META_KEY,
+    RESOURCE_MIME_TYPE,
+    type McpUiAppToolConfig,
+    type McpUiAppResourceConfig,
+    type ToolConfig,
+} from '@modelcontextprotocol/ext-apps/server';

@@ -1,13 +1,40 @@
-# @leanmcp/utils
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-Utility functions and helpers for LeanMCP SDK.
+<p align="center">
+  <strong>@leanmcp/utils</strong><br/>
+  Utility functions and helpers for LeanMCP SDK.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/utils">
+    <img src="https://img.shields.io/npm/v/@leanmcp/utils" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/utils">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/utils" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com/sdk/utils">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
 ## Features
 
-- 🔄 **Retry logic** - Exponential backoff for resilient operations
-- 📊 **Response formatting** - Format data as JSON, Markdown, HTML, or tables
-- 🔀 **Object utilities** - Deep merge, validation, and manipulation
-- ⏱️ **Async helpers** - Sleep, timeout, and promise utilities
+- **Retry logic** — Exponential backoff for resilient operations
+- **Response formatting** — Format data as JSON, Markdown, HTML, or tables
+- **Object utilities** — Deep merge, validation, and manipulation
+- **Async helpers** — Sleep, timeout, and promise utilities
 
 ## Installation
 

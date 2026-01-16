@@ -19,6 +19,7 @@ export * from "./schema-generator";
 export * from "./http-server";
 export * from "./logger";
 export * from "./validation";
+export * from "./auth-helpers";
 import { getMethodMetadata, getDecoratedMethods } from "./decorators";
 import { classToJsonSchemaWithConstraints } from "./schema-generator";
 import { Logger, LogLevel } from "./logger";
@@ -313,10 +314,37 @@ export class MCPServer {
 
         // Format result
         let formattedResult = result;
+
+        // Handle structuredContent for objects
+        let structuredContent: any = undefined;
+
         if (methodMeta.renderFormat === 'markdown' && typeof result === 'string') {
           formattedResult = result;
-        } else if (methodMeta.renderFormat === 'json' || typeof result === 'object') {
-          formattedResult = JSON.stringify(result, null, 2);
+        } else if (typeof result === 'object' && result !== null) {
+          // If it's an object, using it as structuredContent
+          // Check if it's explicitly a { structuredContent: ... } wrapper first (unlikely but safe)
+          if ('structuredContent' in result && Object.keys(result).length === 1) {
+            structuredContent = result.structuredContent;
+            formattedResult = JSON.stringify(structuredContent, null, 2);
+          } else if ('content' in result && Array.isArray(result.content)) {
+            // This is a manual MCP response object (e.g., SlackService returning { content: [...] }).
+            // Extract the actual data from content[0].text and set that as structuredContent.
+            const textItem = result.content.find((c: any) => c.type === 'text');
+            if (textItem?.text) {
+              try {
+                structuredContent = JSON.parse(textItem.text);
+              } catch {
+                // If not valid JSON, use the text itself
+                structuredContent = textItem.text;
+              }
+            }
+            formattedResult = JSON.stringify(result, null, 2);
+          } else {
+            // Regular data object (gpt-apps pattern like social-monitor).
+            // Set as structuredContent for direct client access.
+            structuredContent = result;
+            formattedResult = JSON.stringify(result, null, 2);
+          }
         } else {
           formattedResult = String(result);
         }
@@ -330,6 +358,13 @@ export class MCPServer {
             },
           ],
         };
+
+        if (structuredContent) {
+          response.structuredContent = structuredContent;
+          if (this.logger) {
+            this.logger.debug(`[MCPServer] Setting structuredContent: ${JSON.stringify(structuredContent).slice(0, 100)}...`);
+          }
+        }
 
         // Include _meta in the result if the tool has it (for ext-apps UI)
         if (tool._meta && Object.keys(tool._meta).length > 0) {
@@ -683,8 +718,18 @@ export class MCPServer {
 
   /**
    * Watch UI manifest for changes and reload resources dynamically
+   * 
+   * CRITICAL: Only for stateful mode. In stateless mode, each request
+   * creates a fresh server that reads the manifest directly, making
+   * watchers both unnecessary and a memory leak source.
    */
   private watchUIManifest() {
+    // Stateless mode: each request reads manifest directly from disk
+    // Watching is unnecessary (fresh server per request) and causes leaks
+    if (this.options.stateless) {
+      return;
+    }
+
     try {
       const manifestPath = path.join(process.cwd(), 'dist', 'ui-manifest.json');
 
@@ -748,7 +793,7 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
       const currentUIUris = new Set(Object.keys(manifest));
       const registeredUIUris = Array.from(this.resources.keys()).filter(uri => uri.startsWith('ui://'));
 
@@ -763,7 +808,13 @@ export class MCPServer {
       }
 
       // Add or update resources from manifest
-      for (const [uri, htmlPath] of Object.entries(manifest)) {
+      for (const [uri, entry] of Object.entries(manifest)) {
+        // Normalize entry
+        const isString = typeof entry === 'string';
+        const htmlPath = isString ? entry : entry.htmlPath;
+        const isGPTApp = !isString && entry.isGPTApp;
+        const gptMeta = !isString ? entry.gptMeta : undefined;
+
         if (!fs.existsSync(htmlPath)) {
           if (this.logging) {
             this.logger.warn(`UI HTML file not found: ${htmlPath}`);
@@ -773,16 +824,30 @@ export class MCPServer {
 
         const wasRegistered = this.resources.has(uri);
 
+        // Determine mimeType (ChatGPT requires text/html+skybridge)
+        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+
+        // Construct metadata
+        const _meta: Record<string, any> = {};
+        if (isGPTApp) {
+          _meta['openai/outputTemplate'] = uri;
+          if (gptMeta) Object.assign(_meta, gptMeta);
+          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+        }
+
         this.resources.set(uri, {
           uri,
           name: uri.replace('ui://', '').replace(/\//g, '-'),
           description: `Auto-generated UI resource from pre-built HTML`,
-          mimeType: 'text/html;profile=mcp-app',
+          mimeType,
           inputSchema: undefined,
           method: async () => {
             if (fs.existsSync(htmlPath)) {
               const html = fs.readFileSync(htmlPath, 'utf-8');
-              return { text: html };
+              return {
+                text: html,
+                _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+              };
             }
             throw new Error(`UI HTML file not found: ${htmlPath}`);
           },
@@ -816,9 +881,15 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
-      for (const [uri, htmlPath] of Object.entries(manifest)) {
+      for (const [uri, entry] of Object.entries(manifest)) {
+        // Normalize entry
+        const isString = typeof entry === 'string';
+        const htmlPath = isString ? entry : entry.htmlPath;
+        const isGPTApp = !isString && entry.isGPTApp;
+        const gptMeta = !isString ? entry.gptMeta : undefined;
+
         // Skip if resource already registered (e.g., by explicit @Resource)
         if (this.resources.has(uri)) {
           if (this.logging) {
@@ -838,13 +909,27 @@ export class MCPServer {
         // Create a resource handler that reads the pre-built HTML
         const html = fs.readFileSync(htmlPath, 'utf-8');
 
+        // Determine mimeType (ChatGPT requires text/html+skybridge)
+        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+
+        // Construct metadata
+        const _meta: Record<string, any> = {};
+        if (isGPTApp) {
+          _meta['openai/outputTemplate'] = uri;
+          if (gptMeta) Object.assign(_meta, gptMeta);
+          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+        }
+
         this.resources.set(uri, {
           uri,
           name: uri.replace('ui://', '').replace(/\//g, '-'),
           description: `Auto-generated UI resource from pre-built HTML`,
-          mimeType: 'text/html;profile=mcp-app',
+          mimeType,
           inputSchema: undefined,
-          method: async () => ({ text: html }),
+          method: async () => ({
+            text: html,
+            _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+          }),
           instance: null,
           propertyKey: 'getUI',
         });
@@ -868,6 +953,32 @@ export class MCPServer {
     // Attach waitForInit to the server instance for HTTP server to use
     (this.server as any).waitForInit = () => this.waitForInit();
     return this.server;
+  }
+
+  /**
+   * Clean up all registered services, watchers, and resources
+   * CRITICAL for stateless mode to prevent memory leaks
+   */
+  close(): void {
+    // Close manifest watcher if exists
+    if (this.manifestWatcher) {
+      try {
+        this.manifestWatcher.close();
+      } catch (e) {
+        // Ignore watcher close errors
+      }
+      this.manifestWatcher = null;
+    }
+
+    // Clear all registrations to enable GC
+    this.tools.clear();
+    this.prompts.clear();
+    this.resources.clear();
+
+    // Close underlying MCP server
+    if (this.server && typeof (this.server as any).close === 'function') {
+      (this.server as any).close();
+    }
   }
 
   /**

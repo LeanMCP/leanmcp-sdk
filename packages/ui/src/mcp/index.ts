@@ -96,3 +96,8 @@ export { useToolInput } from './useToolInput';
 export { useToolInputPartial } from './useToolInputPartial';
 export { useToolResult } from './useToolResult';
 export { useToolSubscription } from './useToolSubscription';
+
+// Spec-compliant hooks
+export { useOpenAiGlobal } from './useOpenAiGlobal';
+export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './useToolData';
+export { useWidgetState } from './useWidgetState';

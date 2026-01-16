@@ -1,16 +1,41 @@
-# @leanmcp/elicitation
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-Structured user input collection for LeanMCP tools using the MCP elicitation protocol. The `@Elicitation` decorator automatically intercepts tool calls to request missing required fields from users before execution.
+<p align="center">
+  <strong>@leanmcp/elicitation</strong><br/>
+  Structured user input collection for MCP tools using the elicitation protocol.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/elicitation">
+    <img src="https://img.shields.io/npm/v/@leanmcp/elicitation" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/elicitation">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/elicitation" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com/sdk/elicitation">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
 ## Features
 
-- **@Elicitation decorator** - Declarative way to collect missing user inputs
-- **Method wrapping** - Automatically intercepts calls and returns elicitation requests
-- **Multiple strategies** - Form, multi-step, and conversational elicitation
-- **Fluent builder API** - Programmatic form creation with type safety
-- **Built-in validation** - Email, URL, pattern matching, custom validators
-- **Conditional elicitation** - Only ask for inputs when needed
-- **Type-safe** - Full TypeScript support with type inference
+- **@Elicitation Decorator** — Automatically collect missing user inputs before tool execution
+- **Fluent Builder API** — Programmatic form creation with `ElicitationFormBuilder`
+- **Multiple Strategies** — Form and multi-step elicitation
+- **Built-in Validation** — min/max, pattern matching, custom validators
+- **Conditional Elicitation** — Only ask for inputs when needed
 
 ## Installation
 
@@ -20,7 +45,7 @@ npm install @leanmcp/elicitation @leanmcp/core
 
 ## Quick Start
 
-### 1. Simple Form Elicitation
+### Simple Form Elicitation
 
 ```typescript
 import { Tool } from "@leanmcp/core";
@@ -51,15 +76,81 @@ class SlackService {
     ]
   })
   async createChannel(args: { channelName: string; isPrivate: boolean }) {
-    // Implementation
     return { success: true, channelName: args.channelName };
   }
 }
 ```
 
-### 2. Conditional Elicitation
+### How It Works
 
-Only ask for inputs when they're missing:
+1. **Client calls tool** with missing required fields
+2. **Decorator intercepts** and checks for missing fields
+3. **Elicitation request returned** with form definition
+4. **Client displays form** to collect user input
+5. **Client calls tool again** with complete arguments
+6. **Method executes** normally
+
+---
+
+## Fluent Builder API
+
+For more complex forms, use `ElicitationFormBuilder`:
+
+```typescript
+import { Tool } from "@leanmcp/core";
+import { Elicitation, ElicitationFormBuilder, validation } from "@leanmcp/elicitation";
+
+class UserService {
+  @Tool({ description: "Create user account" })
+  @Elicitation({
+    builder: () => new ElicitationFormBuilder()
+      .title("User Registration")
+      .description("Create a new user account")
+      .addEmailField("email", "Email Address", { required: true })
+      .addTextField("username", "Username", {
+        required: true,
+        validation: validation()
+          .minLength(3)
+          .maxLength(20)
+          .pattern("^[a-zA-Z0-9_]+$")
+          .build()
+      })
+      .addSelectField("role", "Role", [
+        { label: "Admin", value: "admin" },
+        { label: "User", value: "user" }
+      ])
+      .build()
+  })
+  async createUser(args: any) {
+    return { success: true, email: args.email };
+  }
+}
+```
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `title(string)` | Set form title |
+| `description(string)` | Set form description |
+| `condition(fn)` | Set condition for elicitation |
+| `addTextField(name, label, opts?)` | Add text input |
+| `addTextAreaField(name, label, opts?)` | Add textarea |
+| `addNumberField(name, label, opts?)` | Add number input |
+| `addBooleanField(name, label, opts?)` | Add checkbox |
+| `addSelectField(name, label, options, opts?)` | Add dropdown |
+| `addMultiSelectField(name, label, options, opts?)` | Add multi-select |
+| `addEmailField(name, label, opts?)` | Add email input |
+| `addUrlField(name, label, opts?)` | Add URL input |
+| `addDateField(name, label, opts?)` | Add date picker |
+| `addCustomField(field)` | Add custom field |
+| `build()` | Build final config |
+
+---
+
+## Conditional Elicitation
+
+Only ask for inputs when needed:
 
 ```typescript
 @Tool({ description: "Send message to Slack" })
@@ -84,41 +175,11 @@ async sendMessage(args: { channelId?: string; message: string }) {
 }
 ```
 
-### 3. Fluent Builder API
+---
 
-More programmatic approach:
+## Multi-Step Elicitation
 
-```typescript
-import { ElicitationFormBuilder, validation } from "@leanmcp/elicitation";
-
-@Tool({ description: "Create user account" })
-@Elicitation({
-  builder: () => new ElicitationFormBuilder()
-    .title("User Registration")
-    .description("Create a new user account")
-    .addEmailField("email", "Email Address", { required: true })
-    .addTextField("username", "Username", {
-      required: true,
-      validation: validation()
-        .minLength(3)
-        .maxLength(20)
-        .pattern("^[a-zA-Z0-9_]+$")
-        .build()
-    })
-    .addSelectField("role", "Role", [
-      { label: "Admin", value: "admin" },
-      { label: "User", value: "user" }
-    ])
-    .build()
-})
-async createUser(args: any) {
-  // Implementation
-}
-```
-
-### 4. Multi-Step Elicitation
-
-Break input collection into multiple steps:
+Break input collection into sequential steps:
 
 ```typescript
 @Tool({ description: "Deploy application" })
@@ -159,123 +220,27 @@ async deployApp(args: any) {
 }
 ```
 
+---
+
 ## Field Types
 
-### Text Fields
+| Type | Description |
+|------|-------------|
+| `text` | Single-line text input |
+| `textarea` | Multi-line text area |
+| `number` | Numeric input |
+| `boolean` | Checkbox |
+| `select` | Dropdown (single choice) |
+| `multiselect` | Multi-select |
+| `email` | Email input |
+| `url` | URL input |
+| `date` | Date picker |
 
-```typescript
-{
-  name: "description",
-  label: "Description",
-  type: "text",
-  placeholder: "Enter description...",
-  validation: {
-    minLength: 10,
-    maxLength: 500
-  }
-}
-```
-
-### Textarea
-
-```typescript
-{
-  name: "content",
-  label: "Content",
-  type: "textarea",
-  placeholder: "Enter long text..."
-}
-```
-
-### Number
-
-```typescript
-{
-  name: "age",
-  label: "Age",
-  type: "number",
-  validation: {
-    min: 18,
-    max: 120
-  }
-}
-```
-
-### Boolean (Checkbox)
-
-```typescript
-{
-  name: "agree",
-  label: "I agree to terms",
-  type: "boolean",
-  defaultValue: false
-}
-```
-
-### Select (Dropdown)
-
-```typescript
-{
-  name: "country",
-  label: "Country",
-  type: "select",
-  options: [
-    { label: "United States", value: "US" },
-    { label: "Canada", value: "CA" }
-  ]
-}
-```
-
-### Multi-Select
-
-```typescript
-{
-  name: "tags",
-  label: "Tags",
-  type: "multiselect",
-  options: [
-    { label: "JavaScript", value: "js" },
-    { label: "TypeScript", value: "ts" },
-    { label: "Python", value: "py" }
-  ]
-}
-```
-
-### Email
-
-```typescript
-{
-  name: "email",
-  label: "Email",
-  type: "email",
-  required: true
-}
-```
-
-### URL
-
-```typescript
-{
-  name: "website",
-  label: "Website",
-  type: "url",
-  placeholder: "https://example.com"
-}
-```
-
-### Date
-
-```typescript
-{
-  name: "birthdate",
-  label: "Birth Date",
-  type: "date"
-}
-```
+---
 
 ## Validation
 
-### Built-in Validators
+### Built-in Validation
 
 ```typescript
 {
@@ -287,29 +252,6 @@ async deployApp(args: any) {
     maxLength: 20,
     pattern: "^[a-zA-Z0-9_]+$",
     errorMessage: "Username must be 3-20 alphanumeric characters"
-  }
-}
-```
-
-### Custom Validators
-
-```typescript
-{
-  name: "password",
-  label: "Password",
-  type: "text",
-  validation: {
-    customValidator: (value) => {
-      const hasUpper = /[A-Z]/.test(value);
-      const hasLower = /[a-z]/.test(value);
-      const hasNumber = /[0-9]/.test(value);
-      
-      if (!hasUpper || !hasLower || !hasNumber) {
-        return "Password must contain uppercase, lowercase, and numbers";
-      }
-      
-      return true; // Valid
-    }
   }
 }
 ```
@@ -328,103 +270,7 @@ validation()
   .build()
 ```
 
-## How It Works
-
-1. **Client calls tool** with missing required fields
-2. **Decorator intercepts** the method call before execution
-3. **Elicitation check** determines if required fields are missing
-4. **Elicitation request returned** if fields are missing
-5. **Client displays form** to collect user input
-6. **Client calls tool again** with complete arguments
-7. **Method executes** normally with all required fields
-
-**Key Benefits:**
-- **Automatic interception** - No need to modify `@leanmcp/core`
-- **Clean separation** - Elicitation logic separate from business logic
-- **MCP compliant** - Follows MCP elicitation protocol
-- **Type-safe** - Full TypeScript support
-
-## Strategies
-
-### Form Strategy (Default)
-
-Collect all fields at once:
-
-```typescript
-@Elicitation({
-  strategy: "form", // or omit, form is default
-  title: "User Information",
-  fields: [/* ... */]
-})
-```
-
-### Multi-Step Strategy
-
-Break input collection into sequential steps:
-
-```typescript
-@Elicitation({
-  strategy: "multi-step",
-  builder: () => [
-    {
-      title: "Step 1: Basic Info",
-      fields: [/* step 1 fields */]
-    },
-    {
-      title: "Step 2: Details",
-      fields: [/* step 2 fields */],
-      condition: (prev) => prev.needsDetails === true
-    }
-  ]
-})
-```
-
-## Elicitation Flow
-
-### Request/Response Cycle
-
-**First Call (Missing Fields):**
-```json
-// Request
-{
-  "method": "tools/call",
-  "params": {
-    "name": "createChannel",
-    "arguments": {}
-  }
-}
-
-// Response (Elicitation Request)
-{
-  "content": [{
-    "type": "text",
-    "text": "{\n  \"type\": \"elicitation\",\n  \"title\": \"Create Channel\",\n  \"fields\": [...]\n}"
-  }]
-}
-```
-
-**Second Call (Complete Fields):**
-```json
-// Request
-{
-  "method": "tools/call",
-  "params": {
-    "name": "createChannel",
-    "arguments": {
-      "channelName": "my-channel",
-      "isPrivate": false
-    }
-  }
-}
-
-// Response (Tool Result)
-{
-  "content": [{
-    "type": "text",
-    "text": "{\"success\": true, \"channelId\": \"C123\"}"
-  }]
-}
-```
+---
 
 ## API Reference
 
@@ -472,92 +318,33 @@ interface FieldValidation {
 }
 ```
 
-## Complete Example
-
-See [examples/slack-with-elicitation](../../examples/slack-with-elicitation) for a complete working example.
-
-```typescript
-import { createHTTPServer, MCPServer, Tool } from "@leanmcp/core";
-import { Elicitation, ElicitationFormBuilder, validation } from "@leanmcp/elicitation";
-
-class SlackService {
-  @Tool({ description: "Create a new Slack channel" })
-  @Elicitation({
-    title: "Create Channel",
-    description: "Please provide channel details",
-    fields: [
-      {
-        name: "channelName",
-        label: "Channel Name",
-        type: "text",
-        required: true,
-        validation: {
-          pattern: "^[a-z0-9-]+$",
-          errorMessage: "Must be lowercase alphanumeric with hyphens"
-        }
-      },
-      {
-        name: "isPrivate",
-        label: "Private Channel",
-        type: "boolean",
-        defaultValue: false
-      }
-    ]
-  })
-  async createChannel(args: { channelName: string; isPrivate: boolean }) {
-    return {
-      success: true,
-      channelId: `C${Date.now()}`,
-      channelName: args.channelName
-    };
-  }
-}
-
-// Start server
-const serverFactory = () => {
-  const server = new MCPServer({ name: "slack-server", version: "1.0.0" });
-  server.registerService(new SlackService());
-  return server.getServer();
-};
-
-await createHTTPServer(serverFactory, { port: 3000 });
-```
-
-## Error Handling
-
-```typescript
-try {
-  const result = await service.createChannel({ channelName: "test" });
-  console.log(result);
-} catch (error) {
-  console.error('Tool execution failed:', error);
-}
-```
-
-If elicitation is needed, the method returns an `ElicitationRequest` object instead of throwing an error.
+---
 
 ## Best Practices
 
-1. **Use conditional elicitation** - Only ask when truly needed
-2. **Provide sensible defaults** - Reduce user input burden
-3. **Clear field labels** - Make fields self-explanatory
-4. **Validate early** - Catch errors before submission
-5. **Group related fields** - Use multi-step for complex forms
-6. **Test thoroughly** - Test both elicitation and execution paths
-7. **Use builder for complex forms** - Fluent API is more maintainable
-8. **Add help text** - Guide users with helpful descriptions
+1. **Use conditional elicitation** — Only ask when truly needed
+2. **Provide sensible defaults** — Reduce user input burden
+3. **Clear field labels** — Make fields self-explanatory
+4. **Validate early** — Catch errors before submission
+5. **Use builder for complex forms** — Fluent API is more maintainable
+
+---
+
+## Documentation
+
+- [Full Documentation](https://docs.leanmcp.com/sdk/elicitation)
 
 ## Related Packages
 
-- [@leanmcp/core](../core) - Core MCP server functionality
-- [@leanmcp/auth](../auth) - Authentication for MCP tools
-- [@leanmcp/utils](../utils) - Utility functions
+- [@leanmcp/core](https://www.npmjs.com/package/@leanmcp/core) — Core MCP server functionality
+- [@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth) — Authentication decorators
+- [@leanmcp/cli](https://www.npmjs.com/package/@leanmcp/cli) — CLI for project scaffolding
 
 ## Links
 
 - [GitHub Repository](https://github.com/LeanMCP/leanmcp-sdk)
-- [Documentation](https://github.com/LeanMCP/leanmcp-sdk#readme)
-- [Example Implementation](../../examples/slack-with-elicitation)
+- [NPM Package](https://www.npmjs.com/package/@leanmcp/elicitation)
+- [MCP Specification](https://spec.modelcontextprotocol.io/)
 
 ## License
 

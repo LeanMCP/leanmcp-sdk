@@ -15,6 +15,50 @@ export interface HTTPServerOptions {
   sessionTimeout?: number;
   stateless?: boolean;  // Enable stateless mode for Lambda/serverless (default: true)
   dashboard?: boolean;  // Serve dashboard UI at / and /mcp GET endpoints (default: true)
+  /** OAuth/Auth configuration (MCP authorization spec) */
+  auth?: HTTPServerAuthOptions;
+}
+
+/**
+ * OAuth/Auth configuration for MCP server
+ * 
+ * Enables MCP authorization spec compliance by exposing
+ * `/.well-known/oauth-protected-resource` (RFC 9728)
+ */
+export interface HTTPServerAuthOptions {
+  /** Resource identifier (defaults to server URL) */
+  resource?: string;
+  /** Authorization servers (defaults to self) */
+  authorizationServers?: string[];
+  /** Supported OAuth scopes */
+  scopesSupported?: string[];
+  /** Documentation URL */
+  documentationUrl?: string;
+  /** Enable built-in OAuth authorization server */
+  enableOAuthServer?: boolean;
+  /** OAuth server options (when enableOAuthServer is true) */
+  oauthServerOptions?: {
+    /** Session secret for signing tokens/state */
+    sessionSecret: string;
+    /** JWT signing secret (defaults to sessionSecret if not provided) */
+    jwtSigningSecret?: string;
+    /** JWT encryption secret for encrypting upstream tokens */
+    jwtEncryptionSecret?: Buffer;
+    /** Issuer URL for JWTs */
+    issuer?: string;
+    /** Access token TTL in seconds (default: 3600) */
+    tokenTTL?: number;
+    /** Upstream OAuth provider configuration */
+    upstreamProvider?: {
+      id: string;
+      authorizationEndpoint: string;
+      tokenEndpoint: string;
+      clientId: string;
+      clientSecret: string;
+      scopes?: string[];
+      userInfoEndpoint?: string;
+    };
+  };
 }
 
 export interface MCPServerFactory {
@@ -143,7 +187,8 @@ export async function createHTTPServer(
       logging: serverOptions.logging,
       sessionTimeout: (serverOptions as any).sessionTimeout,
       stateless: (serverOptions as any).stateless,
-      dashboard: (serverOptions as any).dashboard
+      dashboard: (serverOptions as any).dashboard,
+      auth: (serverOptions as any).auth,  // MCP auth options
     };
   }
   // Dynamic imports for optional peer dependencies
@@ -318,6 +363,75 @@ export async function createHTTPServer(
     });
   });
 
+  // RFC 9728: Protected Resource Metadata
+  // ChatGPT and MCP clients use this to discover auth requirements
+  app.get('/.well-known/oauth-protected-resource', (req: any, res: any) => {
+    const host = req.headers.host || 'localhost';
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const resource = httpOptions.auth?.resource || `${protocol}://${host}`;
+    const authServers = httpOptions.auth?.authorizationServers || [resource];
+
+    res.json({
+      resource,
+      authorization_servers: authServers,
+      scopes_supported: httpOptions.auth?.scopesSupported || [],
+      resource_documentation: httpOptions.auth?.documentationUrl,
+    });
+  });
+
+  // RFC 8414: Authorization Server Metadata (if OAuth server enabled)
+  if (httpOptions.auth?.enableOAuthServer && httpOptions.auth?.oauthServerOptions) {
+    const authOpts = httpOptions.auth.oauthServerOptions;
+
+    app.get('/.well-known/oauth-authorization-server', (req: any, res: any) => {
+      const host = req.headers.host || 'localhost';
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const issuer = httpOptions.auth?.resource || `${protocol}://${host}`;
+
+      res.json({
+        issuer,
+        authorization_endpoint: `${issuer}/oauth/authorize`,
+        token_endpoint: `${issuer}/oauth/token`,
+        registration_endpoint: `${issuer}/oauth/register`,
+        scopes_supported: httpOptions.auth?.scopesSupported || [],
+        response_types_supported: ['code'],
+        grant_types_supported: ['authorization_code', 'refresh_token'],
+        code_challenge_methods_supported: ['S256'],
+        token_endpoint_auth_methods_supported: [
+          'client_secret_post',
+          'client_secret_basic',
+          'none',
+        ],
+      });
+    });
+
+    // Try to mount OAuth routes from @leanmcp/auth/server if available
+    (async () => {
+      try {
+        // Dynamic require to avoid TypeScript module resolution issues
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const authServerModule = await import(/* webpackIgnore: true */ '@leanmcp/auth/server' as string);
+        const { OAuthAuthorizationServer } = authServerModule;
+        const authServer = new OAuthAuthorizationServer({
+          issuer: httpOptions.auth?.resource || `http://localhost:${basePort}`,
+          sessionSecret: authOpts.sessionSecret,
+          jwtSigningSecret: authOpts.jwtSigningSecret,
+          jwtEncryptionSecret: authOpts.jwtEncryptionSecret,
+          tokenTTL: authOpts.tokenTTL,
+          upstreamProvider: authOpts.upstreamProvider,
+          scopesSupported: httpOptions.auth?.scopesSupported,
+          enableDCR: true,
+        });
+        app.use(authServer.getRouter());
+        logger.info('OAuth authorization server mounted');
+      } catch (e) {
+        // @leanmcp/auth/server not available, skip
+        logger.warn('OAuth server requested but @leanmcp/auth/server not available');
+      }
+    })();
+  }
+
+
   // MCP endpoint handler - STATEFUL mode
   const handleMCPRequestStateful = async (req: any, res: any) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -341,6 +455,25 @@ export async function createHTTPServer(
     }
 
     logger.info(logMessage);
+    // DEBUG: Log full request details
+    logger.info(logMessage);
+
+    // Inject Authorization header into _meta if present (for GPT Apps)
+    if (req.headers.authorization) {
+      if (!req.body.params) req.body.params = {};
+      if (!req.body.params._meta) req.body.params._meta = {};
+      // Strip 'Bearer ' prefix if present, or pass full header?
+      // GitHubService.getAccessToken expects the token string.
+      // The user snippet does: const token = authHeader.split(' ')[1];
+      // So we should probably pass the full header or just the token.
+      // Existing code expects meta.authToken to be the token.
+      const authHeader = req.headers.authorization;
+      if (authHeader.startsWith('Bearer ')) {
+        req.body.params._meta.authToken = authHeader.substring(7);
+      } else {
+        req.body.params._meta.authToken = authHeader;
+      }
+    }
 
     try {
       if (sessionId && transports[sessionId]) {
@@ -400,8 +533,22 @@ export async function createHTTPServer(
     if (params?.name) logMessage += ` [${params.name}]`;
     else if (params?.uri) logMessage += ` [${params.uri}]`;
     logger.info(logMessage);
+    // DEBUG: Log full request details
+    logger.info(logMessage);
 
     try {
+      // Inject Authorization header into _meta if present (for GPT Apps)
+      if (req.headers.authorization) {
+        if (!req.body.params) req.body.params = {};
+        if (!req.body.params._meta) req.body.params._meta = {};
+        const authHeader = req.headers.authorization;
+        if (authHeader.startsWith('Bearer ')) {
+          req.body.params._meta.authToken = authHeader.substring(7);
+        } else {
+          req.body.params._meta.authToken = authHeader;
+        }
+      }
+
       // Create fresh server instance for each request
       // Use statelessServerFactory which has the pre-resolved mcpDir
       const freshServer = await statelessServerFactory!();
@@ -418,9 +565,17 @@ export async function createHTTPServer(
       await transport.handleRequest(req, res, req.body);
 
       // Cleanup after response completes
+      // CRITICAL: Must call close() on MCPServer wrapper (if available) to clean Maps/watchers
       res.on('close', () => {
         transport.close();
-        (freshServer as Server).close();
+
+        // Check if this is an MCPServer instance with our close() method
+        if ('close' in freshServer && typeof (freshServer as any).close === 'function') {
+          (freshServer as any).close();
+        } else {
+          // Fallback for raw Server instances
+          (freshServer as Server).close();
+        }
       });
     } catch (error: any) {
       logger.error('Error handling MCP request:', error);
@@ -439,7 +594,7 @@ export async function createHTTPServer(
   // StreamableHTTPClientTransport uses GET with Accept: text/event-stream for server-to-client streaming
   app.get('/mcp', async (req: any, res: any) => {
     const acceptHeader = req.headers['accept'] || '';
-    
+
     // If client requests SSE, handle as MCP streaming request
     if (acceptHeader.includes('text/event-stream')) {
       // SSE requests need session handling - only supported in stateful mode
@@ -460,7 +615,7 @@ export async function createHTTPServer(
       });
       return;
     }
-    
+
     // Otherwise serve dashboard HTML (if enabled)
     if (isDashboardEnabled) {
       try {
@@ -525,28 +680,48 @@ export async function createHTTPServer(
         reject(error);
       });
 
-      // Cleanup on shutdown
-      const cleanup = () => {
+      // Graceful shutdown handler - cross-platform (Windows/Mac/Linux)
+      let isShuttingDown = false;
+      const cleanup = async () => {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+
         logger.info('\nShutting down server...');
 
-        // Close all MCP transports
-        Object.values(transports).forEach(t => t.close?.());
+        // Close all MCP transports first
+        for (const transport of Object.values(transports)) {
+          try {
+            transport.close?.();
+          } catch (e) {
+            // Ignore transport close errors
+          }
+        }
 
-        // Close the HTTP server
-        activeListener?.close(() => {
-          logger.info('Server closed');
-          process.exit(0);
-        });
-
-        // Force exit after 5 seconds if graceful shutdown fails
-        setTimeout(() => {
-          logger.warn('Forcing shutdown...');
-          process.exit(1);
-        }, 5000);
+        // Close the HTTP server and release the port
+        if (activeListener) {
+          await new Promise<void>((resolveClose) => {
+            activeListener!.close((err: Error | undefined) => {
+              if (err) {
+                logger.warn(`Error closing server: ${err.message}`);
+              } else {
+                logger.info('Server closed');
+              }
+              resolveClose();
+            });
+          });
+        }
       };
 
-      process.on('SIGINT', cleanup);
-      process.on('SIGTERM', cleanup);
+      // Register signal handlers - use 'once' for all platforms
+      const handleShutdown = () => {
+        cleanup().finally(() => {
+          // Let the calling process (CLI) handle exit
+          // This ensures proper cross-platform behavior
+        });
+      };
+
+      process.once('SIGINT', handleShutdown);
+      process.once('SIGTERM', handleShutdown);
     } catch (error) {
       reject(error);
     }

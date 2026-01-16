@@ -1,23 +1,49 @@
-# @leanmcp/core
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-Core library for building Model Context Protocol (MCP) servers with TypeScript decorators and declarative schema definition.
+<p align="center">
+  <strong>@leanmcp/core</strong><br/>
+  Core library for building MCP servers with TypeScript decorators and declarative schema definition.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/core" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com/sdk/core">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
 
 ## Features
 
-- **Type-safe decorators** - `@Tool`, `@Prompt`, `@Resource` with full TypeScript support
-- **Schema generation** - Define JSON Schema declaratively using `@SchemaConstraint` decorators on class properties
-- **Streamable HTTP transport** - Production-ready HTTP server with session management
-- **Input validation** - Built-in AJV validation for all inputs
-- **Clean API** - Function names automatically become tool/prompt/resource names
-- **MCP compliant** - Built on official `@modelcontextprotocol/sdk`
+- **Type-Safe Decorators** — `@Tool`, `@Prompt`, `@Resource` with full TypeScript support
+- **Auto-Discovery** — Zero-config service discovery from `./mcp` directory
+- **Schema Generation** — Declarative JSON Schema with `@SchemaConstraint` decorators
+- **HTTP Transport** — Production-ready HTTP server with session management
+- **Input Validation** — Built-in AJV validation for all inputs
+- **Structured Content** — Automatic `structuredContent` for ChatGPT Apps SDK compatibility
+- **MCP Compliant** — Built on official `@modelcontextprotocol/sdk`
 
 ## Installation
 
 ```bash
 npm install @leanmcp/core
 ```
-
-### Peer Dependencies
 
 For HTTP server support:
 ```bash
@@ -26,12 +52,42 @@ npm install express cors
 
 ## Quick Start
 
-### 1. Define Your Service with Class-Based Schema
+### Zero-Config (Recommended)
+
+The simplest way to create an MCP server with auto-discovery:
 
 ```typescript
+import { createHTTPServer } from "@leanmcp/core";
+
+await createHTTPServer({
+  name: "my-mcp-server",
+  version: "1.0.0",
+  port: 3001,
+  cors: true,
+  logging: true
+});
+
+// Services are automatically discovered from ./mcp directory
+```
+
+**Directory Structure:**
+```
+your-project/
+├── main.ts
+└── mcp/
+    ├── sentiment/
+    │   └── index.ts   # export class SentimentService
+    ├── weather/
+    │   └── index.ts   # export class WeatherService
+    └── config.ts      # Optional: shared dependencies
+```
+
+### Define a Service
+
+```typescript
+// mcp/sentiment/index.ts
 import { Tool, SchemaConstraint, Optional } from "@leanmcp/core";
 
-// Define input schema as a class
 class AnalyzeSentimentInput {
   @SchemaConstraint({
     description: 'Text to analyze',
@@ -48,109 +104,27 @@ class AnalyzeSentimentInput {
   language?: string;
 }
 
-// Define output schema
-class AnalyzeSentimentOutput {
-  @SchemaConstraint({ enum: ['positive', 'negative', 'neutral'] })
-  sentiment!: string;
-
-  @SchemaConstraint({ minimum: -1, maximum: 1 })
-  score!: number;
-}
-
 export class SentimentService {
   @Tool({ 
     description: 'Analyze sentiment of text',
     inputClass: AnalyzeSentimentInput
   })
-  async analyzeSentiment(input: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
-    // Your implementation
+  async analyzeSentiment(input: AnalyzeSentimentInput) {
     return {
       sentiment: 'positive',
-      score: 0.8,
-      confidence: 0.95
+      score: 0.8
     };
   }
 }
 ```
 
-### 2. Create and Start Server
-
-#### Option A: Zero-Config Auto-Discovery (Recommended)
-
-The simplest way to create an HTTP server with auto-discovery:
-
-```typescript
-import { createHTTPServer } from "@leanmcp/core";
-
-// Create and start HTTP server with auto-discovery
-await createHTTPServer({
-  name: "my-mcp-server",
-  version: "1.0.0",
-  port: 3000,
-  cors: true,
-  logging: true
-});
-
-console.log('\nMCP Server running');
-console.log('HTTP endpoint: http://localhost:3000/mcp');
-console.log('Health check: http://localhost:3000/health');
-```
-
-**What happens automatically:**
-- Services are discovered from `./mcp` directory
-- HTTP server is created and started
-- Session management is configured
-- CORS is enabled (if specified)
-
-**Directory Structure:**
-```
-your-project/
-├── main.ts
-└── mcp/
-    ├── sentiment/
-    │   └── index.ts    # export class SentimentService
-    ├── weather/
-    │   └── index.ts    # export class WeatherService
-    └── database/
-        └── index.ts    # export class DatabaseService
-```
-
-#### Option B: Factory Pattern (Advanced)
-
-For advanced use cases requiring manual service registration or custom configuration:
-
-```typescript
-import { createHTTPServer, MCPServer } from "@leanmcp/core";
-import { SentimentService } from "./services/sentiment";
-
-// Create MCP server with factory function
-const serverFactory = async () => {
-  const server = new MCPServer({
-    name: "my-mcp-server",
-    version: "1.0.0",
-    logging: true,
-    autoDiscover: false  // Disable auto-discovery for manual registration
-  });
-
-  // Register services manually
-  server.registerService(new SentimentService());
-
-  return server.getServer();
-};
-
-// Start HTTP server with factory
-await createHTTPServer(serverFactory, {
-  port: 3000,
-  cors: true,
-  logging: true
-});
-```
+---
 
 ## Decorators
 
 ### @Tool
 
-Marks a method as an MCP tool (callable function). Use `inputClass` to specify the input schema class.
+Marks a method as a callable MCP tool.
 
 ```typescript
 class CalculateInput {
@@ -170,9 +144,16 @@ async calculate(input: CalculateInput) {
 }
 ```
 
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `description` | `string` | Tool description for the AI |
+| `inputClass` | `Class` | Class defining input schema |
+
 ### @Prompt
 
-Marks a method as an MCP prompt template. Input schema is automatically inferred from parameter type.
+Marks a method as a reusable prompt template.
 
 ```typescript
 class CodeReviewInput {
@@ -202,7 +183,10 @@ codeReview(input: CodeReviewInput) {
 Marks a method as an MCP resource (data source).
 
 ```typescript
-@Resource({ description: 'Get system configuration', mimeType: 'application/json' })
+@Resource({ 
+  description: 'Get system configuration', 
+  mimeType: 'application/json' 
+})
 async getConfig() {
   return {
     version: "1.0.0",
@@ -213,7 +197,7 @@ async getConfig() {
 
 ### @SchemaConstraint
 
-Add validation constraints to class properties for automatic schema generation.
+Add validation constraints to class properties.
 
 ```typescript
 class UserInput {
@@ -242,6 +226,14 @@ class UserInput {
 }
 ```
 
+**Common constraints:**
+- `description`, `default` — Documentation
+- `minLength`, `maxLength` — String length
+- `minimum`, `maximum` — Number range
+- `enum` — Allowed values
+- `format` — String format (`email`, `uri`, `date`, etc.)
+- `pattern` — Regex pattern
+
 ### @Optional
 
 Marks a property as optional in the schema.
@@ -257,7 +249,49 @@ class SearchInput {
 }
 ```
 
+---
+
 ## API Reference
+
+### createHTTPServer
+
+Create and start an HTTP server with auto-discovery.
+
+**Simplified API (Recommended):**
+```typescript
+await createHTTPServer({
+  name: string;              // Server name (required)
+  version: string;           // Server version (required)
+  port?: number;             // Port (default: 3001)
+  cors?: boolean | object;   // Enable CORS (default: false)
+  logging?: boolean;         // Enable logging (default: false)
+  debug?: boolean;           // Verbose debug logs (default: false)
+  autoDiscover?: boolean;    // Auto-discover services (default: true)
+  mcpDir?: string;           // Custom mcp directory path
+  sessionTimeout?: number;   // Session timeout in ms
+  stateless?: boolean;       // Stateless mode for Lambda/serverless (default: true)
+  dashboard?: boolean;       // Serve dashboard UI at / (default: true)
+});
+```
+
+**Factory Pattern (Advanced):**
+```typescript
+const serverFactory = async () => {
+  const server = new MCPServer({
+    name: "my-server",
+    version: "1.0.0",
+    autoDiscover: false  // Disable for manual registration
+  });
+  
+  server.registerService(new MyService());
+  return server.getServer();
+};
+
+await createHTTPServer(serverFactory, {
+  port: 3001,
+  cors: true
+});
+```
 
 ### MCPServer
 
@@ -268,69 +302,39 @@ const server = new MCPServer({
   name: string;           // Server name
   version: string;        // Server version
   logging?: boolean;      // Enable logging (default: false)
-  debug?: boolean;        // Enable verbose debug logs (default: false)
-  autoDiscover?: boolean; // Enable auto-discovery (default: true)
-  mcpDir?: string;        // Custom mcp directory path (optional)
+  debug?: boolean;        // Verbose debug logs (default: false)
+  autoDiscover?: boolean; // Auto-discover from ./mcp (default: true)
+  mcpDir?: string;        // Custom mcp directory path
 });
 
-// Manual registration
-server.registerService(instance: any): void;
-
-// Get underlying MCP SDK server
-server.getServer(): Server;
+server.registerService(instance);  // Manual registration
+server.getServer();                // Get underlying MCP SDK server
 ```
 
-**Options:**
+---
 
-- **`logging`**: Enable basic logging for server operations
-- **`debug`**: Enable verbose debug logs showing detailed service registration (requires `logging: true`)
-- **`autoDiscover`**: Automatically discover and register services from `./mcp` directory (default: `true`)
-- **`mcpDir`**: Custom path to the mcp directory (default: auto-detected `./mcp`)
+## Auto-Discovery
 
-#### Zero-Config Auto-Discovery
+Services are automatically discovered from the `./mcp` directory:
 
-Services are automatically discovered and registered from the `./mcp` directory when the server is created:
+1. Recursively scans for `index.ts` or `index.js` files
+2. Dynamically imports each file
+3. Looks for exported classes
+4. Instantiates with no-args constructors
+5. Registers all decorated methods
 
-**Basic Usage (Simplified API):**
-```typescript
-import { createHTTPServer } from "@leanmcp/core";
+### Shared Dependencies
 
-await createHTTPServer({
-  name: "my-server",
-  version: "1.0.0",
-  port: 3000,
-  logging: true  // Enable logging
-});
-```
-
-**With Debug Logging:**
-```typescript
-await createHTTPServer({
-  name: "my-server",
-  version: "1.0.0",
-  port: 3000,
-  logging: true,
-  debug: true  // Show detailed service registration logs
-});
-```
-
-**With Shared Dependencies:**
-
-For services that need shared dependencies, create a `config.ts` (example) file in your `mcp` directory:
+For services needing shared configuration (auth, database, etc.), create a `config.ts`:
 
 ```typescript
 // mcp/config.ts
 import { AuthProvider } from "@leanmcp/auth";
 
-if (!process.env.COGNITO_USER_POOL_ID || !process.env.COGNITO_CLIENT_ID) {
-  throw new Error('Missing required Cognito configuration');
-}
-
 export const authProvider = new AuthProvider('cognito', {
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: process.env.AWS_REGION,
   userPoolId: process.env.COGNITO_USER_POOL_ID,
-  clientId: process.env.COGNITO_CLIENT_ID,
-  clientSecret: process.env.COGNITO_CLIENT_SECRET
+  clientId: process.env.COGNITO_CLIENT_ID
 });
 
 await authProvider.init();
@@ -346,147 +350,65 @@ import { authProvider } from "../config.js";
 
 @Authenticated(authProvider)
 export class SlackService {
-  constructor() {
-    // No parameters needed - use environment or imported config
-  }
-
   @Tool({ description: 'Send a message' })
-  async sendMessage(args: any) {
+  async sendMessage(args: { channel: string; message: string }) {
     // Implementation
   }
 }
 ```
 
-Your main file stays clean:
+---
+
+## Structured Content
+
+Tool return values are automatically exposed as `structuredContent` in the MCP response, enabling ChatGPT Apps SDK compatibility.
+
+**Automatic Handling:**
 
 ```typescript
-import { createHTTPServer } from "@leanmcp/core";
-
-await createHTTPServer({
-  name: "my-server",
-  version: "1.0.0",
-  port: 3000,
-  logging: true
-});
-
-// Services are automatically discovered and registered
+@Tool({ description: 'List channels' })
+async listChannels() {
+  // Return a plain object - it becomes structuredContent automatically
+  return { channels: [...] };
+}
 ```
 
-**How It Works:**
-- Automatically discovers and registers services from the `./mcp` directory during server initialization
-- Recursively scans for `index.ts` or `index.js` files
-- Dynamically imports each file and looks for exported classes
-- Instantiates services with no-args constructors
-- Registers all discovered services with their decorated methods
+The response includes both `content` (text) and `structuredContent` (object):
 
-**Directory Structure:**
-```
-your-project/
-├── main.ts
-└── mcp/
-    ├── config.ts      # Optional: shared dependencies
-    ├── slack/
-    │   └── index.ts   # export class SlackService
-    ├── database/
-    │   └── index.ts   # export class DatabaseService
-    └── auth/
-        └── index.ts   # export class AuthService
+```json
+{
+  "content": [{ "type": "text", "text": "{\"channels\": [...]}" }],
+  "structuredContent": { "channels": [...] }
+}
 ```
 
-### createHTTPServer
+**Manual MCP Response:**
 
-Create and start an HTTP server with streamable transport.
-
-**Simplified API (Recommended):**
-```typescript
-await createHTTPServer({
-  name: string;              // Server name (required)
-  version: string;           // Server version (required)
-  port?: number;             // Port number (default: 3001)
-  cors?: boolean | object;   // Enable CORS (default: false)
-  logging?: boolean;         // Enable logging (default: false)
-  debug?: boolean;           // Enable debug logs (default: false)
-  autoDiscover?: boolean;    // Auto-discover services (default: true)
-  mcpDir?: string;           // Custom mcp directory path (optional)
-  sessionTimeout?: number;   // Session timeout in ms (optional)
-});
-```
-
-**Factory Pattern (Advanced):**
-```typescript
-await createHTTPServer(
-  serverFactory: () => Server | Promise<Server>,
-  options: {
-    port?: number;             // Port number (default: 3001)
-    cors?: boolean | object;   // Enable CORS (default: false)
-    logging?: boolean;         // Enable HTTP request logging (default: false)
-    sessionTimeout?: number;   // Session timeout in ms (optional)
-  }
-);
-```
-
-**CORS Configuration:**
-```typescript
-// Simple CORS (allow all origins - not recommended for production)
-await createHTTPServer({
-  name: "my-server",
-  version: "1.0.0",
-  cors: true
-});
-
-// Advanced CORS configuration
-await createHTTPServer({
-  name: "my-server",
-  version: "1.0.0",
-  cors: {
-    origin: 'https://example.com',  // Specific origin
-    credentials: true                // Allow credentials
-  }
-});
-```
-
-### Schema Generation
-
-Generate JSON Schema from TypeScript classes:
+If your tool returns a manual MCP response (with `content` array), the SDK extracts data from `content[0].text`:
 
 ```typescript
-import { classToJsonSchemaWithConstraints } from "@leanmcp/core";
-
-const schema = classToJsonSchemaWithConstraints(MyInputClass);
+return {
+  content: [{ type: 'text', text: JSON.stringify({ channels }) }]
+};
+// structuredContent will be { channels: [...] }
 ```
+
+---
 
 ## HTTP Endpoints
 
-When using `createHTTPServer`, the following endpoints are available:
-
-- `POST /mcp` - MCP protocol endpoint (accepts JSON-RPC 2.0 messages)
-- `GET /health` - Health check endpoint
-- `GET /` - Welcome message
-
-## Environment Variables
-
-```bash
-PORT=3000              # Server port (optional)
-NODE_ENV=production    # Environment (optional)
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/mcp` | POST | MCP protocol endpoint (JSON-RPC 2.0) |
+| `/health` | GET | Health check |
+| `/` | GET | Welcome message |
 
 ## Error Handling
 
-All tools automatically handle errors and return them in MCP format:
+Errors are automatically caught and returned in MCP format:
 
 ```typescript
-class DivideInput {
-  @SchemaConstraint({ description: 'Numerator' })
-  a!: number;
-  
-  @SchemaConstraint({ description: 'Denominator' })
-  b!: number;
-}
-
-@Tool({ 
-  description: 'Divide numbers',
-  inputClass: DivideInput
-})
+@Tool({ description: 'Divide numbers', inputClass: DivideInput })
 async divide(input: DivideInput) {
   if (input.b === 0) {
     throw new Error("Division by zero");
@@ -495,7 +417,7 @@ async divide(input: DivideInput) {
 }
 ```
 
-Errors are returned as:
+Returns:
 ```json
 {
   "content": [{"type": "text", "text": "Error: Division by zero"}],
@@ -503,9 +425,20 @@ Errors are returned as:
 }
 ```
 
+## Environment Variables
+
+```bash
+PORT=3001              # Server port
+NODE_ENV=production    # Environment
+```
+
 ## TypeScript Support
 
-Full TypeScript support with type inference:
+**Key Points:**
+- Input schema is defined via `inputClass` in the decorator
+- Output type is inferred from the return type
+- For tools with no input, omit `inputClass`
+- Use `@SchemaConstraint` for validation and documentation
 
 ```typescript
 class MyInput {
@@ -513,43 +446,29 @@ class MyInput {
   field!: string;
 }
 
-class MyOutput {
-  result!: string;
-}
-
-// Input schema defined via inputClass, output type inferred from return type
-@Tool({ 
-  description: 'My tool',
-  inputClass: MyInput
-})
-async myTool(input: MyInput): Promise<MyOutput> {
-  // TypeScript knows the exact types
-  const result: MyOutput = {
-    result: input.field.toUpperCase()
-    // Full autocomplete and type checking
-  };
-  return result;
+@Tool({ description: 'My tool', inputClass: MyInput })
+async myTool(input: MyInput): Promise<{ result: string }> {
+  return { result: input.field.toUpperCase() };
 }
 ```
 
-**Key Points:**
-- Input schema is defined using `inputClass` in the `@Tool` decorator
-- Output schema is inferred from the return type
-- For tools with no input parameters, omit the `inputClass` option
-- Use `@SchemaConstraint` decorators to add validation and documentation to your input classes
+## Documentation
 
-## License
-
-MIT
+- [Full Documentation](https://docs.leanmcp.com/sdk/core)
 
 ## Related Packages
 
-- [@leanmcp/cli](../cli) - CLI tool for creating new projects
-- [@leanmcp/auth](../auth) - Authentication decorators and providers
-- [@leanmcp/utils](../utils) - Utility functions
+- [@leanmcp/cli](https://www.npmjs.com/package/@leanmcp/cli) — CLI tool for project creation
+- [@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth) — Authentication decorators
+- [@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui) — MCP App UI components
+- [@leanmcp/elicitation](https://www.npmjs.com/package/@leanmcp/elicitation) — Structured user input
 
 ## Links
 
 - [GitHub Repository](https://github.com/LeanMCP/leanmcp-sdk)
+- [NPM Package](https://www.npmjs.com/package/@leanmcp/core)
 - [MCP Specification](https://spec.modelcontextprotocol.io/)
-- [Documentation](https://github.com/LeanMCP/leanmcp-sdk#readme)
+
+## License
+
+MIT

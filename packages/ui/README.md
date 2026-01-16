@@ -1,6 +1,42 @@
-# @leanmcp/ui
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
+    alt="LeanMCP Logo"
+    width="400"
+  />
+</p>
 
-**MCP-Native UI SDK for React** - Build rich, interactive MCP Apps with first-class tool integration.
+<p align="center">
+  <strong>@leanmcp/ui</strong><br/>
+  MCP-Native UI SDK for React — Build rich, interactive MCP Apps with first-class tool integration.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@leanmcp/ui">
+    <img src="https://img.shields.io/npm/v/@leanmcp/ui" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/ui">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/ui" alt="npm downloads" />
+  </a>
+  <a href="https://docs.leanmcp.com/sdk/ui">
+    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://discord.com/invite/DsRcA3GwPy">
+    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+  </a>
+</p>
+
+## Features
+
+- **MCP-Native Components** — ToolButton, ToolSelect, ToolForm, ToolDataGrid, and more
+- **First-Class Tool Integration** — Components that natively call MCP tools
+- **ChatGPT Apps Support** — Build apps that work inside ChatGPT with `@GPTApp`
+- **Streaming Support** — Handle partial/streaming tool responses
+- **Theming** — Automatic host theme adaptation (light/dark)
+- **Testing Utilities** — `MockAppProvider` for unit testing
 
 ## Installation
 
@@ -56,6 +92,18 @@ function MyApp() {
 | `useResource` | Read MCP resources with auto-refresh |
 | `useMessage` | Send messages to host chat |
 | `useHostContext` | Access host theme and viewport |
+
+### GPT Apps SDK Hooks
+
+These hooks provide access to the ChatGPT Apps SDK globals (compatible with OpenAI's `window.openai` API):
+
+| Hook | Description |
+|------|-------------|
+| `useToolOutput` | Access `structuredContent` from the tool response |
+| `useToolInput` | Access input arguments passed to the tool |
+| `useWidgetState` | Read/write persistent widget state across sessions |
+| `useToolResponseMetadata` | Access `_meta` from the tool response |
+| `useOpenAiGlobal` | Low-level hook to subscribe to any `window.openai` property |
 
 ## Examples
 
@@ -126,6 +174,70 @@ function MyApp() {
 />
 ```
 
+## Server-Side Integration
+
+Use `@UIApp` decorator to register your React component as an MCP resource.
+
+> **Note:** Use a relative path string for the `component` property, not an imported component. This avoids importing React components on the server side.
+
+```typescript
+// mcp/dashboard/index.ts
+import { UIApp } from '@leanmcp/core';
+
+export class DashboardService {
+  @UIApp({
+    component: './Dashboard',  // Path relative to this file
+    name: 'dashboard',
+    title: 'Analytics Dashboard'
+  })
+  dashboard() {}
+}
+```
+
+## ChatGPT Integration
+
+Use `@GPTApp` for ChatGPT-specific apps:
+
+```typescript
+import { GPTApp } from '@leanmcp/ui';
+
+export class SlackService {
+  @GPTApp({
+    component: './SlackApp',  // Path relative to this file
+    name: 'slack-composer'
+  })
+  slackComposer() {}
+}
+```
+
+### GPT Apps SDK Hooks Usage
+
+Access tool output (structuredContent) without making additional API calls:
+
+```tsx
+import { useToolOutput, useWidgetState } from '@leanmcp/ui';
+
+function ChannelsView() {
+  // Access the structured data from the tool response
+  const toolOutput = useToolOutput<{ channels: Channel[] }>();
+  
+  // Persist state across the session
+  const [state, setState] = useWidgetState({ selectedChannel: null });
+  
+  if (!toolOutput?.channels) return <div>Loading...</div>;
+  
+  return (
+    <ul>
+      {toolOutput.channels.map(ch => (
+        <li key={ch.id} onClick={() => setState({ selectedChannel: ch.id })}>
+          {ch.name}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
 ## Theming
 
 The SDK uses CSS variables compatible with MCP host theming. Import the styles:
@@ -154,6 +266,19 @@ test('renders tool result', () => {
   );
 });
 ```
+
+## Documentation
+
+- [Full Documentation](https://docs.leanmcp.com/sdk/ui)
+- [Component Reference](https://docs.leanmcp.com/sdk/ui-components)
+- [Hooks Reference](https://docs.leanmcp.com/sdk/ui-hooks)
+- [ChatGPT Apps Guide](https://docs.leanmcp.com/sdk/ui-gpt-apps)
+
+## Related Packages
+
+- [@leanmcp/core](https://www.npmjs.com/package/@leanmcp/core) — Core MCP server functionality
+- [@leanmcp/cli](https://www.npmjs.com/package/@leanmcp/cli) — CLI for project scaffolding
+- [@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth) — Authentication decorators
 
 ## License
 

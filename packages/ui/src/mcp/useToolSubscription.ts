@@ -67,7 +67,12 @@ export function useToolSubscription<T = unknown>(
     }, []);
 
     const start = useCallback(() => {
-        stop();
+        // Defensive: ensure no existing interval before starting new one
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
         setIsPolling(true);
 
         // Initial call
@@ -77,7 +82,7 @@ export function useToolSubscription<T = unknown>(
         intervalRef.current = setInterval(() => {
             toolHook.call(args).catch(() => { });
         }, interval);
-    }, [toolHook.call, args, interval, stop]);
+    }, [toolHook.call, args, interval]);
 
     const refresh = useCallback(async (): Promise<T> => {
         return toolHook.call(args);
