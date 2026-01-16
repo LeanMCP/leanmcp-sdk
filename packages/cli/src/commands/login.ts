@@ -264,7 +264,7 @@ export async function logoutCommand() {
 }
 
 /**
- * Whoami command - show current login status
+ * Whoami command - show current login status by calling the API
  */
 export async function whoamiCommand() {
   const config = await loadConfig();
@@ -275,12 +275,56 @@ export async function whoamiCommand() {
     return;
   }
 
-  logger.info('\nLeanMCP Authentication Status\n');
-  logger.success('Logged in');
-  logger.gray(`  API Key: ${config.apiKey.substring(0, 15)}...`);
-  logger.gray(`  API URL: ${config.apiUrl || 'https://ship.leanmcp.com'}`);
-  if (config.lastUpdated) {
-    logger.gray(`  Last updated: ${new Date(config.lastUpdated).toLocaleString()}`);
+  const spinner = ora('Fetching account info...').start();
+
+  try {
+    const apiUrl = await getApiUrl();
+    const whoamiUrl = `${apiUrl}/api-keys/whoami`;
+    
+    debug('API URL:', apiUrl);
+    debug('Whoami URL:', whoamiUrl);
+
+    const response = await fetch(whoamiUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    debug('Response status:', response.status);
+
+    if (!response.ok) {
+      spinner.fail('Failed to fetch account info');
+      if (response.status === 401) {
+        logger.error('\nYour API key is invalid or has expired.');
+        logger.gray('Run `leanmcp login` to re-authenticate.\n');
+      } else {
+        logger.error(`\nError: ${response.status} ${response.statusText}`);
+      }
+      return;
+    }
+
+    const user = await response.json();
+    spinner.succeed('Account info retrieved');
+
+    logger.info('\nLeanMCP Account\n');
+    logger.log(`  ${chalk.bold('Name:')}     ${user.displayName || user.username}`);
+    logger.log(`  ${chalk.bold('Email:')}    ${user.email}`);
+    logger.log(`  ${chalk.bold('Username:')} ${user.username}`);
+    logger.log(`  ${chalk.bold('Tier:')}     ${user.userTier || 'free'}`);
+    logger.gray(`\n  API Key: ${config.apiKey.substring(0, 20)}...`);
+    logger.log('');
+
+  } catch (error) {
+    spinner.fail('Failed to fetch account info');
+    debug('Error:', error);
+    
+    if (error instanceof Error && error.message.includes('fetch')) {
+      logger.error('\nCould not connect to LeanMCP servers.');
+      logger.gray('Please check your internet connection and try again.');
+    } else {
+      logger.error(`\nError: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
-  logger.log('');
 }

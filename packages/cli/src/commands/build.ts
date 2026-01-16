@@ -5,10 +5,10 @@
  * Does NOT start the server - use 'leanmcp start' or 'node dist/main.js' after building.
  */
 import { spawn } from 'child_process';
-import chalk from 'chalk';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
+import { logger, chalk } from '../logger';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
 
 export async function buildCommand() {
@@ -16,12 +16,12 @@ export async function buildCommand() {
 
     // Check if this is a LeanMCP project
     if (!await fs.pathExists(path.join(cwd, 'main.ts'))) {
-        console.error(chalk.red('ERROR: Not a LeanMCP project (main.ts not found).'));
-        console.error(chalk.gray('Run this command from your project root.'));
+        logger.error('ERROR: Not a LeanMCP project (main.ts not found).');
+        logger.gray('Run this command from your project root.');
         process.exit(1);
     }
 
-    console.log(chalk.cyan('\n🔨 LeanMCP Build\n'));
+    logger.info('\n🔨 LeanMCP Build\n');
 
     // Step 1: Scan for UI components
     const scanSpinner = ora('Scanning for @UIApp components...').start();
@@ -63,7 +63,7 @@ export async function buildCommand() {
         if (errors.length > 0) {
             buildSpinner.fail('Build failed');
             for (const error of errors) {
-                console.error(chalk.red(`   ✗ ${error}`));
+                logger.error(`   ✗ ${error}`);
             }
             process.exit(1);
         }
@@ -95,11 +95,11 @@ export async function buildCommand() {
         tscSpinner.succeed('TypeScript compiled');
     } catch (error) {
         tscSpinner.fail('TypeScript compilation failed');
-        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+        logger.error(error instanceof Error ? error.message : String(error));
         process.exit(1);
     }
 
-    console.log(chalk.green('\nBuild complete!'));
-    console.log(chalk.gray('\nTo start the server:'));
-    console.log(chalk.cyan('  npm run start:node\n'));
+    logger.success('\nBuild complete!');
+    logger.gray('\nTo start the server:');
+    logger.info('  npm run start:node\n');
 }
