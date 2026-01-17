@@ -156,8 +156,8 @@ export async function loginCommand() {
       if (!value || value.trim().length === 0) {
         return 'API key is required';
       }
-      if (!value.startsWith('airtrain_')) {
-        return 'Invalid API key format. API key should start with "airtrain_"';
+      if (!value.startsWith('leanmcp_') && !value.startsWith('airtain_')) {
+        return 'Invalid API key format. API key should start with "leanmcp_" or "airtain_"';
       }
       return true;
     },
