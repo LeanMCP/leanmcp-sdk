@@ -1,6 +1,6 @@
 {
   "name": "leanmcp",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "LeanMCP SDK - TypeScript SDK for building Model Context Protocol (MCP) servers with type-safe decorators",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

@@ -8,7 +8,6 @@ import { spawn } from "child_process";
 import { devCommand } from "./commands/dev";
 import { buildCommand } from "./commands/build";
 import { startCommand } from "./commands/start";
-import { buildCommand } from "./commands/build";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode as setLoginDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
@@ -110,13 +109,13 @@ program
       author: "",
       license: "MIT",
       dependencies: {
-        "@leanmcp/core": "^0.3.9",
+        "@leanmcp/core": "^0.3.14",
         "@leanmcp/ui": "^0.2.1",
-        "@leanmcp/auth": "^0.3.2",
+        "@leanmcp/auth": "^0.4.0",
         "dotenv": "^16.5.0"
       },
       devDependencies: {
-        "@leanmcp/cli": "^0.3.0",
+        "@leanmcp/cli": "^0.4.0",
         "@types/node": "^20.0.0",
         "tsx": "^4.20.3",
         "typescript": "^5.6.3"
