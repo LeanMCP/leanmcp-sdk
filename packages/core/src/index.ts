@@ -50,6 +50,9 @@ export interface MCPServerConstructorOptions {
   };
   sessionTimeout?: number;
   stateless?: boolean;     // Stateless mode for Lambda/serverless (default: true)
+  dashboard?: boolean;     // Serve dashboard UI (default: true)
+  /** OAuth/Auth configuration (MCP authorization spec) - passed to HTTPServerOptions */
+  auth?: import('./http-server').HTTPServerAuthOptions;
 }
 
 interface RegisteredTool {

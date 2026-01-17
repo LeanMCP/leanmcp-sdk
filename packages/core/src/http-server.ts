@@ -48,6 +48,8 @@ export interface HTTPServerAuthOptions {
     issuer?: string;
     /** Access token TTL in seconds (default: 3600) */
     tokenTTL?: number;
+    /** Enable Dynamic Client Registration (for ChatGPT etc.) */
+    enableDCR?: boolean;
     /** Upstream OAuth provider configuration */
     upstreamProvider?: {
       id: string;
