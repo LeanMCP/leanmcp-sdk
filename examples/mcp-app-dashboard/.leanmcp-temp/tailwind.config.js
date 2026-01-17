@@ -2,10 +2,10 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/src/**/*.{ts,tsx}',
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/mcp/**/*.{ts,tsx}',
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/examples/mcp-app-dashboard/node_modules/@leanmcp/ui/dist/**/*.{js,mjs}',
-        'C:/Users/kusha/Code/lean_mcp/leanmcp-sdk/packages/ui/src/**/*.{ts,tsx}',
+        '/Users/ddod/PersonalCode/AIRTRAIN/ORIGINAL/LEANMCP_CLI_TESTS/leanmcp-sdk/examples/mcp-app-dashboard/src/**/*.{ts,tsx}',
+        '/Users/ddod/PersonalCode/AIRTRAIN/ORIGINAL/LEANMCP_CLI_TESTS/leanmcp-sdk/examples/mcp-app-dashboard/mcp/**/*.{ts,tsx}',
+        '/Users/ddod/PersonalCode/AIRTRAIN/ORIGINAL/LEANMCP_CLI_TESTS/leanmcp-sdk/examples/mcp-app-dashboard/node_modules/@leanmcp/ui/dist/**/*.{js,mjs}',
+        '/Users/ddod/PersonalCode/AIRTRAIN/ORIGINAL/LEANMCP_CLI_TESTS/leanmcp-sdk/packages/ui/src/**/*.{ts,tsx}',
     ],
     darkMode: ['class'],
     theme: {

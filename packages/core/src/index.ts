@@ -13,6 +13,7 @@ import {
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import Ajv from "ajv";
+import type { HTTPServerAuthOptions } from "./http-server";
 
 export * from "./decorators";
 export * from "./schema-generator";
@@ -50,6 +51,7 @@ export interface MCPServerConstructorOptions {
   };
   sessionTimeout?: number;
   stateless?: boolean;     // Stateless mode for Lambda/serverless (default: true)
+  auth?: HTTPServerAuthOptions; // OAuth/Auth configuration
 }
 
 interface RegisteredTool {
