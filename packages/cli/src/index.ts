@@ -327,16 +327,11 @@ program
 
 program
   .command("build")
-  .description("Compile TypeScript to JavaScript")
+  .description("Build UI components and compile TypeScript for production")
   .action(() => {
     trackCommand("build");
     buildCommand();
   });
-
-program
-  .command("build")
-  .description("Build UI components and compile TypeScript for production")
-  .action(buildCommand);
 
 program
   .command("start")
