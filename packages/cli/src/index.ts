@@ -11,6 +11,15 @@ import { startCommand } from "./commands/start";
 import { loginCommand, logoutCommand, whoamiCommand, setDebugMode as setLoginDebugMode } from "./commands/login";
 import { deployCommand, setDeployDebugMode } from "./commands/deploy";
 import { projectsListCommand, projectsGetCommand, projectsDeleteCommand } from "./commands/projects";
+import {
+  envListCommand,
+  envSetCommand,
+  envGetCommand,
+  envRemoveCommand,
+  envPullCommand,
+  envPushCommand,
+  setEnvDebugMode,
+} from "./commands/env";
 import { getReadmeTemplate } from "./templates/readme_v1";
 import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
@@ -35,6 +44,7 @@ function enableDebugIfNeeded() {
     setDebugMode(true);
     setLoginDebugMode(true);
     setDeployDebugMode(true);
+    setEnvDebugMode(true);
     debug("Debug mode enabled globally");
   }
 }
@@ -62,6 +72,8 @@ Examples:
   $ leanmcp deploy ./my-app              # Deploy to LeanMCP cloud
   $ leanmcp projects list                # List your cloud projects
   $ leanmcp projects delete <id>         # Delete a cloud project
+  $ leanmcp env list                     # List environment variables
+  $ leanmcp env set KEY=VALUE            # Set an environment variable
 
 Global Options:
   -v, --version    Output the current version
@@ -412,6 +424,71 @@ projectsCmd
   .action((projectId, options) => {
     trackCommand("projects_delete", { projectId, force: options.force });
     projectsDeleteCommand(projectId, options);
+  });
+
+// === Environment Variable Commands ===
+
+const envCmd = program
+  .command("env")
+  .description("Manage environment variables for deployed projects");
+
+envCmd
+  .command("list [folder]")
+  .alias("ls")
+  .description("List all environment variables")
+  .option("--reveal", "Show actual values instead of masked")
+  .option("--project-id <id>", "Specify project ID")
+  .action((folder, options) => {
+    trackCommand("env_list", { folder, ...options });
+    envListCommand(folder || ".", options);
+  });
+
+envCmd
+  .command("set <keyValue> [folder]")
+  .description("Set an environment variable (KEY=VALUE)")
+  .option("-f, --file <file>", "Load from env file")
+  .option("--force", "Skip confirmation for reserved keys")
+  .action((keyValue, folder, options) => {
+    trackCommand("env_set", { folder, ...options });
+    envSetCommand(keyValue, folder || ".", options);
+  });
+
+envCmd
+  .command("get <key> [folder]")
+  .description("Get an environment variable value")
+  .option("--reveal", "Show actual value")
+  .action((key, folder, options) => {
+    trackCommand("env_get", { key, folder, ...options });
+    envGetCommand(key, folder || ".", options);
+  });
+
+envCmd
+  .command("remove <key> [folder]")
+  .alias("rm")
+  .description("Remove an environment variable")
+  .option("--force", "Skip confirmation")
+  .action((key, folder, options) => {
+    trackCommand("env_remove", { key, folder, ...options });
+    envRemoveCommand(key, folder || ".", options);
+  });
+
+envCmd
+  .command("pull [folder]")
+  .description("Download environment variables to local .env file")
+  .option("-f, --file <file>", "Output file", ".env.remote")
+  .action((folder, options) => {
+    trackCommand("env_pull", { folder, ...options });
+    envPullCommand(folder || ".", options);
+  });
+
+envCmd
+  .command("push [folder]")
+  .description("Upload environment variables from local .env file (replaces all)")
+  .option("-f, --file <file>", "Input file", ".env")
+  .option("--force", "Skip confirmation")
+  .action((folder, options) => {
+    trackCommand("env_push", { folder, ...options });
+    envPushCommand(folder || ".", options);
   });
 
 program.parse();
