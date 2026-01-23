@@ -25,6 +25,12 @@ import { gitignoreTemplate } from "./templates/gitignore_v1";
 import { getExampleServiceTemplate } from "./templates/example_service_v1";
 import { getMainTsTemplate } from "./templates/main_ts_v1";
 import { getServiceIndexTemplate } from "./templates/service_index_v1";
+import {
+  getPythonMainTemplate,
+  getPythonRequirementsTemplate,
+  pythonGitignoreTemplate,
+  getPythonReadmeTemplate,
+} from "./templates/python";
 import { trackCommand, logger, chalk, setDebugMode, debug } from "./logger";
 
 const require = createRequire(import.meta.url);
@@ -62,7 +68,8 @@ program
     "after",
     `
 Examples:
-  $ leanmcp create my-app                # Create new project (interactive)
+  $ leanmcp create my-app                # Create new TypeScript project (interactive)
+  $ leanmcp create my-app --python       # Create new Python project
   $ leanmcp create my-app -i             # Create and install deps (non-interactive)
   $ leanmcp create my-app --no-install   # Create without installing deps
   $ leanmcp dev                          # Start development server
@@ -89,6 +96,7 @@ program
   .option("--no-dashboard", "Disable dashboard UI at / and /mcp GET endpoints")
   .option("-i, --install", "Install dependencies automatically (non-interactive, no dev server)")
   .option("--no-install", "Skip dependency installation (non-interactive)")
+  .option("--python", "Create a Python MCP project instead of TypeScript")
   .action(async (projectName, options) => {
     trackCommand("create", { projectName, ...options });
     const spinner = ora(`Creating project ${projectName}...`).start();
@@ -100,77 +108,105 @@ program
     }
 
     await fs.mkdirp(targetDir);
-    await fs.mkdirp(path.join(targetDir, "mcp", "example"));
 
-    // --- Package.json ---
-    const pkg = {
-      name: projectName,
-      version: "1.0.0",
-      description: "MCP Server with Streamable HTTP Transport and LeanMCP SDK",
-      main: "dist/main.js",
-      type: "module",
-      scripts: {
-        dev: "leanmcp dev",
-        build: "leanmcp build",
-        start: "leanmcp start",
-        inspect: "npx @modelcontextprotocol/inspector node dist/main.js",
-        "start:node": "node dist/main.js",
-        clean: "rm -rf dist"
-      },
-      keywords: ["mcp", "model-context-protocol", "streamable-http", "leanmcp"],
-      author: "",
-      license: "MIT",
-      dependencies: {
-        "@leanmcp/core": "^0.3.14",
-        "@leanmcp/ui": "^0.2.1",
-        "@leanmcp/auth": "^0.4.0",
-        "dotenv": "^16.5.0"
-      },
-      devDependencies: {
-        "@leanmcp/cli": "^0.4.0",
-        "@types/node": "^20.0.0",
-        "tsx": "^4.20.3",
-        "typescript": "^5.6.3"
-      }
-    };
-    await fs.writeJSON(path.join(targetDir, "package.json"), pkg, { spaces: 2 });
+    const isPython = options.python === true;
 
-    // --- TypeScript Config ---
-    const tsconfig = {
-      compilerOptions: {
-        module: "ESNext",
-        target: "ES2022",
-        moduleResolution: "Node",
-        esModuleInterop: true,
-        strict: true,
-        skipLibCheck: true,
-        outDir: "dist",
-        experimentalDecorators: true,
-        emitDecoratorMetadata: true
-      },
-      include: ["**/*.ts"],
-      exclude: ["node_modules", "dist"]
-    };
-    await fs.writeJSON(path.join(targetDir, "tsconfig.json"), tsconfig, { spaces: 2 });
+    if (isPython) {
+      // === PYTHON PROJECT ===
 
-    // --- Main Entry Point (main.ts) ---
-    const dashboardLine = options.dashboard === false ? `\n  dashboard: false,  // Dashboard disabled via --no-dashboard` : '';
-    const mainTs = getMainTsTemplate(projectName, dashboardLine);
-    await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
+      // --- requirements.txt ---
+      const requirements = getPythonRequirementsTemplate();
+      await fs.writeFile(path.join(targetDir, "requirements.txt"), requirements);
 
-    // Create an example service file
-    const exampleServiceTs = getExampleServiceTemplate(projectName);
-    await fs.writeFile(path.join(targetDir, "mcp", "example", "index.ts"), exampleServiceTs);
+      // --- Main Entry Point (main.py) - includes example tools/resources/prompts ---
+      const mainPy = getPythonMainTemplate(projectName);
+      await fs.writeFile(path.join(targetDir, "main.py"), mainPy);
 
-    const gitignore = gitignoreTemplate;
-    const env = `# Server Configuration\nPORT=3001\nNODE_ENV=development\n\n# Add your environment variables here\n`;
+      // --- .gitignore ---
+      await fs.writeFile(path.join(targetDir, ".gitignore"), pythonGitignoreTemplate);
 
-    await fs.writeFile(path.join(targetDir, ".gitignore"), gitignore);
-    await fs.writeFile(path.join(targetDir, ".env"), env);
+      // --- .env ---
+      const env = `# Server Configuration\nPORT=3001\n\n# Add your environment variables here\n`;
+      await fs.writeFile(path.join(targetDir, ".env"), env);
 
-    // --- README ---
-    const readme = getReadmeTemplate(projectName);
-    await fs.writeFile(path.join(targetDir, "README.md"), readme);
+      // --- README ---
+      const readme = getPythonReadmeTemplate(projectName);
+      await fs.writeFile(path.join(targetDir, "README.md"), readme);
+
+    } else {
+      // === TYPESCRIPT PROJECT ===
+      await fs.mkdirp(path.join(targetDir, "mcp", "example"));
+
+      // --- Package.json ---
+      const pkg = {
+        name: projectName,
+        version: "1.0.0",
+        description: "MCP Server with Streamable HTTP Transport and LeanMCP SDK",
+        main: "dist/main.js",
+        type: "module",
+        scripts: {
+          dev: "leanmcp dev",
+          build: "leanmcp build",
+          start: "leanmcp start",
+          inspect: "npx @modelcontextprotocol/inspector node dist/main.js",
+          "start:node": "node dist/main.js",
+          clean: "rm -rf dist"
+        },
+        keywords: ["mcp", "model-context-protocol", "streamable-http", "leanmcp"],
+        author: "",
+        license: "MIT",
+        dependencies: {
+          "@leanmcp/core": "^0.3.14",
+          "@leanmcp/ui": "^0.2.1",
+          "@leanmcp/auth": "^0.4.0",
+          "dotenv": "^16.5.0"
+        },
+        devDependencies: {
+          "@leanmcp/cli": "^0.4.0",
+          "@types/node": "^20.0.0",
+          "tsx": "^4.20.3",
+          "typescript": "^5.6.3"
+        }
+      };
+      await fs.writeJSON(path.join(targetDir, "package.json"), pkg, { spaces: 2 });
+
+      // --- TypeScript Config ---
+      const tsconfig = {
+        compilerOptions: {
+          module: "ESNext",
+          target: "ES2022",
+          moduleResolution: "Node",
+          esModuleInterop: true,
+          strict: true,
+          skipLibCheck: true,
+          outDir: "dist",
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true
+        },
+        include: ["**/*.ts"],
+        exclude: ["node_modules", "dist"]
+      };
+      await fs.writeJSON(path.join(targetDir, "tsconfig.json"), tsconfig, { spaces: 2 });
+
+      // --- Main Entry Point (main.ts) ---
+      const dashboardLine = options.dashboard === false ? `\n  dashboard: false,  // Dashboard disabled via --no-dashboard` : '';
+      const mainTs = getMainTsTemplate(projectName, dashboardLine);
+      await fs.writeFile(path.join(targetDir, "main.ts"), mainTs);
+
+      // Create an example service file
+      const exampleServiceTs = getExampleServiceTemplate(projectName);
+      await fs.writeFile(path.join(targetDir, "mcp", "example", "index.ts"), exampleServiceTs);
+
+      const gitignore = gitignoreTemplate;
+      const env = `# Server Configuration\nPORT=3001\nNODE_ENV=development\n\n# Add your environment variables here\n`;
+
+      await fs.writeFile(path.join(targetDir, ".gitignore"), gitignore);
+      await fs.writeFile(path.join(targetDir, ".env"), env);
+
+      // --- README ---
+      const readme = getReadmeTemplate(projectName);
+      await fs.writeFile(path.join(targetDir, "README.md"), readme);
+    }
 
     spinner.succeed(`Project ${projectName} created!`);
     logger.log("\nSuccess! Your MCP server is ready.\n", chalk.green);
@@ -192,8 +228,15 @@ program
     if (options.install === false) {
       logger.log("To get started:", chalk.cyan);
       logger.log(`  cd ${projectName}`, chalk.gray);
-      logger.log(`  npm install`, chalk.gray);
-      logger.log(`  npm run dev`, chalk.gray);
+      if (isPython) {
+        logger.log(`  python -m venv venv`, chalk.gray);
+        logger.log(`  source venv/bin/activate  # On Windows: venv\\Scripts\\activate`, chalk.gray);
+        logger.log(`  pip install -r requirements.txt`, chalk.gray);
+        logger.log(`  python main.py`, chalk.gray);
+      } else {
+        logger.log(`  npm install`, chalk.gray);
+        logger.log(`  npm run dev`, chalk.gray);
+      }
       logger.log("");
       logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
       logger.log(`  cd ${projectName}`, chalk.gray);
@@ -201,6 +244,22 @@ program
       return;
     }
 
+    // For Python projects, skip automatic install (requires venv setup)
+    if (isPython) {
+      logger.log("\nTo get started:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  python -m venv venv`, chalk.gray);
+      logger.log(`  source venv/bin/activate  # On Windows: venv\\Scripts\\activate`, chalk.gray);
+      logger.log(`  pip install -r requirements.txt`, chalk.gray);
+      logger.log(`  python main.py`, chalk.gray);
+      logger.log("");
+      logger.log("To deploy to LeanMCP cloud:", chalk.cyan);
+      logger.log(`  cd ${projectName}`, chalk.gray);
+      logger.log(`  leanmcp deploy .`, chalk.gray);
+      return;
+    }
+
+    // === TypeScript/Node.js install flow ===
     // Ask if user wants to install dependencies (unless non-interactive)
     const shouldInstall = isNonInteractive
       ? true
