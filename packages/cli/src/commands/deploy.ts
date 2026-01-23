@@ -251,13 +251,19 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     process.exit(1);
   }
 
-  // Check if it's a valid LeanMCP project
+  // Check if it's a valid LeanMCP project (Node.js or Python)
   const hasMainTs = await fs.pathExists(path.join(absolutePath, 'main.ts'));
   const hasPackageJson = await fs.pathExists(path.join(absolutePath, 'package.json'));
+  const hasMainPy = await fs.pathExists(path.join(absolutePath, 'main.py'));
+  const hasRequirementsTxt = await fs.pathExists(path.join(absolutePath, 'requirements.txt'));
+  const hasPyprojectToml = await fs.pathExists(path.join(absolutePath, 'pyproject.toml'));
 
-  if (!hasMainTs && !hasPackageJson) {
+  const isNodeProject = hasMainTs || hasPackageJson;
+  const isPythonProject = hasMainPy || hasRequirementsTxt || hasPyprojectToml;
+
+  if (!isNodeProject && !isPythonProject) {
     logger.error('Not a valid project folder.');
-    logger.gray('Expected main.ts or package.json in the folder.\n');
+    logger.gray('Expected one of: main.ts, package.json, main.py, requirements.txt, or pyproject.toml\n');
     process.exit(1);
   }
 
