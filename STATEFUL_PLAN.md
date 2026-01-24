@@ -34,13 +34,27 @@ Request 2: tools/call with mcp-session-id: abc123
 ### Target Flow (Fixed)
 
 ```
+Request 1: initialize (first request)
+├── Container A starts
+├── Creates transport with sessionIdGenerator: () => randomUUID()
+├── Transport generates session ID: "abc123"
+├── ⭐ Store in memory: transports["abc123"] = transport
+├── ⭐ Store in DynamoDB: sessions.createSession("abc123")
+├── Returns response with mcp-session-id: abc123
+└── ✅ Client saves session ID for future requests
+
+     ↓ Lambda recycles (or different container) ↓
+
 Request 2: tools/call with mcp-session-id: abc123
-├── Container B starts
-├── transports["abc123"] = undefined
+├── Container B starts (fresh memory)
+├── transports["abc123"] = undefined (memory is empty!)
 ├── ⭐ Check DynamoDB: session "abc123" exists? YES
-├── ⭐ Recreate transport with same session ID
-├── Connect fresh MCP server to transport
-└── ✅ Handle request successfully
+├── ⭐ Recreate transport with sessionIdGenerator: () => "abc123" (reuse ID!)
+├── Store in memory: transports["abc123"] = newTransport
+├── Create fresh MCP server instance
+├── Connect server to recreated transport
+├── Handle the request normally
+└── ✅ Session continues seamlessly
 ```
 
 ---
