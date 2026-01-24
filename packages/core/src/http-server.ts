@@ -505,6 +505,7 @@ export async function createHTTPServer(
         }
         await (mcpServer as Server).connect(transport);
       } else {
+        // This needs to be changed <-- when the 
         res.status(400).json({
           jsonrpc: '2.0',
           error: { code: -32000, message: 'Bad Request: Invalid session or not an init request' },
