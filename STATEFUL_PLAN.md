@@ -652,9 +652,9 @@ export type { ISessionStore, SessionData } from './http-server';
 
 - Table `leanmcp-sessions` created in each supported region
 - Partition key: `sessionId` (String)
-- [ ] TTL attribute: `ttl` (Number)
-- [ ] On-demand capacity mode
-- [ ] IAM role attached to Lambda has full access to this table
+- TTL attribute: `ttl` (Number)
+- On-demand capacity mode
+- IAM role attached to Lambda has full access to this table
 
 **Table Schema:**
 ```
@@ -668,19 +668,13 @@ Table: leanmcp-sessions
 
 ---
 
-### Ticket 3.2: Set Environment Variables in LeanMCP Lambda
+### 3.2 Set Environment Variables
 
-**Type:** Infrastructure  
-**Priority:** High  
-**Estimate:** 1 hour
+Automatically set on all LeanMCP Lambda deployments:
 
-**Description:**
-Automatically set required environment variables for deployed Lambda functions.
-
-**Acceptance Criteria:**
-- [ ] `LEANMCP_LAMBDA=true` set on all deployments
-- [ ] `DYNAMODB_TABLE_NAME=leanmcp-sessions` set
-- [ ] `AWS_REGION` set to deployment region
+- `LEANMCP_LAMBDA=true`
+- `DYNAMODB_TABLE_NAME=leanmcp-sessions`
+- `AWS_REGION` set to deployment region
 
 ---
 
@@ -704,7 +698,7 @@ await createHTTPServer({
 
 ```typescript
 // server.ts
-import { LeanMCPSessionProvider } from '@leanmcp/lambda';
+import { LeanMCPSessionProvider } from '@leanmcp/core';
 
 // ⭐ Replace: const transports = new Map();
 const sessions = new LeanMCPSessionProvider();
@@ -725,13 +719,3 @@ const sessions = new LeanMCPSessionProvider();
 - [ ] Session data persistence across requests
 - [ ] Graceful handling of DynamoDB errors
 
----
-
-## Timeline Estimate
-
-| Phase | Tickets | Estimate |
-|-------|---------|----------|
-| Phase 1: LeanMCP SDK Core | 1.1 - 1.5 | 12 hours |
-| Phase 2: Native SDK Support | 2.1 - 2.3 | 8 hours |
-| Phase 3: Platform Setup | 3.1 - 3.2 | 3 hours |
-| **Total** | | **23 hours** |
