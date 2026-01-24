@@ -65,7 +65,7 @@ Request 2: tools/call with mcp-session-id: abc123
 
 **For Native MCP SDK users (1-2 lines):**
 ```typescript
-import { LeanMCPSessionProvider } from '@leanmcp/lambda';
+import { LeanMCPSessionProvider } from '@leanmcp/core';
 
 // Replace this:
 const transports = new Map<string, StreamableHTTPServerTransport>();
@@ -74,7 +74,7 @@ const transports = new Map<string, StreamableHTTPServerTransport>();
 const sessions = new LeanMCPSessionProvider();
 ```
 
-**For LeanMCP SDK users (zero changes if using `stateful: true`):**
+**For LeanMCP SDK users (zero changes if using `stateless: false`):**
 ```typescript
 await createHTTPServer({
   name: 'my-server',
@@ -85,34 +85,16 @@ await createHTTPServer({
 
 ---
 
-## Part 1: LeanMCP SDK Changes
+## Part 1: LeanMCP SDK Changes (`@leanmcp/core`)
 
-### Epic: Stateful Lambda Sessions in LeanMCP SDK
-
----
-
-### Ticket 1.1: Add ISessionStore Interface
-
-**Type:** Feature  
-**Priority:** High  
-**Estimate:** 2 hours
-
-**Description:**
-Create a session store abstraction interface in `http-server.ts`.
-
-**Acceptance Criteria:**
-- [ ] `ISessionStore` interface defined with methods:
-  - `sessionExists(sessionId: string): Promise<boolean>`
-  - `createSession(sessionId: string, data?: any): Promise<void>`
-  - `getSession(sessionId: string): Promise<SessionData | null>`
-  - `updateSession(sessionId: string, data: Partial<SessionData>): Promise<void>`
-  - `deleteSession(sessionId: string): Promise<void>`
-- [ ] `SessionData` type defined with `createdAt`, `updatedAt`, `ttl`, and generic `data` field
-- [ ] Interface exported from `@leanmcp/core`
+### 1.1 Add ISessionStore Interface
 
 **File:** `packages/core/src/http-server.ts`
 
-**Code:**
+- Add `ISessionStore` interface with methods: `sessionExists`, `createSession`, `getSession`, `updateSession`, `deleteSession`
+- Add `SessionData` type
+- Export from `@leanmcp/core`
+
 ```typescript
 export interface SessionData {
   sessionId: string;
@@ -133,63 +115,35 @@ export interface ISessionStore {
 
 ---
 
-### Ticket 1.2: Add sessionStore Option to HTTPServerOptions
-
-**Type:** Feature  
-**Priority:** High  
-**Estimate:** 1 hour
-
-**Description:**
-Add `sessionStore` configuration option to `HTTPServerOptions`.
-
-**Acceptance Criteria:**
-- [ ] `sessionStore?: ISessionStore` added to `HTTPServerOptions`
-- [ ] When provided, used for session persistence
-- [ ] When not provided, falls back to in-memory only (current behavior)
+### 1.2 Add sessionStore to HTTPServerOptions
 
 **File:** `packages/core/src/http-server.ts`
 
-**Code:**
+- Add `sessionStore?: ISessionStore` to `HTTPServerOptions`
+- When provided, use for session persistence
+- When not provided, fallback to in-memory only
+
 ```typescript
 export interface HTTPServerOptions {
-  port?: number;
-  cors?: boolean | { origin?: string | string[]; credentials?: boolean };
-  logging?: boolean;
-  logger?: Logger;
-  sessionTimeout?: number;
-  stateless?: boolean;
-  dashboard?: boolean;
-  auth?: HTTPServerAuthOptions;
+  // ... existing options
   sessionStore?: ISessionStore;  // NEW
 }
 ```
 
 ---
 
-### Ticket 1.3: Implement Transport Recreation in handleMCPRequestStateful
+### 1.3 Implement Transport Recreation in handleMCPRequestStateful
 
-**Type:** Feature  
-**Priority:** Critical  
-**Estimate:** 4 hours
-
-**Description:**
-Modify `handleMCPRequestStateful` to recreate transports when session exists in DynamoDB but transport is missing from memory.
-
-**Acceptance Criteria:**
-- [ ] Add new branch between existing `if (sessionId && transports[sessionId])` and `else if (!sessionId && isInitializeRequest)`
-- [ ] New branch handles: session ID provided, transport missing, NOT an initialize request
-- [ ] Check `sessionStore.sessionExists(sessionId)` before recreating
-- [ ] Return 404 if session doesn't exist in store
-- [ ] Recreate transport with `sessionIdGenerator: () => sessionId` (reuse existing ID)
-- [ ] Create fresh MCP server via `serverFactory()`
-- [ ] Connect server to recreated transport
-- [ ] Handle request normally
-
-**File:** `packages/core/src/http-server.ts`
-
+**File:** `packages/core/src/http-server.ts`  
 **Location:** Lines 480-514 in `handleMCPRequestStateful`
 
-**Code:**
+- Add new branch between `if (sessionId && transports[sessionId])` and `else if (!sessionId && isInitializeRequest)`
+- New branch handles: session ID provided, transport missing, NOT an initialize request
+- Check `sessionStore.sessionExists(sessionId)` before recreating
+- Return 404 if session doesn't exist in store
+- Recreate transport with `sessionIdGenerator: () => sessionId` (reuse existing ID)
+- Create fresh MCP server via `serverFactory()`
+- Connect server to recreated transport
 ```typescript
 const handleMCPRequestStateful = async (req: any, res: any) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -305,30 +259,16 @@ const handleMCPRequestStateful = async (req: any, res: any) => {
 
 ---
 
-### Ticket 1.4: Create DynamoDB Session Store Implementation
+### 1.4 Create DynamoDB Session Store Implementation
 
-**Type:** Feature  
-**Priority:** High  
-**Estimate:** 3 hours
+**File:** `packages/core/src/dynamodb-session-store.ts`
 
-**Description:**
-Create a DynamoDB implementation of `ISessionStore` in a new package `@leanmcp/lambda`.
-
-**Acceptance Criteria:**
-- [ ] Create new package `packages/lambda`
-- [ ] Implement `DynamoDBSessionStore` class
-- [ ] Auto-create table if not exists (with TTL)
-- [ ] Use environment variables: `DYNAMODB_TABLE_NAME`, `AWS_REGION`
-- [ ] Default table name: `leanmcp-sessions`
-- [ ] TTL support (default 24 hours)
-- [ ] Export from `@leanmcp/lambda`
-
-**Files:**
-- `packages/lambda/package.json`
-- `packages/lambda/src/index.ts`
-- `packages/lambda/src/dynamodb-session-store.ts`
-
-**Code (dynamodb-session-store.ts):**
+- Implement `DynamoDBSessionStore` class that implements `ISessionStore`
+- Auto-create table if not exists (with TTL enabled)
+- Use environment variables: `DYNAMODB_TABLE_NAME`, `AWS_REGION`
+- Default table name: `leanmcp-sessions`
+- TTL support (default 24 hours)
+- Export from `@leanmcp/core`
 ```typescript
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { 
@@ -424,24 +364,14 @@ export class DynamoDBSessionStore implements ISessionStore {
 
 ---
 
-### Ticket 1.5: Auto-detect LeanMCP Lambda Environment
-
-**Type:** Feature  
-**Priority:** Medium  
-**Estimate:** 2 hours
-
-**Description:**
-Auto-configure DynamoDB session store when running on LeanMCP Lambda platform.
-
-**Acceptance Criteria:**
-- [ ] Detect `LEANMCP_LAMBDA=true` environment variable
-- [ ] Auto-create `DynamoDBSessionStore` when detected and `stateless: false`
-- [ ] Log message indicating auto-configuration
-- [ ] Allow explicit `sessionStore` option to override auto-detection
+### 1.5 Auto-detect LeanMCP Lambda Environment
 
 **File:** `packages/core/src/http-server.ts`
 
-**Code:**
+- Detect `LEANMCP_LAMBDA=true` environment variable
+- Auto-create `DynamoDBSessionStore` when detected and `stateless: false`
+- Log message indicating auto-configuration
+- Allow explicit `sessionStore` option to override auto-detection
 ```typescript
 // In createHTTPServer, before setting up routes:
 if (!isStateless && !httpOptions.sessionStore) {
@@ -462,33 +392,22 @@ if (!isStateless && !httpOptions.sessionStore) {
 
 ## Part 2: Native MCP SDK Support
 
-### Epic: LeanMCP Session Provider for Native SDK
-
 For users who use the official `@modelcontextprotocol/sdk` directly and want to deploy on LeanMCP Lambda.
 
 ---
 
-### Ticket 2.1: Create LeanMCPSessionProvider Class
+### 2.1 Create LeanMCPSessionProvider Class
 
-**Type:** Feature  
-**Priority:** High  
-**Estimate:** 4 hours
+**File:** `packages/core/src/session-provider.ts`
 
-**Description:**
-Create a drop-in replacement for `Map<string, StreamableHTTPServerTransport>` that handles transport recreation automatically.
-
-**Acceptance Criteria:**
-- [ ] `LeanMCPSessionProvider` class with Map-like interface
-- [ ] `get(sessionId)` checks memory first, then DynamoDB
-- [ ] `set(sessionId, transport)` stores in both memory and DynamoDB
-- [ ] `delete(sessionId)` removes from both
-- [ ] `has(sessionId)` checks memory first, then DynamoDB
-- [ ] `getOrRecreate(sessionId, serverFactory)` method for transport recreation
-- [ ] Exported from `@leanmcp/lambda`
-
-**File:** `packages/lambda/src/session-provider.ts`
-
-**Code:**
+- `LeanMCPSessionProvider` class - drop-in replacement for `Map<string, StreamableHTTPServerTransport>`
+- `get(sessionId)` - get transport from memory
+- `set(sessionId, transport)` - store in memory AND DynamoDB
+- `delete(sessionId)` - remove from both
+- `has(sessionId)` - check memory first, then DynamoDB
+- `getOrRecreate(sessionId, serverFactory)` - **key method** for transport recreation
+- `getSessionData(sessionId)` / `updateSessionData(sessionId, data)` - read/write user data
+- Export from `@leanmcp/core`
 ```typescript
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -600,23 +519,15 @@ export class LeanMCPSessionProvider {
 
 ---
 
-### Ticket 2.2: Create Usage Example for Native SDK
+### 2.2 Usage Example for Native SDK
 
-**Type:** Documentation  
-**Priority:** Medium  
-**Estimate:** 2 hours
+Example showing how to use `LeanMCPSessionProvider` with native MCP SDK:
 
-**Description:**
-Create example showing how to use `LeanMCPSessionProvider` with native MCP SDK.
-
-**File:** `packages/lambda/examples/native-sdk-example.ts`
-
-**Code:**
 ```typescript
 import express from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { LeanMCPSessionProvider } from '@leanmcp/lambda';
+import { LeanMCPSessionProvider } from '@leanmcp/core';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
@@ -718,76 +629,29 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 ---
 
-### Ticket 2.3: Create NPM Package @leanmcp/lambda
+### 2.3 Export from @leanmcp/core
 
-**Type:** Feature  
-**Priority:** High  
-**Estimate:** 2 hours
+**File:** `packages/core/src/index.ts`
 
-**Description:**
-Set up the `@leanmcp/lambda` package with proper exports.
-
-**Acceptance Criteria:**
-- [ ] `packages/lambda/package.json` with dependencies
-- [ ] Export `DynamoDBSessionStore`
-- [ ] Export `LeanMCPSessionProvider`
-- [ ] Export `ISessionStore` interface (re-export from core)
-- [ ] Peer dependencies: `@aws-sdk/client-dynamodb`, `@aws-sdk/lib-dynamodb`
-
-**File:** `packages/lambda/package.json`
-
-```json
-{
-  "name": "@leanmcp/lambda",
-  "version": "0.1.0",
-  "description": "Lambda support for LeanMCP with DynamoDB session persistence",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
-  },
-  "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.700.0",
-    "@aws-sdk/lib-dynamodb": "^3.700.0"
-  },
-  "peerDependencies": {
-    "@leanmcp/core": "^0.1.0",
-    "@modelcontextprotocol/sdk": "^1.0.0"
-  }
-}
-```
-
-**File:** `packages/lambda/src/index.ts`
+- Export `DynamoDBSessionStore`
+- Export `LeanMCPSessionProvider`
+- Export `ISessionStore` interface
+- Export `SessionData` type
 
 ```typescript
 export { DynamoDBSessionStore, DEFAULT_TABLE_NAME } from './dynamodb-session-store';
 export { LeanMCPSessionProvider } from './session-provider';
-export type { ISessionStore, SessionData } from '@leanmcp/core';
+export type { ISessionStore, SessionData } from './http-server';
 ```
 
 ---
 
-## Part 3: LeanMCP Lambda Platform
+## Part 3: LeanMCP Lambda Platform (Infrastructure)
 
-### Epic: Platform-Level DynamoDB Configuration
+### 3.1 Pre-create DynamoDB Table
 
----
-
-### Ticket 3.1: Pre-create DynamoDB Table in LeanMCP Lambda
-
-**Type:** Infrastructure  
-**Priority:** High  
-**Estimate:** 2 hours
-
-**Description:**
-Ensure the `leanmcp-sessions` DynamoDB table exists for all LeanMCP Lambda deployments.
-
-**Acceptance Criteria:**
-- [ ] Table `leanmcp-sessions` created in each supported region
-- [ ] Partition key: `sessionId` (String)
+- Table `leanmcp-sessions` created in each supported region
+- Partition key: `sessionId` (String)
 - [ ] TTL attribute: `ttl` (Number)
 - [ ] On-demand capacity mode
 - [ ] IAM role attached to Lambda has full access to this table
