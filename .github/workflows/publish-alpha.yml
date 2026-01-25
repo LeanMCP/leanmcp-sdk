@@ -19,8 +19,11 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Configure npm for legacy peer deps
+        run: echo "legacy-peer-deps=true" > .npmrc
+
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Check formatting
         run: npm run format:check
