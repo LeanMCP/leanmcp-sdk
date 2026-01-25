@@ -27,6 +27,10 @@
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
   </a>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 ## Installation
