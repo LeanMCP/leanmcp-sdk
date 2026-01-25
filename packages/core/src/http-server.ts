@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { Logger, LogLevel } from "./logger";
 import { validatePort } from "./validation";
 import type { MCPServerConstructorOptions } from "./index";
+import type { ISessionStore } from "./session-store";
 
 export interface HTTPServerOptions {
   port?: number;
@@ -17,6 +18,8 @@ export interface HTTPServerOptions {
   dashboard?: boolean;  // Serve dashboard UI at / and /mcp GET endpoints (default: true)
   /** OAuth/Auth configuration (MCP authorization spec) */
   auth?: HTTPServerAuthOptions;
+  /** Session store for stateful mode (enables session persistence across Lambda container recycling) */
+  sessionStore?: ISessionStore;
 }
 
 /**
@@ -306,6 +309,21 @@ export async function createHTTPServer(
 
   console.log(`Starting LeanMCP HTTP Server (${isStateless ? 'STATELESS' : 'STATEFUL'})...`);
 
+  // Auto-detect LeanMCP Lambda environment and configure session store
+  if (!isStateless && !httpOptions.sessionStore) {
+    if (process.env.LEANMCP_LAMBDA === 'true') {
+      try {
+        const { DynamoDBSessionStore } = await import('./dynamodb-session-store.js');
+        httpOptions.sessionStore = new DynamoDBSessionStore({
+          logging: httpOptions.logging,
+        });
+        logger.info('Auto-configured DynamoDB session store for LeanMCP Lambda');
+      } catch (e: any) {
+        logger.warn(`Running on LeanMCP Lambda but failed to initialize DynamoDB session store: ${e.message}`);
+      }
+    }
+  }
+
   // Dashboard configuration
   const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://s3-dashboard-build.s3.us-west-2.amazonaws.com/out/index.html';
   let cachedDashboard: string | null = null;
@@ -479,23 +497,90 @@ export async function createHTTPServer(
 
     try {
       if (sessionId && transports[sessionId]) {
+        // Transport exists in memory - reuse it
         transport = transports[sessionId];
         logger.debug(`Reusing session: ${sessionId}`);
+        
+      } else if (sessionId && !isInitializeRequest(req.body)) {
+        // Session ID provided but transport missing (Lambda container recycled)
+        logger.info(`Transport missing for session ${sessionId}, checking session store...`);
+        
+        if (httpOptions.sessionStore) {
+          // Check if session exists in persistent store
+          const exists = await httpOptions.sessionStore.sessionExists(sessionId);
+          if (!exists) {
+            res.status(404).json({
+              jsonrpc: '2.0',
+              error: { code: -32001, message: 'Session not found' },
+              id: req.body?.id || null
+            });
+            return;
+          }
+          
+          // Recreate transport with existing session ID
+          transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => sessionId,  // Reuse existing ID
+            onsessioninitialized: (sid: string) => {
+              transports[sid] = transport;
+              logger.info(`Transport recreated for session: ${sid}`);
+            }
+          });
+          
+          transport.onclose = async () => {
+            if (transport.sessionId) {
+              delete transports[transport.sessionId];
+              logger.debug(`Session cleaned up: ${transport.sessionId}`);
+              
+              // Remove from session store
+              if (httpOptions.sessionStore) {
+                await httpOptions.sessionStore.deleteSession(transport.sessionId);
+              }
+            }
+          };
+          
+          // Create fresh MCP server instance (Lambda container recycled)
+          const freshServer = await serverFactory();
+          if (freshServer && typeof (freshServer as any).waitForInit === 'function') {
+            await (freshServer as any).waitForInit();
+          }
+          await (freshServer as Server).connect(transport);
+          
+        } else {
+          // No session store configured - cannot recreate
+          res.status(400).json({
+            jsonrpc: '2.0',
+            error: { code: -32000, message: 'Session expired (no session store configured)' },
+            id: req.body?.id || null
+          });
+          return;
+        }
+        
       } else if (!sessionId && isInitializeRequest(req.body)) {
+        // New session - create transport
         logger.info("Creating new MCP session...");
 
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (newSessionId: string) => {
+          onsessioninitialized: async (newSessionId: string) => {
             transports[newSessionId] = transport;
             logger.info(`Session initialized: ${newSessionId}`);
+            
+            // Persist session to store
+            if (httpOptions.sessionStore) {
+              await httpOptions.sessionStore.createSession(newSessionId);
+            }
           }
         });
 
-        transport.onclose = () => {
+        transport.onclose = async () => {
           if (transport.sessionId) {
             delete transports[transport.sessionId];
             logger.debug(`Session cleaned up: ${transport.sessionId}`);
+            
+            // Remove from session store
+            if (httpOptions.sessionStore) {
+              await httpOptions.sessionStore.deleteSession(transport.sessionId);
+            }
           }
         };
 
@@ -504,7 +589,9 @@ export async function createHTTPServer(
           throw new Error('MCP server not initialized');
         }
         await (mcpServer as Server).connect(transport);
+        
       } else {
+        // Invalid request
         res.status(400).json({
           jsonrpc: '2.0',
           error: { code: -32000, message: 'Bad Request: Invalid session or not an init request' },

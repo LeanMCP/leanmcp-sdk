@@ -11,6 +11,7 @@ await createHTTPServer({
   port: 3001,
   cors: true,
   logging: true${dashboardLine}
+  // stateless: false,  // Enable stateful mode (uses DynamoDB on Lambda for session persistence)
 });
 
 console.log("\\n${projectName} MCP Server");
