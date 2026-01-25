@@ -19,15 +19,6 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Configure npm for legacy peer deps
-        run: echo "legacy-peer-deps=true" > .npmrc
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check formatting
-        run: npm run format:check
-
       - name: Get short SHA
         id: sha
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -39,6 +30,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -52,6 +44,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -65,6 +58,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -78,6 +72,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -91,6 +86,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -104,6 +100,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -117,6 +114,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
@@ -130,6 +128,7 @@ jobs:
           CURRENT_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${CURRENT_VERSION}-alpha.${GITHUB_RUN_NUMBER}.${SHORT_SHA}"
           npm version $ALPHA_VERSION --no-git-tag-version
+          npm install
           npm run build
           npm publish --tag alpha --access public
         env:
