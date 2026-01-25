@@ -30,6 +30,7 @@ jobs:
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Publish @leanmcp/utils (alpha)
+        continue-on-error: true
         working-directory: packages/utils
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -42,6 +43,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/env-injection (alpha)
+        continue-on-error: true
         working-directory: packages/env-injection
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -54,6 +56,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/elicitation (alpha)
+        continue-on-error: true
         working-directory: packages/elicitation
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -66,6 +69,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/auth (alpha)
+        continue-on-error: true
         working-directory: packages/auth
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -78,6 +82,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/core (alpha)
+        continue-on-error: true
         working-directory: packages/core
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -90,6 +95,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/ui (alpha)
+        continue-on-error: true
         working-directory: packages/ui
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -102,6 +108,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish @leanmcp/cli (alpha)
+        continue-on-error: true
         working-directory: packages/cli
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -114,6 +121,7 @@ jobs:
           SHORT_SHA: ${{ steps.sha.outputs.short }}
 
       - name: Publish leanmcp (alpha)
+        continue-on-error: true
         working-directory: packages/leanmcp
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
