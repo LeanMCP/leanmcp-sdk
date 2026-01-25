@@ -6,18 +6,17 @@ module.exports = {
   roots: ['<rootDir>/src', '<rootDir>/test'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
-      tsconfig: {
-        experimentalDecorators: true,
-        emitDecoratorMetadata: true,
-      }
-    }],
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          experimentalDecorators: true,
+          emitDecoratorMetadata: true,
+        },
+      },
+    ],
   },
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/**/__tests__/**',
-  ],
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/**/__tests__/**'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   coverageDirectory: 'coverage',
   verbose: true,

@@ -48,6 +48,7 @@ npm install -g @leanmcp/cli
 ```
 
 Or run without installing:
+
 ```bash
 npx @leanmcp/cli create my-mcp-server
 ```
@@ -85,11 +86,13 @@ leanmcp create my-sentiment-tool
 ```
 
 Interactive prompts will guide you through:
+
 1. Creating the project structure
 2. Installing dependencies (optional)
 3. Starting the dev server (optional)
 
 **Generated structure:**
+
 ```
 my-mcp-server/
 ├── main.ts              # Entry point with HTTP server
@@ -110,6 +113,7 @@ leanmcp add weather
 ```
 
 This:
+
 - Creates `mcp/weather/index.ts` with example Tool, Prompt, and Resource
 - Automatically registers the service in `main.ts`
 - Includes `@SchemaConstraint` validation examples
@@ -123,6 +127,7 @@ leanmcp dev
 ```
 
 This command:
+
 - Scans for `@UIApp` components and builds them
 - Starts the HTTP server with `tsx watch`
 - Watches `mcp/` directory for changes
@@ -176,6 +181,7 @@ leanmcp login
 ```
 
 Steps:
+
 1. Go to [ship.leanmcp.com/api-keys](https://ship.leanmcp.com/api-keys)
 2. Create an API key with "BUILD_AND_DEPLOY" scope
 3. Enter the key when prompted
@@ -207,6 +213,7 @@ leanmcp deploy ./my-project
 ```
 
 Deployment process:
+
 1. Creates project (or updates existing)
 2. Packages and uploads code
 3. Builds container image
@@ -287,6 +294,7 @@ PORT=4000
 ### LeanMCP Config
 
 Stored in `~/.leanmcp/config.json`:
+
 ```json
 {
   "apiKey": "airtrain_...",
@@ -300,6 +308,7 @@ Stored in `~/.leanmcp/config.json`:
 ### Port Already in Use
 
 Change the port in `.env`:
+
 ```bash
 PORT=3002
 ```
@@ -307,6 +316,7 @@ PORT=3002
 ### Module Not Found Errors
 
 Ensure dependencies are installed:
+
 ```bash
 npm install
 ```
@@ -314,6 +324,7 @@ npm install
 ### TypeScript Decorator Errors
 
 Ensure your `tsconfig.json` has:
+
 ```json
 {
   "compilerOptions": {

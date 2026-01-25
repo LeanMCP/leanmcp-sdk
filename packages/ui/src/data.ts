@@ -1,6 +1,6 @@
 /**
  * @leanmcp/ui/data - Data visualization components
- * 
+ *
  * Heavy components with Chart.js dependency (~200KB).
  * Import separately to avoid bundling if not needed.
  */

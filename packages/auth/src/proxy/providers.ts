@@ -1,6 +1,6 @@
 /**
  * Pre-configured OAuth Providers
- * 
+ *
  * Ready-to-use configurations for popular identity providers.
  * Just add your client credentials.
  */
@@ -9,7 +9,7 @@ import type { OAuthProviderConfig } from './types';
 
 /**
  * Google OAuth provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const google = googleProvider({
@@ -20,31 +20,31 @@ import type { OAuthProviderConfig } from './types';
  * ```
  */
 export function googleProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    return {
-        id: 'google',
-        name: 'Google',
-        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-        tokenEndpoint: 'https://oauth2.googleapis.com/token',
-        userInfoEndpoint: 'https://www.googleapis.com/oauth2/v3/userinfo',
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['openid', 'email', 'profile'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: true,
-        authorizationParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-        },
-    };
+  return {
+    id: 'google',
+    name: 'Google',
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    userInfoEndpoint: 'https://www.googleapis.com/oauth2/v3/userinfo',
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['openid', 'email', 'profile'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: true,
+    authorizationParams: {
+      access_type: 'offline',
+      prompt: 'consent',
+    },
+  };
 }
 
 /**
  * GitHub OAuth provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const github = githubProvider({
@@ -54,27 +54,27 @@ export function googleProvider(options: {
  * ```
  */
 export function githubProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    return {
-        id: 'github',
-        name: 'GitHub',
-        authorizationEndpoint: 'https://github.com/login/oauth/authorize',
-        tokenEndpoint: 'https://github.com/login/oauth/access_token',
-        userInfoEndpoint: 'https://api.github.com/user',
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['read:user', 'user:email'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: false, // GitHub doesn't support PKCE for web apps
-    };
+  return {
+    id: 'github',
+    name: 'GitHub',
+    authorizationEndpoint: 'https://github.com/login/oauth/authorize',
+    tokenEndpoint: 'https://github.com/login/oauth/access_token',
+    userInfoEndpoint: 'https://api.github.com/user',
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['read:user', 'user:email'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: false, // GitHub doesn't support PKCE for web apps
+  };
 }
 
 /**
  * Microsoft Azure AD / Entra ID provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const azure = azureProvider({
@@ -85,29 +85,29 @@ export function githubProvider(options: {
  * ```
  */
 export function azureProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    tenantId?: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  tenantId?: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    const tenantId = options.tenantId ?? 'common';
-    return {
-        id: 'azure',
-        name: 'Microsoft',
-        authorizationEndpoint: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`,
-        tokenEndpoint: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-        userInfoEndpoint: 'https://graph.microsoft.com/oidc/userinfo',
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['openid', 'email', 'profile', 'offline_access'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: true,
-    };
+  const tenantId = options.tenantId ?? 'common';
+  return {
+    id: 'azure',
+    name: 'Microsoft',
+    authorizationEndpoint: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`,
+    tokenEndpoint: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
+    userInfoEndpoint: 'https://graph.microsoft.com/oidc/userinfo',
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['openid', 'email', 'profile', 'offline_access'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: true,
+  };
 }
 
 /**
  * GitLab OAuth provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const gitlab = gitlabProvider({
@@ -119,29 +119,29 @@ export function azureProvider(options: {
  * ```
  */
 export function gitlabProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    baseUrl?: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  baseUrl?: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    const baseUrl = options.baseUrl ?? 'https://gitlab.com';
-    return {
-        id: 'gitlab',
-        name: 'GitLab',
-        authorizationEndpoint: `${baseUrl}/oauth/authorize`,
-        tokenEndpoint: `${baseUrl}/oauth/token`,
-        userInfoEndpoint: `${baseUrl}/api/v4/user`,
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['openid', 'read_user', 'email'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: true,
-    };
+  const baseUrl = options.baseUrl ?? 'https://gitlab.com';
+  return {
+    id: 'gitlab',
+    name: 'GitLab',
+    authorizationEndpoint: `${baseUrl}/oauth/authorize`,
+    tokenEndpoint: `${baseUrl}/oauth/token`,
+    userInfoEndpoint: `${baseUrl}/api/v4/user`,
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['openid', 'read_user', 'email'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: true,
+  };
 }
 
 /**
  * Slack OAuth provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const slack = slackProvider({
@@ -151,27 +151,27 @@ export function gitlabProvider(options: {
  * ```
  */
 export function slackProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    return {
-        id: 'slack',
-        name: 'Slack',
-        authorizationEndpoint: 'https://slack.com/oauth/v2/authorize',
-        tokenEndpoint: 'https://slack.com/api/oauth.v2.access',
-        userInfoEndpoint: 'https://slack.com/api/users.identity',
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['openid', 'email', 'profile'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: false,
-    };
+  return {
+    id: 'slack',
+    name: 'Slack',
+    authorizationEndpoint: 'https://slack.com/oauth/v2/authorize',
+    tokenEndpoint: 'https://slack.com/api/oauth.v2.access',
+    userInfoEndpoint: 'https://slack.com/api/users.identity',
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['openid', 'email', 'profile'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: false,
+  };
 }
 
 /**
  * Discord OAuth provider configuration
- * 
+ *
  * @example
  * ```typescript
  * const discord = discordProvider({
@@ -181,27 +181,27 @@ export function slackProvider(options: {
  * ```
  */
 export function discordProvider(options: {
-    clientId: string;
-    clientSecret: string;
-    scopes?: string[];
+  clientId: string;
+  clientSecret: string;
+  scopes?: string[];
 }): OAuthProviderConfig {
-    return {
-        id: 'discord',
-        name: 'Discord',
-        authorizationEndpoint: 'https://discord.com/api/oauth2/authorize',
-        tokenEndpoint: 'https://discord.com/api/oauth2/token',
-        userInfoEndpoint: 'https://discord.com/api/users/@me',
-        clientId: options.clientId,
-        clientSecret: options.clientSecret,
-        scopes: options.scopes ?? ['identify', 'email'],
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: true,
-    };
+  return {
+    id: 'discord',
+    name: 'Discord',
+    authorizationEndpoint: 'https://discord.com/api/oauth2/authorize',
+    tokenEndpoint: 'https://discord.com/api/oauth2/token',
+    userInfoEndpoint: 'https://discord.com/api/users/@me',
+    clientId: options.clientId,
+    clientSecret: options.clientSecret,
+    scopes: options.scopes ?? ['identify', 'email'],
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: true,
+  };
 }
 
 /**
  * Create a custom OAuth provider
- * 
+ *
  * @example
  * ```typescript
  * const custom = customProvider({
@@ -216,9 +216,9 @@ export function discordProvider(options: {
  * ```
  */
 export function customProvider(config: OAuthProviderConfig): OAuthProviderConfig {
-    return {
-        tokenEndpointAuthMethod: 'client_secret_post',
-        supportsPkce: false,
-        ...config,
-    };
+  return {
+    tokenEndpointAuthMethod: 'client_secret_post',
+    supportsPkce: false,
+    ...config,
+  };
 }

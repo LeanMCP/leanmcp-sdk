@@ -1,9 +1,9 @@
 /**
  * @leanmcp/ui Testing Showcases
- * 
+ *
  * Component showcases demonstrating all UI components wrapped in MockAppProvider.
  * Each folder contains a showcase for a specific category of components.
- * 
+ *
  * Usage:
  * ```tsx
  * import { FormShowcase } from '@leanmcp/ui/testing/forms';

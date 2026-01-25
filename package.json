@@ -20,6 +20,8 @@
     "test": "turbo run test",
     "test:watch": "turbo run test -- --watch",
     "install:all": "npm install && npm run build",
+    "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"packages/**/*.{ts,tsx,js,jsx,json,md}\"",
     "prepare": "husky"
   },
   "devDependencies": {

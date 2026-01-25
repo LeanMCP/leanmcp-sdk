@@ -69,57 +69,57 @@ function MyApp() {
 
 ### MCP-Native Components
 
-| Component | Description |
-|-----------|-------------|
-| `ToolButton` | Button with tool execution, confirmation, result display |
-| `ToolSelect` | Select with tool-based options and selection callbacks |
-| `ToolInput` | Input with debounced search and autocomplete |
-| `ToolForm` | Form with multiple field types (text, select, checkbox, slider) |
-| `ToolDataGrid` | Table with server-side pagination, sorting, row actions |
-| `ResourceView` | Display MCP server resources with auto-refresh |
-| `StreamingContent` | Render streaming/partial tool data |
+| Component          | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `ToolButton`       | Button with tool execution, confirmation, result display        |
+| `ToolSelect`       | Select with tool-based options and selection callbacks          |
+| `ToolInput`        | Input with debounced search and autocomplete                    |
+| `ToolForm`         | Form with multiple field types (text, select, checkbox, slider) |
+| `ToolDataGrid`     | Table with server-side pagination, sorting, row actions         |
+| `ResourceView`     | Display MCP server resources with auto-refresh                  |
+| `StreamingContent` | Render streaming/partial tool data                              |
 
 ### Utility Components
 
-| Component | Description |
-|-----------|-------------|
-| `RequireConnection` | Guard wrapper for MCP connection state |
+| Component           | Description                               |
+| ------------------- | ----------------------------------------- |
+| `RequireConnection` | Guard wrapper for MCP connection state    |
 | `ToolErrorBoundary` | Error boundary with retry for tool errors |
-| `ToolProvider` | Scoped configuration context |
+| `ToolProvider`      | Scoped configuration context              |
 
 ## Hooks
 
-| Hook | Description |
-|------|-------------|
-| `useTool` | Call tools with retry, abort, transformation |
-| `useToolStream` | Handle streaming tool input |
-| `useResource` | Read MCP resources with auto-refresh |
-| `useMessage` | Send messages to host chat |
-| `useHostContext` | Access host theme and viewport |
+| Hook             | Description                                  |
+| ---------------- | -------------------------------------------- |
+| `useTool`        | Call tools with retry, abort, transformation |
+| `useToolStream`  | Handle streaming tool input                  |
+| `useResource`    | Read MCP resources with auto-refresh         |
+| `useMessage`     | Send messages to host chat                   |
+| `useHostContext` | Access host theme and viewport               |
 
 ### GPT Apps SDK Hooks
 
 These hooks provide access to the ChatGPT Apps SDK globals (compatible with OpenAI's `window.openai` API):
 
-| Hook | Description |
-|------|-------------|
-| `useToolOutput` | Access `structuredContent` from the tool response |
-| `useToolInput` | Access input arguments passed to the tool |
-| `useWidgetState` | Read/write persistent widget state across sessions |
-| `useToolResponseMetadata` | Access `_meta` from the tool response |
-| `useOpenAiGlobal` | Low-level hook to subscribe to any `window.openai` property |
+| Hook                      | Description                                                 |
+| ------------------------- | ----------------------------------------------------------- |
+| `useToolOutput`           | Access `structuredContent` from the tool response           |
+| `useToolInput`            | Access input arguments passed to the tool                   |
+| `useWidgetState`          | Read/write persistent widget state across sessions          |
+| `useToolResponseMetadata` | Access `_meta` from the tool response                       |
+| `useOpenAiGlobal`         | Low-level hook to subscribe to any `window.openai` property |
 
 ## Examples
 
 ### ToolButton with Confirmation
 
 ```tsx
-<ToolButton 
-  tool="delete-item" 
+<ToolButton
+  tool="delete-item"
   args={{ id: item.id }}
-  confirm={{ 
+  confirm={{
     title: 'Delete Item?',
-    description: 'This cannot be undone.' 
+    description: 'This cannot be undone.',
   }}
   variant="destructive"
 >
@@ -132,10 +132,12 @@ These hooks provide access to the ChatGPT Apps SDK globals (compatible with Open
 ```tsx
 <ToolSelect
   optionsTool="list-categories"
-  transformOptions={(r) => r.categories.map(c => ({
-    value: c.id,
-    label: c.name
-  }))}
+  transformOptions={(r) =>
+    r.categories.map((c) => ({
+      value: c.id,
+      label: c.name,
+    }))
+  }
   onSelectTool="set-category"
   argName="categoryId"
 />
@@ -149,12 +151,10 @@ These hooks provide access to the ChatGPT Apps SDK globals (compatible with Open
   columns={[
     { key: 'name', header: 'Name', sortable: true },
     { key: 'email', header: 'Email' },
-    { key: 'status', header: 'Status' }
+    { key: 'status', header: 'Status' },
   ]}
   transformData={(r) => ({ rows: r.users, total: r.total })}
-  rowActions={[
-    { label: 'Edit', tool: 'edit-user' }
-  ]}
+  rowActions={[{ label: 'Edit', tool: 'edit-user' }]}
   pagination
 />
 ```
@@ -166,13 +166,16 @@ These hooks provide access to the ChatGPT Apps SDK globals (compatible with Open
   toolName="create-item"
   fields={[
     { name: 'title', label: 'Title', required: true },
-    { name: 'priority', label: 'Priority', type: 'select', 
+    {
+      name: 'priority',
+      label: 'Priority',
+      type: 'select',
       options: [
         { value: 'low', label: 'Low' },
-        { value: 'high', label: 'High' }
-      ] 
+        { value: 'high', label: 'High' },
+      ],
     },
-    { name: 'notify', label: 'Send notifications', type: 'switch' }
+    { name: 'notify', label: 'Send notifications', type: 'switch' },
   ]}
   showSuccessToast
 />
@@ -190,9 +193,9 @@ import { UIApp } from '@leanmcp/core';
 
 export class DashboardService {
   @UIApp({
-    component: './Dashboard',  // Path relative to this file
+    component: './Dashboard', // Path relative to this file
     name: 'dashboard',
-    title: 'Analytics Dashboard'
+    title: 'Analytics Dashboard',
   })
   dashboard() {}
 }
@@ -207,8 +210,8 @@ import { GPTApp } from '@leanmcp/ui';
 
 export class SlackService {
   @GPTApp({
-    component: './SlackApp',  // Path relative to this file
-    name: 'slack-composer'
+    component: './SlackApp', // Path relative to this file
+    name: 'slack-composer',
   })
   slackComposer() {}
 }
@@ -224,15 +227,15 @@ import { useToolOutput, useWidgetState } from '@leanmcp/ui';
 function ChannelsView() {
   // Access the structured data from the tool response
   const toolOutput = useToolOutput<{ channels: Channel[] }>();
-  
+
   // Persist state across the session
   const [state, setState] = useWidgetState({ selectedChannel: null });
-  
+
   if (!toolOutput?.channels) return <div>Loading...</div>;
-  
+
   return (
     <ul>
-      {toolOutput.channels.map(ch => (
+      {toolOutput.channels.map((ch) => (
         <li key={ch.id} onClick={() => setState({ selectedChannel: ch.id })}>
           {ch.name}
         </li>
@@ -261,7 +264,7 @@ import { MockAppProvider } from '@leanmcp/ui/testing';
 
 test('renders tool result', () => {
   render(
-    <MockAppProvider 
+    <MockAppProvider
       toolResult={{ data: 'test' }}
       callTool={async () => ({ content: [{ type: 'text', text: '{}' }] })}
     >

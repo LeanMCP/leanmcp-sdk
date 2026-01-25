@@ -3,7 +3,7 @@ import {
   ElicitationRequest,
   ElicitationConfig,
   ElicitationContext,
-  ElicitationStep
+  ElicitationStep,
 } from '../types';
 
 /**
@@ -24,7 +24,7 @@ export class MultiStepElicitationStrategy extends ElicitationStrategyBase {
     // Find the next applicable step
     while (this.currentStep < this.steps.length) {
       const step = this.steps[this.currentStep];
-      
+
       // Check if step condition is met
       if (!step.condition || step.condition(this.accumulatedValues)) {
         return {
@@ -36,11 +36,11 @@ export class MultiStepElicitationStrategy extends ElicitationStrategyBase {
             strategy: 'multi-step',
             stepNumber: this.currentStep + 1,
             totalSteps: this.steps.length,
-            previousValues: { ...context.args, ...this.accumulatedValues }
-          }
+            previousValues: { ...context.args, ...this.accumulatedValues },
+          },
         };
       }
-      
+
       // Skip this step if condition is not met
       this.currentStep++;
     }
@@ -55,8 +55,8 @@ export class MultiStepElicitationStrategy extends ElicitationStrategyBase {
         strategy: 'multi-step',
         stepNumber: this.steps.length,
         totalSteps: this.steps.length,
-        previousValues: this.accumulatedValues
-      }
+        previousValues: this.accumulatedValues,
+      },
     };
   }
 

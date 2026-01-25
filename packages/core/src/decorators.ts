@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 
 // ============================================================================
 // Core MCP Decorators - Type-safe with automatic name inference
@@ -6,7 +6,7 @@ import "reflect-metadata";
 
 /**
  * Security scheme for MCP tools (per MCP authorization spec)
- * 
+ *
  * @example
  * ```typescript
  * @Tool({
@@ -25,13 +25,13 @@ export interface SecurityScheme {
 
 export interface ToolOptions {
   description?: string;
-  inputClass?: any;  // Optional: Explicit input class for schema generation. Omit for tools with no input.
-  /** 
+  inputClass?: any; // Optional: Explicit input class for schema generation. Omit for tools with no input.
+  /**
    * Security schemes for this tool (MCP authorization spec)
-   * 
+   *
    * - `noauth`: Tool is callable anonymously
    * - `oauth2`: Tool requires OAuth 2.0 access token
-   * 
+   *
    * If both are listed, tool works anonymously but OAuth unlocks more features.
    * If omitted, tool inherits server-level defaults.
    */
@@ -40,13 +40,13 @@ export interface ToolOptions {
 
 export interface PromptOptions {
   description?: string;
-  inputClass?: any;  // Optional: Explicit input class for schema generation
+  inputClass?: any; // Optional: Explicit input class for schema generation
 }
 
 export interface ResourceOptions {
   description?: string;
   mimeType?: string;
-  inputClass?: any;  // Optional: Explicit input class for schema generation
+  inputClass?: any; // Optional: Explicit input class for schema generation
 }
 
 /**
@@ -54,24 +54,24 @@ export interface ResourceOptions {
  * - Tool name is automatically derived from function name
  * - Input schema is explicitly defined via inputClass
  * - Full type safety at compile time
- * 
+ *
  * @example
  * class AnalyzeSentimentInput {
  *   @SchemaConstraint({ description: 'Text to analyze' })
  *   text!: string;
- *   
+ *
  *   @Optional()
  *   language?: string;
  * }
- * 
- * @Tool({ 
+ *
+ * @Tool({
  *   description: 'Analyze sentiment of text',
  *   inputClass: AnalyzeSentimentInput
  * })
  * async analyzeSentiment(args: AnalyzeSentimentInput): Promise<AnalyzeSentimentOutput> {
  *   // Tool name will be: "analyzeSentiment"
  * }
- * 
+ *
  * @example
  * // Tool with OAuth requirement
  * @Tool({
@@ -84,37 +84,36 @@ export function Tool(options: ToolOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     const toolName = String(propertyKey);
 
-    Reflect.defineMetadata("tool:name", toolName, descriptor.value!);
-    Reflect.defineMetadata("tool:description", options.description || "", descriptor.value!);
-    Reflect.defineMetadata("tool:propertyKey", propertyKey, descriptor.value!);
+    Reflect.defineMetadata('tool:name', toolName, descriptor.value!);
+    Reflect.defineMetadata('tool:description', options.description || '', descriptor.value!);
+    Reflect.defineMetadata('tool:propertyKey', propertyKey, descriptor.value!);
 
     // Store inputClass if provided
     if (options.inputClass) {
-      Reflect.defineMetadata("tool:inputClass", options.inputClass, descriptor.value!);
+      Reflect.defineMetadata('tool:inputClass', options.inputClass, descriptor.value!);
     }
 
     // Store securitySchemes if provided
     if (options.securitySchemes) {
-      Reflect.defineMetadata("tool:securitySchemes", options.securitySchemes, descriptor.value!);
+      Reflect.defineMetadata('tool:securitySchemes', options.securitySchemes, descriptor.value!);
     }
   };
 }
-
 
 /**
  * Marks a method as an MCP prompt template
  * - Prompt name is automatically derived from function name
  * - Input schema can be explicitly defined via inputClass or inferred from parameter type
- * 
+ *
  * @example
  * class PromptInput {
  *   @SchemaConstraint({ description: 'Auth token' })
  *   token!: string;
  * }
- * 
- * @Prompt({ 
+ *
+ * @Prompt({
  *   description: 'Generate sentiment analysis prompt',
- *   inputClass: PromptInput 
+ *   inputClass: PromptInput
  * })
  * sentimentPrompt(args: PromptInput) {
  *   // Prompt name will be: "sentimentPrompt"
@@ -124,18 +123,18 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     const promptName = String(propertyKey);
 
-    Reflect.defineMetadata("prompt:name", promptName, descriptor.value!);
-    Reflect.defineMetadata("prompt:description", options.description || "", descriptor.value!);
-    Reflect.defineMetadata("prompt:propertyKey", propertyKey, descriptor.value!);
+    Reflect.defineMetadata('prompt:name', promptName, descriptor.value!);
+    Reflect.defineMetadata('prompt:description', options.description || '', descriptor.value!);
+    Reflect.defineMetadata('prompt:propertyKey', propertyKey, descriptor.value!);
 
     // Store inputClass if explicitly provided
     if (options.inputClass) {
-      Reflect.defineMetadata("prompt:inputClass", options.inputClass, descriptor.value!);
+      Reflect.defineMetadata('prompt:inputClass', options.inputClass, descriptor.value!);
     } else {
       // Fallback to parameter type inference
-      const paramTypes = Reflect.getMetadata("design:paramtypes", target, propertyKey);
+      const paramTypes = Reflect.getMetadata('design:paramtypes', target, propertyKey);
       if (paramTypes && paramTypes.length > 0 && paramTypes[0] !== Object) {
-        Reflect.defineMetadata("prompt:inputClass", paramTypes[0], descriptor.value!);
+        Reflect.defineMetadata('prompt:inputClass', paramTypes[0], descriptor.value!);
       }
     }
   };
@@ -144,25 +143,25 @@ export function Prompt(options: PromptOptions = {}): MethodDecorator {
 export interface ResourceOptions {
   description?: string;
   mimeType?: string;
-  inputClass?: any;  // Optional: Explicit input class for schema generation
-  uri?: string;      // Optional: Explicit URI (uses ui:// scheme by default)
+  inputClass?: any; // Optional: Explicit input class for schema generation
+  uri?: string; // Optional: Explicit URI (uses ui:// scheme by default)
 }
 
 /**
  * Marks a method as an MCP resource (data source/endpoint)
  * - Resource URI defaults to ui://classname/methodname (for ext-apps compatibility)
  * - Can be customized with explicit uri option
- * 
+ *
  * @example
  * class ResourceInput {
  *   @SchemaConstraint({ description: 'Auth token' })
  *   token!: string;
  * }
- * 
- * @Resource({ 
- *   description: 'Service statistics', 
+ *
+ * @Resource({
+ *   description: 'Service statistics',
  *   mimeType: 'application/json',
- *   inputClass: ResourceInput 
+ *   inputClass: ResourceInput
  * })
  * getStats(args: ResourceInput) {
  *   // Resource URI will be: "ui://servicename/getStats"
@@ -175,15 +174,19 @@ export function Resource(options: ResourceOptions = {}): MethodDecorator {
     const className = target.constructor.name.toLowerCase().replace('service', '');
     const resourceUri = options.uri ?? `ui://${className}/${resourceName}`;
 
-    Reflect.defineMetadata("resource:uri", resourceUri, descriptor.value!);
-    Reflect.defineMetadata("resource:name", resourceName, descriptor.value!);
-    Reflect.defineMetadata("resource:description", options.description || "", descriptor.value!);
-    Reflect.defineMetadata("resource:mimeType", options.mimeType || "application/json", descriptor.value!);
-    Reflect.defineMetadata("resource:propertyKey", propertyKey, descriptor.value!);
+    Reflect.defineMetadata('resource:uri', resourceUri, descriptor.value!);
+    Reflect.defineMetadata('resource:name', resourceName, descriptor.value!);
+    Reflect.defineMetadata('resource:description', options.description || '', descriptor.value!);
+    Reflect.defineMetadata(
+      'resource:mimeType',
+      options.mimeType || 'application/json',
+      descriptor.value!
+    );
+    Reflect.defineMetadata('resource:propertyKey', propertyKey, descriptor.value!);
 
     // Store inputClass if provided
     if (options.inputClass) {
-      Reflect.defineMetadata("resource:inputClass", options.inputClass, descriptor.value!);
+      Reflect.defineMetadata('resource:inputClass', options.inputClass, descriptor.value!);
     }
   };
 }
@@ -201,7 +204,7 @@ export interface AuthOptions {
  * @example
  * @Auth({ provider: 'clerk' })
  * export class MyService { }
- * 
+ *
  * @Tool({ description: 'Premium feature' })
  * @Auth({ provider: 'stripe' })
  * async premiumAction() { }
@@ -210,12 +213,12 @@ export function Auth(options: AuthOptions): ClassDecorator & MethodDecorator {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey && descriptor) {
       // Method decorator
-      Reflect.defineMetadata("auth:provider", options.provider, descriptor.value!);
-      Reflect.defineMetadata("auth:required", true, descriptor.value!);
+      Reflect.defineMetadata('auth:provider', options.provider, descriptor.value!);
+      Reflect.defineMetadata('auth:required', true, descriptor.value!);
     } else {
       // Class decorator
-      Reflect.defineMetadata("auth:provider", options.provider, target);
-      Reflect.defineMetadata("auth:required", true, target);
+      Reflect.defineMetadata('auth:provider', options.provider, target);
+      Reflect.defineMetadata('auth:required', true, target);
     }
   };
 }
@@ -226,7 +229,7 @@ export function Auth(options: AuthOptions): ClassDecorator & MethodDecorator {
 export function UserEnvs(): PropertyDecorator {
   return (target, propertyKey) => {
     const constructor = target.constructor;
-    Reflect.defineMetadata("userenvs:propertyKey", propertyKey, constructor);
+    Reflect.defineMetadata('userenvs:propertyKey', propertyKey, constructor);
   };
 }
 
@@ -236,11 +239,11 @@ export function UserEnvs(): PropertyDecorator {
 
 /**
  * Property decorator to mark a field as optional in JSON Schema
- * 
+ *
  * @example
  * class MyInput {
  *   required!: string;
- *   
+ *
  *   @Optional()
  *   optional?: string;
  * }
@@ -260,10 +263,10 @@ export function UI(component: string): ClassDecorator & MethodDecorator {
   return (target: any, propertyKey?: string | symbol, descriptor?: PropertyDescriptor) => {
     if (propertyKey && descriptor) {
       // Method decorator
-      Reflect.defineMetadata("ui:component", component, descriptor.value!);
+      Reflect.defineMetadata('ui:component', component, descriptor.value!);
     } else {
       // Class decorator
-      Reflect.defineMetadata("ui:component", component, target);
+      Reflect.defineMetadata('ui:component', component, target);
     }
   };
 }
@@ -272,9 +275,11 @@ export function UI(component: string): ClassDecorator & MethodDecorator {
  * Specifies how output should be rendered
  * @param format - Render format ('markdown', 'html', 'json', 'chart', 'table')
  */
-export function Render(format: 'markdown' | 'html' | 'json' | 'chart' | 'table' | string): MethodDecorator {
+export function Render(
+  format: 'markdown' | 'html' | 'json' | 'chart' | 'table' | string
+): MethodDecorator {
   return (target, propertyKey, descriptor) => {
-    Reflect.defineMetadata("render:format", format, descriptor.value!);
+    Reflect.defineMetadata('render:format', format, descriptor.value!);
   };
 }
 
@@ -292,8 +297,8 @@ export function Deprecated(message?: string): ClassDecorator & MethodDecorator {
 
     if (propertyKey && descriptor) {
       // Method decorator
-      Reflect.defineMetadata("deprecated:message", deprecationMessage, descriptor.value!);
-      Reflect.defineMetadata("deprecated:true", true, descriptor.value!);
+      Reflect.defineMetadata('deprecated:message', deprecationMessage, descriptor.value!);
+      Reflect.defineMetadata('deprecated:true', true, descriptor.value!);
 
       // Wrap method to log deprecation warning
       const originalMethod = descriptor.value as Function;
@@ -303,8 +308,8 @@ export function Deprecated(message?: string): ClassDecorator & MethodDecorator {
       } as any;
     } else {
       // Class decorator
-      Reflect.defineMetadata("deprecated:message", deprecationMessage, target);
-      Reflect.defineMetadata("deprecated:true", true, target);
+      Reflect.defineMetadata('deprecated:message', deprecationMessage, target);
+      Reflect.defineMetadata('deprecated:true', true, target);
       console.warn(`DEPRECATED: ${target.name} - ${deprecationMessage}`);
     }
   };
@@ -320,34 +325,37 @@ export function Deprecated(message?: string): ClassDecorator & MethodDecorator {
 export function getMethodMetadata(method: Function) {
   return {
     // Tool metadata
-    toolName: Reflect.getMetadata("tool:name", method),
-    toolDescription: Reflect.getMetadata("tool:description", method),
+    toolName: Reflect.getMetadata('tool:name', method),
+    toolDescription: Reflect.getMetadata('tool:description', method),
 
     // Prompt metadata
-    promptName: Reflect.getMetadata("prompt:name", method),
-    promptDescription: Reflect.getMetadata("prompt:description", method),
+    promptName: Reflect.getMetadata('prompt:name', method),
+    promptDescription: Reflect.getMetadata('prompt:description', method),
 
     // Resource metadata
-    resourceUri: Reflect.getMetadata("resource:uri", method),
-    resourceName: Reflect.getMetadata("resource:name", method),
-    resourceDescription: Reflect.getMetadata("resource:description", method),
+    resourceUri: Reflect.getMetadata('resource:uri', method),
+    resourceName: Reflect.getMetadata('resource:name', method),
+    resourceDescription: Reflect.getMetadata('resource:description', method),
 
     // Common metadata
-    inputSchema: Reflect.getMetadata("schema:input", method),
-    outputSchema: Reflect.getMetadata("schema:output", method),
-    authProvider: Reflect.getMetadata("auth:provider", method),
-    authRequired: Reflect.getMetadata("auth:required", method),
-    uiComponent: Reflect.getMetadata("ui:component", method),
-    renderFormat: Reflect.getMetadata("render:format", method),
-    deprecated: Reflect.getMetadata("deprecated:true", method),
-    deprecationMessage: Reflect.getMetadata("deprecated:message", method),
+    inputSchema: Reflect.getMetadata('schema:input', method),
+    outputSchema: Reflect.getMetadata('schema:output', method),
+    authProvider: Reflect.getMetadata('auth:provider', method),
+    authRequired: Reflect.getMetadata('auth:required', method),
+    uiComponent: Reflect.getMetadata('ui:component', method),
+    renderFormat: Reflect.getMetadata('render:format', method),
+    deprecated: Reflect.getMetadata('deprecated:true', method),
+    deprecationMessage: Reflect.getMetadata('deprecated:message', method),
   };
 }
 
 /**
  * Get all methods with a specific decorator from a class
  */
-export function getDecoratedMethods(target: any, metadataKey: string): Array<{ method: Function; propertyKey: string; metadata: any }> {
+export function getDecoratedMethods(
+  target: any,
+  metadataKey: string
+): Array<{ method: Function; propertyKey: string; metadata: any }> {
   const methods: Array<{ method: Function; propertyKey: string; metadata: any }> = [];
   const prototype = target.prototype || target;
 
@@ -359,7 +367,7 @@ export function getDecoratedMethods(target: any, metadataKey: string): Array<{ m
         methods.push({
           method: descriptor.value,
           propertyKey,
-          metadata
+          metadata,
         });
       }
     }

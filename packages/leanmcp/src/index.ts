@@ -1,9 +1,9 @@
 /**
  * LeanMCP SDK - Meta Package
- * 
+ *
  * This package provides a unified entry point for all LeanMCP packages.
  * Install with: npm install leanmcp
- * 
+ *
  * @packageDocumentation
  */
 
@@ -14,19 +14,19 @@ export * from '@leanmcp/core';
 
 // Named exports for convenience
 export {
-    // Server
-    createHTTPServer,
-    MCPServer,
+  // Server
+  createHTTPServer,
+  MCPServer,
 
-    // Decorators
-    Tool,
-    Prompt,
-    Resource,
-    Optional,
-    SchemaConstraint,
+  // Decorators
+  Tool,
+  Prompt,
+  Resource,
+  Optional,
+  SchemaConstraint,
 
-    // Types
-    type MCPServerConstructorOptions,
+  // Types
+  type MCPServerConstructorOptions,
 } from '@leanmcp/core';
 
 // ============================================================================
@@ -35,10 +35,10 @@ export {
 export * from '@leanmcp/auth';
 
 export {
-    AuthProvider,
-    AuthProviderBase,
-    Authenticated,
-    type AuthenticatedOptions,
+  AuthProvider,
+  AuthProviderBase,
+  Authenticated,
+  type AuthenticatedOptions,
 } from '@leanmcp/auth';
 
 // ============================================================================
@@ -49,32 +49,32 @@ export * from '@leanmcp/ui';
 
 // Named exports for commonly used items (for better IDE autocomplete)
 export {
-    // Core providers and hooks
-    AppProvider,
-    useMcpApp,
-    useTool,
+  // Core providers and hooks
+  AppProvider,
+  useMcpApp,
+  useTool,
 
-    // Components
-    ActionButton,
-    ToolForm,
-    Button,
-    Card,
-    CardHeader,
-    CardContent,
-    CardFooter,
-    Input,
-    DataGrid,
-    Chart,
-    CodeBlock,
-    AppShell,
-    UIApp,
-    getUIAppMetadata,
-    getUIAppUri,
+  // Components
+  ActionButton,
+  ToolForm,
+  Button,
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+  Input,
+  DataGrid,
+  Chart,
+  CodeBlock,
+  AppShell,
+  UIApp,
+  getUIAppMetadata,
+  getUIAppUri,
 
-    // Types
-    type AppProviderProps,
-    type AppShellProps,
-    type UIAppOptions,
+  // Types
+  type AppProviderProps,
+  type AppShellProps,
+  type UIAppOptions,
 } from '@leanmcp/ui';
 
 // ============================================================================

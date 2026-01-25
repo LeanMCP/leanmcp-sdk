@@ -1,22 +1,22 @@
-import { 
+import {
   CognitoIdentityProviderClient,
-  InitiateAuthCommand
-} from "@aws-sdk/client-cognito-identity-provider";
-import { createHmac } from "crypto";
-import axios from "axios";
-import jwt from "jsonwebtoken";
-import jwkToPem from "jwk-to-pem";
-import { AuthProviderBase } from "../index";
+  InitiateAuthCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { createHmac } from 'crypto';
+import axios from 'axios';
+import jwt from 'jsonwebtoken';
+import jwkToPem from 'jwk-to-pem';
+import { AuthProviderBase } from '../index';
 
 /**
  * AWS Cognito authentication provider implementation
  */
 export class AuthCognito extends AuthProviderBase {
   private cognito: CognitoIdentityProviderClient | null = null;
-  private region: string = "";
-  private userPoolId: string = "";
-  private clientId: string = "";
-  private clientSecret: string = "";
+  private region: string = '';
+  private userPoolId: string = '';
+  private clientId: string = '';
+  private clientSecret: string = '';
   private jwksCache: any[] | null = null;
 
   /**
@@ -28,13 +28,15 @@ export class AuthCognito extends AuthProviderBase {
     clientId?: string;
     clientSecret?: string;
   }): Promise<void> {
-    this.region = config?.region || process.env.AWS_REGION || "";
-    this.userPoolId = config?.userPoolId || process.env.COGNITO_USER_POOL_ID || "";
-    this.clientId = config?.clientId || process.env.COGNITO_CLIENT_ID || "";
-    this.clientSecret = config?.clientSecret || process.env.COGNITO_CLIENT_SECRET || "";
+    this.region = config?.region || process.env.AWS_REGION || '';
+    this.userPoolId = config?.userPoolId || process.env.COGNITO_USER_POOL_ID || '';
+    this.clientId = config?.clientId || process.env.COGNITO_CLIENT_ID || '';
+    this.clientSecret = config?.clientSecret || process.env.COGNITO_CLIENT_SECRET || '';
 
     if (!this.region || !this.userPoolId || !this.clientId) {
-      throw new Error("Missing required Cognito configuration: region, userPoolId, and clientId are required");
+      throw new Error(
+        'Missing required Cognito configuration: region, userPoolId, and clientId are required'
+      );
     }
 
     this.cognito = new CognitoIdentityProviderClient({ region: this.region });
@@ -45,11 +47,11 @@ export class AuthCognito extends AuthProviderBase {
    */
   async refreshToken(refreshToken: string, username: string): Promise<any> {
     if (!this.cognito) {
-      throw new Error("CognitoAuth not initialized. Call init() first.");
+      throw new Error('CognitoAuth not initialized. Call init() first.');
     }
 
     const authParameters: Record<string, string> = {
-      REFRESH_TOKEN: refreshToken
+      REFRESH_TOKEN: refreshToken,
     };
 
     // Calculate and add SECRET_HASH if client secret is configured
@@ -60,9 +62,9 @@ export class AuthCognito extends AuthProviderBase {
     }
 
     const command = new InitiateAuthCommand({
-      AuthFlow: "REFRESH_TOKEN_AUTH",
+      AuthFlow: 'REFRESH_TOKEN_AUTH',
       ClientId: this.clientId,
-      AuthParameters: authParameters
+      AuthParameters: authParameters,
     });
 
     return await this.cognito.send(command);
@@ -102,15 +104,15 @@ export class AuthCognito extends AuthProviderBase {
     const decoded = jwt.decode(idToken) as any;
 
     if (!decoded) {
-      throw new Error("Invalid ID token");
+      throw new Error('Invalid ID token');
     }
 
     return {
-      username: decoded["cognito:username"],
+      username: decoded['cognito:username'],
       email: decoded.email,
       email_verified: decoded.email_verified,
       sub: decoded.sub,
-      attributes: decoded
+      attributes: decoded,
     };
   }
 
@@ -132,20 +134,20 @@ export class AuthCognito extends AuthProviderBase {
   private async verifyJwt(token: string): Promise<any> {
     const decoded = jwt.decode(token, { complete: true });
     if (!decoded) {
-      throw new Error("Invalid token");
+      throw new Error('Invalid token');
     }
 
     const jwks = await this.fetchJWKS();
-    const key = jwks.find(k => k.kid === decoded.header.kid);
+    const key = jwks.find((k) => k.kid === decoded.header.kid);
     if (!key) {
-      throw new Error("Signing key not found in JWKS");
+      throw new Error('Signing key not found in JWKS');
     }
 
     const pem = jwkToPem(key);
 
     return jwt.verify(token, pem, {
-      algorithms: ["RS256"],
-      issuer: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPoolId}`
+      algorithms: ['RS256'],
+      issuer: `https://cognito-idp.${this.region}.amazonaws.com/${this.userPoolId}`,
     });
   }
 
@@ -155,8 +157,8 @@ export class AuthCognito extends AuthProviderBase {
    */
   private calculateSecretHash(username: string): string {
     const message = username + this.clientId;
-    const hmac = createHmac("sha256", this.clientSecret);
+    const hmac = createHmac('sha256', this.clientSecret);
     hmac.update(message);
-    return hmac.digest("base64");
+    return hmac.digest('base64');
   }
 }

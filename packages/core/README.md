@@ -50,6 +50,7 @@ npm install @leanmcp/core
 ```
 
 For HTTP server support:
+
 ```bash
 npm install express cors
 ```
@@ -61,20 +62,21 @@ npm install express cors
 The simplest way to create an MCP server with auto-discovery:
 
 ```typescript
-import { createHTTPServer } from "@leanmcp/core";
+import { createHTTPServer } from '@leanmcp/core';
 
 await createHTTPServer({
-  name: "my-mcp-server",
-  version: "1.0.0",
+  name: 'my-mcp-server',
+  version: '1.0.0',
   port: 3001,
   cors: true,
-  logging: true
+  logging: true,
 });
 
 // Services are automatically discovered from ./mcp directory
 ```
 
 **Directory Structure:**
+
 ```
 your-project/
 ├── main.ts
@@ -90,12 +92,12 @@ your-project/
 
 ```typescript
 // mcp/sentiment/index.ts
-import { Tool, SchemaConstraint, Optional } from "@leanmcp/core";
+import { Tool, SchemaConstraint, Optional } from '@leanmcp/core';
 
 class AnalyzeSentimentInput {
   @SchemaConstraint({
     description: 'Text to analyze',
-    minLength: 1
+    minLength: 1,
   })
   text!: string;
 
@@ -103,20 +105,20 @@ class AnalyzeSentimentInput {
   @SchemaConstraint({
     description: 'Language code',
     enum: ['en', 'es', 'fr'],
-    default: 'en'
+    default: 'en',
   })
   language?: string;
 }
 
 export class SentimentService {
-  @Tool({ 
+  @Tool({
     description: 'Analyze sentiment of text',
-    inputClass: AnalyzeSentimentInput
+    inputClass: AnalyzeSentimentInput,
   })
   async analyzeSentiment(input: AnalyzeSentimentInput) {
     return {
       sentiment: 'positive',
-      score: 0.8
+      score: 0.8,
     };
   }
 }
@@ -134,12 +136,12 @@ Marks a method as a callable MCP tool.
 class CalculateInput {
   @SchemaConstraint({ description: 'First number' })
   a!: number;
-  
+
   @SchemaConstraint({ description: 'Second number' })
   b!: number;
 }
 
-@Tool({ 
+@Tool({
   description: 'Calculate sum of two numbers',
   inputClass: CalculateInput
 })
@@ -150,10 +152,10 @@ async calculate(input: CalculateInput) {
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
+| Option        | Type     | Description                 |
+| ------------- | -------- | --------------------------- |
 | `description` | `string` | Tool description for the AI |
-| `inputClass` | `Class` | Class defining input schema |
+| `inputClass`  | `Class`  | Class defining input schema |
 
 ### @Prompt
 
@@ -163,7 +165,7 @@ Marks a method as a reusable prompt template.
 class CodeReviewInput {
   @SchemaConstraint({ description: 'Code to review' })
   code!: string;
-  
+
   @SchemaConstraint({ description: 'Programming language' })
   language!: string;
 }
@@ -187,9 +189,9 @@ codeReview(input: CodeReviewInput) {
 Marks a method as an MCP resource (data source).
 
 ```typescript
-@Resource({ 
-  description: 'Get system configuration', 
-  mimeType: 'application/json' 
+@Resource({
+  description: 'Get system configuration',
+  mimeType: 'application/json'
 })
 async getConfig() {
   return {
@@ -209,14 +211,14 @@ class UserInput {
     description: 'User email',
     format: 'email',
     minLength: 5,
-    maxLength: 100
+    maxLength: 100,
   })
   email!: string;
 
   @SchemaConstraint({
     description: 'User age',
     minimum: 18,
-    maximum: 120
+    maximum: 120,
   })
   age!: number;
 
@@ -224,13 +226,14 @@ class UserInput {
   @SchemaConstraint({
     description: 'User role',
     enum: ['admin', 'user', 'guest'],
-    default: 'user'
+    default: 'user',
   })
   role?: string;
 }
 ```
 
 **Common constraints:**
+
 - `description`, `default` — Documentation
 - `minLength`, `maxLength` — String length
 - `minimum`, `maximum` — Number range
@@ -262,6 +265,7 @@ class SearchInput {
 Create and start an HTTP server with auto-discovery.
 
 **Simplified API (Recommended):**
+
 ```typescript
 await createHTTPServer({
   name: string;              // Server name (required)
@@ -279,21 +283,22 @@ await createHTTPServer({
 ```
 
 **Factory Pattern (Advanced):**
+
 ```typescript
 const serverFactory = async () => {
   const server = new MCPServer({
-    name: "my-server",
-    version: "1.0.0",
-    autoDiscover: false  // Disable for manual registration
+    name: 'my-server',
+    version: '1.0.0',
+    autoDiscover: false, // Disable for manual registration
   });
-  
+
   server.registerService(new MyService());
   return server.getServer();
 };
 
 await createHTTPServer(serverFactory, {
   port: 3001,
-  cors: true
+  cors: true,
 });
 ```
 
@@ -333,12 +338,12 @@ For services needing shared configuration (auth, database, etc.), create a `conf
 
 ```typescript
 // mcp/config.ts
-import { AuthProvider } from "@leanmcp/auth";
+import { AuthProvider } from '@leanmcp/auth';
 
 export const authProvider = new AuthProvider('cognito', {
   region: process.env.AWS_REGION,
   userPoolId: process.env.COGNITO_USER_POOL_ID,
-  clientId: process.env.COGNITO_CLIENT_ID
+  clientId: process.env.COGNITO_CLIENT_ID,
 });
 
 await authProvider.init();
@@ -348,9 +353,9 @@ Then import in your services:
 
 ```typescript
 // mcp/slack/index.ts
-import { Tool } from "@leanmcp/core";
-import { Authenticated } from "@leanmcp/auth";
-import { authProvider } from "../config.js";
+import { Tool } from '@leanmcp/core';
+import { Authenticated } from '@leanmcp/auth';
+import { authProvider } from '../config.js';
 
 @Authenticated(authProvider)
 export class SlackService {
@@ -392,7 +397,7 @@ If your tool returns a manual MCP response (with `content` array), the SDK extra
 
 ```typescript
 return {
-  content: [{ type: 'text', text: JSON.stringify({ channels }) }]
+  content: [{ type: 'text', text: JSON.stringify({ channels }) }],
 };
 // structuredContent will be { channels: [...] }
 ```
@@ -401,11 +406,11 @@ return {
 
 ## HTTP Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mcp` | POST | MCP protocol endpoint (JSON-RPC 2.0) |
-| `/health` | GET | Health check |
-| `/` | GET | Welcome message |
+| Endpoint  | Method | Description                          |
+| --------- | ------ | ------------------------------------ |
+| `/mcp`    | POST   | MCP protocol endpoint (JSON-RPC 2.0) |
+| `/health` | GET    | Health check                         |
+| `/`       | GET    | Welcome message                      |
 
 ## Error Handling
 
@@ -422,9 +427,10 @@ async divide(input: DivideInput) {
 ```
 
 Returns:
+
 ```json
 {
-  "content": [{"type": "text", "text": "Error: Division by zero"}],
+  "content": [{ "type": "text", "text": "Error: Division by zero" }],
   "isError": true
 }
 ```
@@ -439,6 +445,7 @@ NODE_ENV=production    # Environment
 ## TypeScript Support
 
 **Key Points:**
+
 - Input schema is defined via `inputClass` in the decorator
 - Output type is inferred from the return type
 - For tools with no input, omit `inputClass`

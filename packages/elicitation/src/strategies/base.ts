@@ -4,7 +4,7 @@ import {
   ElicitationField,
   ValidationError,
   ElicitationConfig,
-  ElicitationContext
+  ElicitationContext,
 } from '../types';
 
 /**
@@ -15,18 +15,12 @@ export abstract class ElicitationStrategyBase {
   /**
    * Build an elicitation request from configuration and context
    */
-  abstract buildRequest(
-    config: ElicitationConfig,
-    context: ElicitationContext
-  ): ElicitationRequest;
+  abstract buildRequest(config: ElicitationConfig, context: ElicitationContext): ElicitationRequest;
 
   /**
    * Validate user response against field definitions
    */
-  validateResponse(
-    response: ElicitationResponse,
-    fields: ElicitationField[]
-  ): ValidationError[] {
+  validateResponse(response: ElicitationResponse, fields: ElicitationField[]): ValidationError[] {
     const errors: ValidationError[] = [];
 
     for (const field of fields) {
@@ -36,7 +30,7 @@ export abstract class ElicitationStrategyBase {
       if (field.required && (value === undefined || value === null || value === '')) {
         errors.push({
           field: field.name,
-          message: field.validation?.errorMessage || `${field.label} is required`
+          message: field.validation?.errorMessage || `${field.label} is required`,
         });
         continue;
       }
@@ -74,7 +68,7 @@ export abstract class ElicitationStrategyBase {
         if (typeof value !== 'number' && isNaN(Number(value))) {
           return {
             field: field.name,
-            message: `${field.label} must be a number`
+            message: `${field.label} must be a number`,
           };
         }
         break;
@@ -83,7 +77,7 @@ export abstract class ElicitationStrategyBase {
         if (typeof value !== 'boolean') {
           return {
             field: field.name,
-            message: `${field.label} must be true or false`
+            message: `${field.label} must be true or false`,
           };
         }
         break;
@@ -93,7 +87,7 @@ export abstract class ElicitationStrategyBase {
         if (!emailRegex.test(String(value))) {
           return {
             field: field.name,
-            message: `${field.label} must be a valid email address`
+            message: `${field.label} must be a valid email address`,
           };
         }
         break;
@@ -104,7 +98,7 @@ export abstract class ElicitationStrategyBase {
         } catch {
           return {
             field: field.name,
-            message: `${field.label} must be a valid URL`
+            message: `${field.label} must be a valid URL`,
           };
         }
         break;
@@ -126,30 +120,39 @@ export abstract class ElicitationStrategyBase {
       if (validation.min !== undefined && numValue < validation.min) {
         return {
           field: field.name,
-          message: validation.errorMessage || `${field.label} must be at least ${validation.min}`
+          message: validation.errorMessage || `${field.label} must be at least ${validation.min}`,
         };
       }
       if (validation.max !== undefined && numValue > validation.max) {
         return {
           field: field.name,
-          message: validation.errorMessage || `${field.label} must be at most ${validation.max}`
+          message: validation.errorMessage || `${field.label} must be at most ${validation.max}`,
         };
       }
     }
 
     // MinLength/MaxLength for strings
-    if (field.type === 'text' || field.type === 'textarea' || field.type === 'email' || field.type === 'url') {
+    if (
+      field.type === 'text' ||
+      field.type === 'textarea' ||
+      field.type === 'email' ||
+      field.type === 'url'
+    ) {
       const strValue = String(value);
       if (validation.minLength !== undefined && strValue.length < validation.minLength) {
         return {
           field: field.name,
-          message: validation.errorMessage || `${field.label} must be at least ${validation.minLength} characters`
+          message:
+            validation.errorMessage ||
+            `${field.label} must be at least ${validation.minLength} characters`,
         };
       }
       if (validation.maxLength !== undefined && strValue.length > validation.maxLength) {
         return {
           field: field.name,
-          message: validation.errorMessage || `${field.label} must be at most ${validation.maxLength} characters`
+          message:
+            validation.errorMessage ||
+            `${field.label} must be at most ${validation.maxLength} characters`,
         };
       }
     }
@@ -160,7 +163,7 @@ export abstract class ElicitationStrategyBase {
       if (!regex.test(String(value))) {
         return {
           field: field.name,
-          message: validation.errorMessage || `${field.label} format is invalid`
+          message: validation.errorMessage || `${field.label} format is invalid`,
         };
       }
     }
@@ -171,7 +174,10 @@ export abstract class ElicitationStrategyBase {
       if (result !== true) {
         return {
           field: field.name,
-          message: typeof result === 'string' ? result : (validation.errorMessage || `${field.label} is invalid`)
+          message:
+            typeof result === 'string'
+              ? result
+              : validation.errorMessage || `${field.label} is invalid`,
         };
       }
     }

@@ -5,7 +5,7 @@ import { useOpenAiGlobal } from './useOpenAiGlobal';
  * Maps to 'structuredContent' in the tool response.
  */
 export function useToolOutput<T = any>(): T | undefined {
-    return useOpenAiGlobal('toolOutput') as T;
+  return useOpenAiGlobal('toolOutput') as T;
 }
 
 /**
@@ -13,12 +13,12 @@ export function useToolOutput<T = any>(): T | undefined {
  * Maps to '_meta' in the tool response.
  */
 export function useToolResponseMetadata<T = any>(): T | undefined {
-    return useOpenAiGlobal('toolResponseMetadata') as T;
+  return useOpenAiGlobal('toolResponseMetadata') as T;
 }
 
 /**
  * Access the input arguments passed to the tool.
  */
 export function useToolInput<T = any>(): T | undefined {
-    return useOpenAiGlobal('toolInput') as T;
+  return useOpenAiGlobal('toolInput') as T;
 }

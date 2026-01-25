@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 
 /**
  * Converts a TypeScript class to JSON Schema
@@ -8,58 +8,58 @@ export function classToJsonSchema(classConstructor: new () => any): any {
   const instance = new classConstructor();
   const properties: Record<string, any> = {};
   const required: string[] = [];
-  
+
   // Get all property names from the class instance
   const propertyNames = Object.keys(instance);
-  
+
   // Get property types using reflect-metadata
   for (const propertyName of propertyNames) {
-    const propertyType = Reflect.getMetadata("design:type", instance, propertyName);
-    
+    const propertyType = Reflect.getMetadata('design:type', instance, propertyName);
+
     // Convert TypeScript type to JSON Schema type
-    let jsonSchemaType = "any";
+    let jsonSchemaType = 'any';
     if (propertyType) {
       switch (propertyType.name) {
-        case "String":
-          jsonSchemaType = "string";
+        case 'String':
+          jsonSchemaType = 'string';
           break;
-        case "Number":
-          jsonSchemaType = "number";
+        case 'Number':
+          jsonSchemaType = 'number';
           break;
-        case "Boolean":
-          jsonSchemaType = "boolean";
+        case 'Boolean':
+          jsonSchemaType = 'boolean';
           break;
-        case "Array":
-          jsonSchemaType = "array";
+        case 'Array':
+          jsonSchemaType = 'array';
           break;
-        case "Object":
-          jsonSchemaType = "object";
+        case 'Object':
+          jsonSchemaType = 'object';
           break;
         default:
-          jsonSchemaType = "object";
+          jsonSchemaType = 'object';
       }
     }
-    
+
     properties[propertyName] = { type: jsonSchemaType };
-    
+
     // Check if property is required (not optional)
     // In TypeScript, optional properties have '?' in declaration
     // We'll assume all properties without default values are required
     const descriptor = Object.getOwnPropertyDescriptor(instance, propertyName);
     if (descriptor && descriptor.value === undefined) {
       // Property has no default value, check if it's required
-      const isOptional = propertyName.endsWith("?") || 
-                        Reflect.getMetadata("optional", instance, propertyName);
+      const isOptional =
+        propertyName.endsWith('?') || Reflect.getMetadata('optional', instance, propertyName);
       if (!isOptional) {
         required.push(propertyName);
       }
     }
   }
-  
+
   return {
-    type: "object",
+    type: 'object',
     properties,
-    required: required.length > 0 ? required : undefined
+    required: required.length > 0 ? required : undefined,
   };
 }
 
@@ -68,7 +68,7 @@ export function classToJsonSchema(classConstructor: new () => any): any {
  */
 export function Optional(): PropertyDecorator {
   return (target, propertyKey) => {
-    Reflect.defineMetadata("optional", true, target, propertyKey);
+    Reflect.defineMetadata('optional', true, target, propertyKey);
   };
 }
 
@@ -86,7 +86,7 @@ export function SchemaConstraint(constraints: {
   default?: any;
 }): PropertyDecorator {
   return (target, propertyKey) => {
-    Reflect.defineMetadata("schema:constraints", constraints, target, propertyKey);
+    Reflect.defineMetadata('schema:constraints', constraints, target, propertyKey);
   };
 }
 
@@ -97,68 +97,72 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
   const instance = new classConstructor();
   const properties: Record<string, any> = {};
   const required: string[] = [];
-  
+
   const propertyNames = Object.keys(instance);
-  
+
   for (const propertyName of propertyNames) {
-    const propertyType = Reflect.getMetadata("design:type", instance, propertyName);
-    const constraints = Reflect.getMetadata("schema:constraints", instance, propertyName);
-    const isOptional = Reflect.getMetadata("optional", instance, propertyName);
-    
-    let jsonSchemaType = "string"; // Default to string when metadata is unavailable (tsx/ts-node limitation)
-    
+    const propertyType = Reflect.getMetadata('design:type', instance, propertyName);
+    const constraints = Reflect.getMetadata('schema:constraints', instance, propertyName);
+    const isOptional = Reflect.getMetadata('optional', instance, propertyName);
+
+    let jsonSchemaType = 'string'; // Default to string when metadata is unavailable (tsx/ts-node limitation)
+
     if (propertyType) {
       switch (propertyType.name) {
-        case "String":
-          jsonSchemaType = "string";
+        case 'String':
+          jsonSchemaType = 'string';
           break;
-        case "Number":
-          jsonSchemaType = "number";
+        case 'Number':
+          jsonSchemaType = 'number';
           break;
-        case "Boolean":
-          jsonSchemaType = "boolean";
+        case 'Boolean':
+          jsonSchemaType = 'boolean';
           break;
-        case "Array":
-          jsonSchemaType = "array";
+        case 'Array':
+          jsonSchemaType = 'array';
           break;
-        case "Object":
-          jsonSchemaType = "object";
+        case 'Object':
+          jsonSchemaType = 'object';
           break;
         default:
-          jsonSchemaType = "object";
+          jsonSchemaType = 'object';
       }
     } else if (constraints) {
       // Infer type from constraints when design:type metadata is unavailable
-      if (constraints.minLength !== undefined || constraints.maxLength !== undefined || constraints.pattern) {
-        jsonSchemaType = "string";
+      if (
+        constraints.minLength !== undefined ||
+        constraints.maxLength !== undefined ||
+        constraints.pattern
+      ) {
+        jsonSchemaType = 'string';
       } else if (constraints.minimum !== undefined || constraints.maximum !== undefined) {
-        jsonSchemaType = "number";
+        jsonSchemaType = 'number';
       } else if (constraints.enum && constraints.enum.length > 0) {
         // Infer from enum values
         const firstValue = constraints.enum[0];
         if (typeof firstValue === 'number') {
-          jsonSchemaType = "number";
+          jsonSchemaType = 'number';
         } else if (typeof firstValue === 'boolean') {
-          jsonSchemaType = "boolean";
+          jsonSchemaType = 'boolean';
         } else {
-          jsonSchemaType = "string";
+          jsonSchemaType = 'string';
         }
       }
     }
-    
+
     properties[propertyName] = {
       type: jsonSchemaType,
-      ...(constraints || {})
+      ...(constraints || {}),
     };
-    
+
     if (!isOptional) {
       required.push(propertyName);
     }
   }
-  
+
   return {
-    type: "object",
+    type: 'object',
     properties,
-    required: required.length > 0 ? required : undefined
+    required: required.length > 0 ? required : undefined,
   };
 }

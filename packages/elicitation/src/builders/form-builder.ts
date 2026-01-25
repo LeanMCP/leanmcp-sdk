@@ -1,12 +1,8 @@
-import {
-  ElicitationConfig,
-  ElicitationField,
-  FieldValidation
-} from '../types';
+import { ElicitationConfig, ElicitationField, FieldValidation } from '../types';
 
 /**
  * Fluent builder for creating elicitation forms
- * 
+ *
  * @example
  * const config = new ElicitationFormBuilder()
  *   .title('Create Slack Channel')
@@ -59,7 +55,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'text',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -76,7 +72,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'textarea',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -93,7 +89,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'number',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -110,7 +106,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'boolean',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -129,7 +125,7 @@ export class ElicitationFormBuilder {
       label,
       type: 'select',
       options,
-      ...fieldOptions
+      ...fieldOptions,
     });
     return this;
   }
@@ -148,7 +144,7 @@ export class ElicitationFormBuilder {
       label,
       type: 'multiselect',
       options,
-      ...fieldOptions
+      ...fieldOptions,
     });
     return this;
   }
@@ -165,7 +161,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'email',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -182,7 +178,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'url',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -199,7 +195,7 @@ export class ElicitationFormBuilder {
       name,
       label,
       type: 'date',
-      ...options
+      ...options,
     });
     return this;
   }
@@ -219,7 +215,7 @@ export class ElicitationFormBuilder {
     return {
       ...this.config,
       fields: this.fields,
-      strategy: 'form'
+      strategy: 'form',
     };
   }
 }

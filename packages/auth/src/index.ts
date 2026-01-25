@@ -1,8 +1,8 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 
 /**
  * @leanmcp/auth - Authentication Module
- * 
+ *
  * This module provides a base class for implementing authentication providers for MCP tools.
  * Extend AuthProviderBase to integrate with different auth providers (Clerk, Stripe, Firebase, etc.)
  */
@@ -32,7 +32,6 @@ export abstract class AuthProviderBase {
    */
   abstract getUser(token: string): Promise<any>;
 }
-
 
 /**
  * Unified AuthProvider class that dynamically selects the appropriate auth provider
@@ -85,7 +84,9 @@ export class AuthProvider extends AuthProviderBase {
       }
 
       default:
-        throw new Error(`Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, leanmcp`);
+        throw new Error(
+          `Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, leanmcp`
+        );
     }
   }
 
@@ -94,7 +95,7 @@ export class AuthProvider extends AuthProviderBase {
    */
   async refreshToken(refreshToken: string, username?: string): Promise<any> {
     if (!this.providerInstance) {
-      throw new Error("AuthProvider not initialized. Call init() first.");
+      throw new Error('AuthProvider not initialized. Call init() first.');
     }
     return this.providerInstance.refreshToken(refreshToken, username);
   }
@@ -104,7 +105,7 @@ export class AuthProvider extends AuthProviderBase {
    */
   async verifyToken(token: string): Promise<boolean> {
     if (!this.providerInstance) {
-      throw new Error("AuthProvider not initialized. Call init() first.");
+      throw new Error('AuthProvider not initialized. Call init() first.');
     }
     return this.providerInstance.verifyToken(token);
   }
@@ -114,7 +115,7 @@ export class AuthProvider extends AuthProviderBase {
    */
   async getUser(token: string): Promise<any> {
     if (!this.providerInstance) {
-      throw new Error("AuthProvider not initialized. Call init() first.");
+      throw new Error('AuthProvider not initialized. Call init() first.');
     }
     return this.providerInstance.getUser(token);
   }
@@ -125,11 +126,13 @@ export class AuthProvider extends AuthProviderBase {
    */
   async getUserSecrets(token: string, projectId: string): Promise<Record<string, string>> {
     if (!this.providerInstance) {
-      throw new Error("AuthProvider not initialized. Call init() first.");
+      throw new Error('AuthProvider not initialized. Call init() first.');
     }
     // Check if the underlying provider supports getUserSecrets
-    if ('getUserSecrets' in this.providerInstance &&
-      typeof (this.providerInstance as any).getUserSecrets === 'function') {
+    if (
+      'getUserSecrets' in this.providerInstance &&
+      typeof (this.providerInstance as any).getUserSecrets === 'function'
+    ) {
       return (this.providerInstance as any).getUserSecrets(token, projectId);
     }
     // Other providers don't support user secrets
@@ -148,4 +151,10 @@ export class AuthProvider extends AuthProviderBase {
 export type { AuthenticatedOptions } from './types';
 
 // Export decorators and utilities
-export { Authenticated, AuthenticationError, isAuthenticationRequired, getAuthProvider, getAuthUser } from './decorators';
+export {
+  Authenticated,
+  AuthenticationError,
+  isAuthenticationRequired,
+  getAuthProvider,
+  getAuthUser,
+} from './decorators';

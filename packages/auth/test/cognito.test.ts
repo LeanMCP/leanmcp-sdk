@@ -2,16 +2,13 @@ import { AuthProvider } from '../src/index';
 
 /**
  * Cognito AuthProvider tests
- * 
+ *
  * Note: These tests require AWS Cognito credentials to be set in environment variables.
  * If credentials are not provided, tests will be skipped.
  */
 
 describe('Cognito AuthProvider', () => {
-  const hasCredentials = !!(
-    process.env.COGNITO_USER_POOL_ID && 
-    process.env.COGNITO_CLIENT_ID
-  );
+  const hasCredentials = !!(process.env.COGNITO_USER_POOL_ID && process.env.COGNITO_CLIENT_ID);
 
   const skipIfNoCredentials = hasCredentials ? test : test.skip;
 
@@ -20,7 +17,7 @@ describe('Cognito AuthProvider', () => {
       const authProvider = new AuthProvider('cognito', {
         region: 'us-east-1',
         userPoolId: 'test-pool-id',
-        clientId: 'test-client-id'
+        clientId: 'test-client-id',
       });
 
       expect(authProvider).toBeDefined();
@@ -43,7 +40,7 @@ describe('Cognito AuthProvider', () => {
           region: process.env.AWS_REGION || 'us-east-1',
           userPoolId: process.env.COGNITO_USER_POOL_ID!,
           clientId: process.env.COGNITO_CLIENT_ID!,
-          clientSecret: process.env.COGNITO_CLIENT_SECRET
+          clientSecret: process.env.COGNITO_CLIENT_SECRET,
         });
         await authProvider.init();
       }
@@ -58,7 +55,7 @@ describe('Cognito AuthProvider', () => {
       const expiredToken = process.env.COGNITO_ID_TOKEN;
       const refreshToken = process.env.COGNITO_REFRESH_TOKEN;
       const username = process.env.COGNITO_USERNAME;
-      
+
       if (!expiredToken || !refreshToken || !username) {
         console.warn('Skipping: Required credentials not provided');
         return;
@@ -84,7 +81,7 @@ describe('Cognito AuthProvider', () => {
 
       // Store the fresh token for subsequent tests
       freshIdToken = result.AuthenticationResult.IdToken;
-      
+
       // Verify the new token is valid
       const isValid = await authProvider.verifyToken(freshIdToken!);
       expect(isValid).toBe(true);
@@ -118,7 +115,7 @@ describe('Cognito AuthProvider', () => {
     skipIfNoCredentials('should refresh token independently', async () => {
       const refreshToken = process.env.COGNITO_REFRESH_TOKEN;
       const username = process.env.COGNITO_USERNAME;
-      
+
       if (!refreshToken || !username) {
         console.warn('Skipping: COGNITO_REFRESH_TOKEN or COGNITO_USERNAME not provided');
         return;
@@ -135,7 +132,7 @@ describe('Cognito AuthProvider', () => {
   describe('Error handling', () => {
     test('should handle missing configuration gracefully', async () => {
       const authProvider = new AuthProvider('cognito', {
-        region: 'us-east-1'
+        region: 'us-east-1',
         // Missing required fields: userPoolId and clientId
       });
 

@@ -1,27 +1,29 @@
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { randomUUID } from "node:crypto";
-import { Logger, LogLevel } from "./logger";
-import { validatePort } from "./validation";
-import type { MCPServerConstructorOptions } from "./index";
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { randomUUID } from 'node:crypto';
+import { Logger, LogLevel } from './logger';
+import { validatePort } from './validation';
+import type { MCPServerConstructorOptions } from './index';
 
 export interface HTTPServerOptions {
   port?: number;
-  cors?: boolean | {
-    origin?: string | string[];
-    credentials?: boolean;
-  };
+  cors?:
+    | boolean
+    | {
+        origin?: string | string[];
+        credentials?: boolean;
+      };
   logging?: boolean;
   logger?: Logger;
   sessionTimeout?: number;
-  stateless?: boolean;  // Enable stateless mode for Lambda/serverless (default: true)
-  dashboard?: boolean;  // Serve dashboard UI at / and /mcp GET endpoints (default: true)
+  stateless?: boolean; // Enable stateless mode for Lambda/serverless (default: true)
+  dashboard?: boolean; // Serve dashboard UI at / and /mcp GET endpoints (default: true)
   /** OAuth/Auth configuration (MCP authorization spec) */
   auth?: HTTPServerAuthOptions;
 }
 
 /**
  * OAuth/Auth configuration for MCP server
- * 
+ *
  * Enables MCP authorization spec compliance by exposing
  * `/.well-known/oauth-protected-resource` (RFC 9728)
  */
@@ -111,13 +113,13 @@ function getCallerFile(): string | null {
       const normalizedPath = fileName.replace(/\\/g, '/');
 
       // Check if this file is NOT from the @leanmcp/core package
-      const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') ||
+      const isLeanMCPCore =
+        normalizedPath.includes('@leanmcp/core') ||
         normalizedPath.includes('leanmcp-sdk/packages/core');
 
       // Check if this is a valid TypeScript/JavaScript file
-      const isValidExtension = fileName.endsWith('.ts') ||
-        fileName.endsWith('.js') ||
-        fileName.endsWith('.mjs');
+      const isValidExtension =
+        fileName.endsWith('.ts') || fileName.endsWith('.js') || fileName.endsWith('.mjs');
 
       if (!isLeanMCPCore && isValidExtension) {
         return fileName;
@@ -133,7 +135,7 @@ function getCallerFile(): string | null {
 /**
  * Create an HTTP server for MCP with Streamable HTTP transport
  * Returns the HTTP server instance to keep the process alive
- * 
+ *
  * @param serverInput - Either MCPServerConstructorOptions or a factory function that returns a Server
  * @param options - HTTP server options (only used when serverInput is a factory function)
  */
@@ -190,22 +192,22 @@ export async function createHTTPServer(
       sessionTimeout: (serverOptions as any).sessionTimeout,
       stateless: (serverOptions as any).stateless,
       dashboard: (serverOptions as any).dashboard,
-      auth: (serverOptions as any).auth,  // MCP auth options
+      auth: (serverOptions as any).auth, // MCP auth options
     };
   }
   // Dynamic imports for optional peer dependencies
   // @ts-ignore - Express is a peer dependency
   const [express, { StreamableHTTPServerTransport }, cors] = await Promise.all([
     // @ts-ignore
-    import("express").catch(() => {
-      throw new Error("Express not found. Install with: npm install express @types/express");
+    import('express').catch(() => {
+      throw new Error('Express not found. Install with: npm install express @types/express');
     }),
     // @ts-ignore
-    import("@modelcontextprotocol/sdk/server/streamableHttp.js").catch(() => {
-      throw new Error("MCP SDK not found. Install with: npm install @modelcontextprotocol/sdk");
+    import('@modelcontextprotocol/sdk/server/streamableHttp.js').catch(() => {
+      throw new Error('MCP SDK not found. Install with: npm install @modelcontextprotocol/sdk');
     }),
     // @ts-ignore
-    httpOptions.cors ? import("cors").catch(() => null) : Promise.resolve(null)
+    httpOptions.cors ? import('cors').catch(() => null) : Promise.resolve(null),
   ]);
 
   const app = express.default();
@@ -219,10 +221,12 @@ export async function createHTTPServer(
   let statelessServerFactory: MCPServerFactory | null = null; // Factory with pre-resolved mcpDir for stateless mode
 
   // Initialize logger
-  const logger = httpOptions.logger || new Logger({
-    level: httpOptions.logging ? LogLevel.INFO : LogLevel.NONE,
-    prefix: 'HTTP'
-  });
+  const logger =
+    httpOptions.logger ||
+    new Logger({
+      level: httpOptions.logging ? LogLevel.INFO : LogLevel.NONE,
+      prefix: 'HTTP',
+    });
 
   // Primary logs must always emit regardless of logging flag
   const logPrimary = (message: string) => {
@@ -280,34 +284,49 @@ export async function createHTTPServer(
 
   // Middleware
   if (cors && httpOptions.cors) {
-    const corsOptions = typeof httpOptions.cors === 'object' ? {
-      origin: httpOptions.cors.origin || '*', // Use wildcard if not specified
-      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
-      exposedHeaders: ['mcp-session-id'],
-      credentials: httpOptions.cors.credentials ?? false, // Default false for security
-      maxAge: 86400
-    } : {
-      // When cors: true, use permissive defaults for development
-      origin: '*',
-      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'mcp-session-id', 'mcp-protocol-version', 'Authorization'],
-      exposedHeaders: ['mcp-session-id'],
-      credentials: false,
-      maxAge: 86400
-    };
+    const corsOptions =
+      typeof httpOptions.cors === 'object'
+        ? {
+            origin: httpOptions.cors.origin || '*', // Use wildcard if not specified
+            methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+            allowedHeaders: [
+              'Content-Type',
+              'mcp-session-id',
+              'mcp-protocol-version',
+              'Authorization',
+            ],
+            exposedHeaders: ['mcp-session-id'],
+            credentials: httpOptions.cors.credentials ?? false, // Default false for security
+            maxAge: 86400,
+          }
+        : {
+            // When cors: true, use permissive defaults for development
+            origin: '*',
+            methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+            allowedHeaders: [
+              'Content-Type',
+              'mcp-session-id',
+              'mcp-protocol-version',
+              'Authorization',
+            ],
+            exposedHeaders: ['mcp-session-id'],
+            credentials: false,
+            maxAge: 86400,
+          };
 
     app.use(cors.default(corsOptions));
   }
 
   app.use(express.json());
 
-  const isStateless = httpOptions.stateless !== false;  // Default: true (stateless)
+  const isStateless = httpOptions.stateless !== false; // Default: true (stateless)
 
   console.log(`Starting LeanMCP HTTP Server (${isStateless ? 'STATELESS' : 'STATEFUL'})...`);
 
   // Dashboard configuration
-  const DASHBOARD_URL = process.env.DASHBOARD_URL || 'https://s3-dashboard-build.s3.us-west-2.amazonaws.com/out/index.html';
+  const DASHBOARD_URL =
+    process.env.DASHBOARD_URL ||
+    'https://s3-dashboard-build.s3.us-west-2.amazonaws.com/out/index.html';
   let cachedDashboard: string | null = null;
   let cacheTimestamp: number = 0;
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -317,7 +336,7 @@ export async function createHTTPServer(
     const now = Date.now();
 
     // Return cached version if still valid
-    if (cachedDashboard && (now - cacheTimestamp) < CACHE_DURATION) {
+    if (cachedDashboard && now - cacheTimestamp < CACHE_DURATION) {
       return cachedDashboard;
     }
 
@@ -341,7 +360,7 @@ export async function createHTTPServer(
   }
 
   // Dashboard endpoints - serve MCP UI at / and /mcp GET (if enabled)
-  const isDashboardEnabled = httpOptions.dashboard !== false;  // Default: true
+  const isDashboardEnabled = httpOptions.dashboard !== false; // Default: true
 
   if (isDashboardEnabled) {
     app.get('/', async (req: any, res: any) => {
@@ -350,7 +369,9 @@ export async function createHTTPServer(
         res.setHeader('Content-Type', 'text/html');
         res.send(html);
       } catch (error) {
-        res.status(500).send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
+        res
+          .status(500)
+          .send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
       }
     });
   }
@@ -361,7 +382,7 @@ export async function createHTTPServer(
       status: 'ok',
       mode: isStateless ? 'stateless' : 'stateful',
       activeSessions: isStateless ? 0 : Object.keys(transports).length,
-      uptime: process.uptime()
+      uptime: process.uptime(),
     });
   });
 
@@ -412,7 +433,9 @@ export async function createHTTPServer(
       try {
         // Dynamic require to avoid TypeScript module resolution issues
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const authServerModule = await import(/* webpackIgnore: true */ '@leanmcp/auth/server' as string);
+        const authServerModule = await import(
+          /* webpackIgnore: true */ '@leanmcp/auth/server' as string
+        );
         const { OAuthAuthorizationServer } = authServerModule;
         const authServer = new OAuthAuthorizationServer({
           issuer: httpOptions.auth?.resource || `http://localhost:${basePort}`,
@@ -432,7 +455,6 @@ export async function createHTTPServer(
       }
     })();
   }
-
 
   // MCP endpoint handler - STATEFUL mode
   const handleMCPRequestStateful = async (req: any, res: any) => {
@@ -482,14 +504,14 @@ export async function createHTTPServer(
         transport = transports[sessionId];
         logger.debug(`Reusing session: ${sessionId}`);
       } else if (!sessionId && isInitializeRequest(req.body)) {
-        logger.info("Creating new MCP session...");
+        logger.info('Creating new MCP session...');
 
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (newSessionId: string) => {
             transports[newSessionId] = transport;
             logger.info(`Session initialized: ${newSessionId}`);
-          }
+          },
         });
 
         transport.onclose = () => {
@@ -508,7 +530,7 @@ export async function createHTTPServer(
         res.status(400).json({
           jsonrpc: '2.0',
           error: { code: -32000, message: 'Bad Request: Invalid session or not an init request' },
-          id: null
+          id: null,
         });
         return;
       }
@@ -520,7 +542,7 @@ export async function createHTTPServer(
         res.status(500).json({
           jsonrpc: '2.0',
           error: { code: -32603, message: 'Internal server error' },
-          id: null
+          id: null,
         });
       }
     }
@@ -560,7 +582,7 @@ export async function createHTTPServer(
 
       // Create transport with no session ID (stateless)
       const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,  // No session IDs in stateless mode
+        sessionIdGenerator: undefined, // No session IDs in stateless mode
       });
 
       await (freshServer as Server).connect(transport);
@@ -585,7 +607,7 @@ export async function createHTTPServer(
         res.status(500).json({
           jsonrpc: '2.0',
           error: { code: -32603, message: 'Internal server error' },
-          id: null
+          id: null,
         });
       }
     }
@@ -612,8 +634,11 @@ export async function createHTTPServer(
       // Stateless mode or no valid session - return 405 Method Not Allowed
       res.status(405).json({
         jsonrpc: '2.0',
-        error: { code: -32000, message: 'SSE streaming not supported in stateless mode or invalid session' },
-        id: null
+        error: {
+          code: -32000,
+          message: 'SSE streaming not supported in stateless mode or invalid session',
+        },
+        id: null,
       });
       return;
     }
@@ -625,7 +650,9 @@ export async function createHTTPServer(
         res.setHeader('Content-Type', 'text/html');
         res.send(html);
       } catch (error) {
-        res.status(500).send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
+        res
+          .status(500)
+          .send('<h1>Dashboard temporarily unavailable</h1><p>Please try again later.</p>');
       }
     } else {
       res.status(404).json({ error: 'Dashboard disabled' });
@@ -638,7 +665,7 @@ export async function createHTTPServer(
       res.status(405).json({
         jsonrpc: '2.0',
         error: { code: -32000, message: 'Method not allowed (stateless mode)' },
-        id: null
+        id: null,
       });
     });
   } else {

@@ -55,30 +55,34 @@ npm install @leanmcp/utils
 
 Format data based on specified format type.
 
-```typescript
-import { formatResponse } from "@leanmcp/utils";
+````typescript
+import { formatResponse } from '@leanmcp/utils';
 
 // JSON formatting
-const json = formatResponse({ hello: "world" }, "json");
+const json = formatResponse({ hello: 'world' }, 'json');
 // Output: '{\n  "hello": "world"\n}'
 
 // Markdown formatting
-const md = formatResponse({ hello: "world" }, "markdown");
+const md = formatResponse({ hello: 'world' }, 'markdown');
 // Output: '```json\n{\n  "hello": "world"\n}\n```'
 
 // HTML formatting
-const html = formatResponse({ hello: "world" }, "html");
+const html = formatResponse({ hello: 'world' }, 'html');
 // Output: '<pre>{\n  "hello": "world"\n}</pre>'
 
 // Table formatting (for arrays)
-const table = formatResponse([
-  { name: "Alice", age: 30 },
-  { name: "Bob", age: 25 }
-], "table");
+const table = formatResponse(
+  [
+    { name: 'Alice', age: 30 },
+    { name: 'Bob', age: 25 },
+  ],
+  'table'
+);
 // Output: Markdown table format
-```
+````
 
 **Supported formats:**
+
 - `json` - Pretty-printed JSON
 - `markdown` - JSON wrapped in markdown code block
 - `html` - JSON wrapped in HTML pre tag
@@ -90,11 +94,11 @@ const table = formatResponse([
 Format array of objects as a Markdown table.
 
 ```typescript
-import { formatAsTable } from "@leanmcp/utils";
+import { formatAsTable } from '@leanmcp/utils';
 
 const data = [
-  { name: "Alice", age: 30, city: "NYC" },
-  { name: "Bob", age: 25, city: "LA" }
+  { name: 'Alice', age: 30, city: 'NYC' },
+  { name: 'Bob', age: 25, city: 'LA' },
 ];
 
 const table = formatAsTable(data);
@@ -112,7 +116,7 @@ console.log(table);
 Deep merge multiple objects.
 
 ```typescript
-import { deepMerge } from "@leanmcp/utils";
+import { deepMerge } from '@leanmcp/utils';
 
 const target = { a: 1, b: { c: 2 } };
 const source1 = { b: { d: 3 } };
@@ -127,12 +131,12 @@ const result = deepMerge(target, source1, source2);
 Check if value is a plain object.
 
 ```typescript
-import { isObject } from "@leanmcp/utils";
+import { isObject } from '@leanmcp/utils';
 
-isObject({});           // true
-isObject([]);           // false
-isObject(null);         // false
-isObject("string");     // false
+isObject({}); // true
+isObject([]); // false
+isObject(null); // false
+isObject('string'); // false
 ```
 
 ### Async Utilities
@@ -142,7 +146,7 @@ isObject("string");     // false
 Retry a function with exponential backoff.
 
 ```typescript
-import { retry } from "@leanmcp/utils";
+import { retry } from '@leanmcp/utils';
 
 // Retry API call up to 3 times
 const result = await retry(
@@ -152,14 +156,15 @@ const result = await retry(
     return response.json();
   },
   {
-    maxRetries: 3,       // Maximum number of retries
-    delayMs: 1000,       // Initial delay in milliseconds
-    backoff: 2           // Backoff multiplier (2^n)
+    maxRetries: 3, // Maximum number of retries
+    delayMs: 1000, // Initial delay in milliseconds
+    backoff: 2, // Backoff multiplier (2^n)
   }
 );
 ```
 
 **Retry logic:**
+
 - Attempt 1: Immediate
 - Attempt 2: Wait 1000ms
 - Attempt 3: Wait 2000ms
@@ -170,10 +175,10 @@ const result = await retry(
 Async sleep function.
 
 ```typescript
-import { sleep } from "@leanmcp/utils";
+import { sleep } from '@leanmcp/utils';
 
-await sleep(1000);  // Wait 1 second
-console.log("1 second later");
+await sleep(1000); // Wait 1 second
+console.log('1 second later');
 ```
 
 #### timeout(promise, ms)
@@ -181,12 +186,12 @@ console.log("1 second later");
 Add timeout to a promise.
 
 ```typescript
-import { timeout } from "@leanmcp/utils";
+import { timeout } from '@leanmcp/utils';
 
 try {
   const result = await timeout(
     fetch('https://slow-api.example.com'),
-    5000  // 5 second timeout
+    5000 // 5 second timeout
   );
 } catch (error) {
   console.log('Request timed out');
@@ -198,19 +203,21 @@ try {
 ### Formatting API Responses
 
 ```typescript
-import { formatResponse } from "@leanmcp/utils";
+import { formatResponse } from '@leanmcp/utils';
 
 class DataService {
   @Tool({ description: 'Get user data' })
   async getUsers() {
     const users = await fetchUsers();
-    
+
     // Return as formatted table
     return {
-      content: [{
-        type: "text",
-        text: formatResponse(users, "table")
-      }]
+      content: [
+        {
+          type: 'text',
+          text: formatResponse(users, 'table'),
+        },
+      ],
     };
   }
 }
@@ -219,17 +226,17 @@ class DataService {
 ### Resilient API Calls
 
 ```typescript
-import { retry } from "@leanmcp/utils";
+import { retry } from '@leanmcp/utils';
 
 class ExternalService {
   @Tool({ description: 'Fetch external data' })
   async fetchData(input: { url: string }) {
     // Automatically retry failed requests
-    const data = await retry(
-      () => fetch(input.url).then(r => r.json()),
-      { maxRetries: 3, delayMs: 1000 }
-    );
-    
+    const data = await retry(() => fetch(input.url).then((r) => r.json()), {
+      maxRetries: 3,
+      delayMs: 1000,
+    });
+
     return { data };
   }
 }
@@ -238,16 +245,16 @@ class ExternalService {
 ### Deep Configuration Merging
 
 ```typescript
-import { deepMerge } from "@leanmcp/utils";
+import { deepMerge } from '@leanmcp/utils';
 
 const defaultConfig = {
   server: { port: 3000, host: 'localhost' },
-  logging: { level: 'info' }
+  logging: { level: 'info' },
 };
 
 const userConfig = {
   server: { port: 4000 },
-  features: { auth: true }
+  features: { auth: true },
 };
 
 const config = deepMerge(defaultConfig, userConfig);

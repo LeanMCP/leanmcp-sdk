@@ -52,32 +52,32 @@ npm install @leanmcp/elicitation @leanmcp/core
 ### Simple Form Elicitation
 
 ```typescript
-import { Tool } from "@leanmcp/core";
-import { Elicitation } from "@leanmcp/elicitation";
+import { Tool } from '@leanmcp/core';
+import { Elicitation } from '@leanmcp/elicitation';
 
 class SlackService {
-  @Tool({ description: "Create a new Slack channel" })
+  @Tool({ description: 'Create a new Slack channel' })
   @Elicitation({
-    title: "Create Channel",
-    description: "Please provide channel details",
+    title: 'Create Channel',
+    description: 'Please provide channel details',
     fields: [
       {
-        name: "channelName",
-        label: "Channel Name",
-        type: "text",
+        name: 'channelName',
+        label: 'Channel Name',
+        type: 'text',
         required: true,
         validation: {
-          pattern: "^[a-z0-9-]+$",
-          errorMessage: "Must be lowercase alphanumeric with hyphens"
-        }
+          pattern: '^[a-z0-9-]+$',
+          errorMessage: 'Must be lowercase alphanumeric with hyphens',
+        },
       },
       {
-        name: "isPrivate",
-        label: "Private Channel",
-        type: "boolean",
-        defaultValue: false
-      }
-    ]
+        name: 'isPrivate',
+        label: 'Private Channel',
+        type: 'boolean',
+        defaultValue: false,
+      },
+    ],
   })
   async createChannel(args: { channelName: string; isPrivate: boolean }) {
     return { success: true, channelName: args.channelName };
@@ -101,29 +101,26 @@ class SlackService {
 For more complex forms, use `ElicitationFormBuilder`:
 
 ```typescript
-import { Tool } from "@leanmcp/core";
-import { Elicitation, ElicitationFormBuilder, validation } from "@leanmcp/elicitation";
+import { Tool } from '@leanmcp/core';
+import { Elicitation, ElicitationFormBuilder, validation } from '@leanmcp/elicitation';
 
 class UserService {
-  @Tool({ description: "Create user account" })
+  @Tool({ description: 'Create user account' })
   @Elicitation({
-    builder: () => new ElicitationFormBuilder()
-      .title("User Registration")
-      .description("Create a new user account")
-      .addEmailField("email", "Email Address", { required: true })
-      .addTextField("username", "Username", {
-        required: true,
-        validation: validation()
-          .minLength(3)
-          .maxLength(20)
-          .pattern("^[a-zA-Z0-9_]+$")
-          .build()
-      })
-      .addSelectField("role", "Role", [
-        { label: "Admin", value: "admin" },
-        { label: "User", value: "user" }
-      ])
-      .build()
+    builder: () =>
+      new ElicitationFormBuilder()
+        .title('User Registration')
+        .description('Create a new user account')
+        .addEmailField('email', 'Email Address', { required: true })
+        .addTextField('username', 'Username', {
+          required: true,
+          validation: validation().minLength(3).maxLength(20).pattern('^[a-zA-Z0-9_]+$').build(),
+        })
+        .addSelectField('role', 'Role', [
+          { label: 'Admin', value: 'admin' },
+          { label: 'User', value: 'user' },
+        ])
+        .build(),
   })
   async createUser(args: any) {
     return { success: true, email: args.email };
@@ -133,22 +130,22 @@ class UserService {
 
 ### Builder Methods
 
-| Method | Description |
-|--------|-------------|
-| `title(string)` | Set form title |
-| `description(string)` | Set form description |
-| `condition(fn)` | Set condition for elicitation |
-| `addTextField(name, label, opts?)` | Add text input |
-| `addTextAreaField(name, label, opts?)` | Add textarea |
-| `addNumberField(name, label, opts?)` | Add number input |
-| `addBooleanField(name, label, opts?)` | Add checkbox |
-| `addSelectField(name, label, options, opts?)` | Add dropdown |
-| `addMultiSelectField(name, label, options, opts?)` | Add multi-select |
-| `addEmailField(name, label, opts?)` | Add email input |
-| `addUrlField(name, label, opts?)` | Add URL input |
-| `addDateField(name, label, opts?)` | Add date picker |
-| `addCustomField(field)` | Add custom field |
-| `build()` | Build final config |
+| Method                                             | Description                   |
+| -------------------------------------------------- | ----------------------------- |
+| `title(string)`                                    | Set form title                |
+| `description(string)`                              | Set form description          |
+| `condition(fn)`                                    | Set condition for elicitation |
+| `addTextField(name, label, opts?)`                 | Add text input                |
+| `addTextAreaField(name, label, opts?)`             | Add textarea                  |
+| `addNumberField(name, label, opts?)`               | Add number input              |
+| `addBooleanField(name, label, opts?)`              | Add checkbox                  |
+| `addSelectField(name, label, options, opts?)`      | Add dropdown                  |
+| `addMultiSelectField(name, label, options, opts?)` | Add multi-select              |
+| `addEmailField(name, label, opts?)`                | Add email input               |
+| `addUrlField(name, label, opts?)`                  | Add URL input                 |
+| `addDateField(name, label, opts?)`                 | Add date picker               |
+| `addCustomField(field)`                            | Add custom field              |
+| `build()`                                          | Build final config            |
 
 ---
 
@@ -228,17 +225,17 @@ async deployApp(args: any) {
 
 ## Field Types
 
-| Type | Description |
-|------|-------------|
-| `text` | Single-line text input |
-| `textarea` | Multi-line text area |
-| `number` | Numeric input |
-| `boolean` | Checkbox |
-| `select` | Dropdown (single choice) |
-| `multiselect` | Multi-select |
-| `email` | Email input |
-| `url` | URL input |
-| `date` | Date picker |
+| Type          | Description              |
+| ------------- | ------------------------ |
+| `text`        | Single-line text input   |
+| `textarea`    | Multi-line text area     |
+| `number`      | Numeric input            |
+| `boolean`     | Checkbox                 |
+| `select`      | Dropdown (single choice) |
+| `multiselect` | Multi-select             |
+| `email`       | Email input              |
+| `url`         | URL input                |
+| `date`        | Date picker              |
 
 ---
 
@@ -263,15 +260,15 @@ async deployApp(args: any) {
 ### Using ValidationBuilder
 
 ```typescript
-import { validation } from "@leanmcp/elicitation";
+import { validation } from '@leanmcp/elicitation';
 
 validation()
   .minLength(8)
   .maxLength(100)
-  .pattern("^[a-zA-Z0-9]+$")
-  .customValidator((value) => value !== "admin")
-  .errorMessage("Invalid input")
-  .build()
+  .pattern('^[a-zA-Z0-9]+$')
+  .customValidator((value) => value !== 'admin')
+  .errorMessage('Invalid input')
+  .build();
 ```
 
 ---
@@ -297,7 +294,16 @@ interface ElicitationConfig {
 interface ElicitationField {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'boolean' | 'select' | 'multiselect' | 'date' | 'email' | 'url' | 'textarea';
+  type:
+    | 'text'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'multiselect'
+    | 'date'
+    | 'email'
+    | 'url'
+    | 'textarea';
   description?: string;
   required?: boolean;
   defaultValue?: any;

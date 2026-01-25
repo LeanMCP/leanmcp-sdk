@@ -1,14 +1,14 @@
 /**
  * @leanmcp/ui - MCP-Native UI SDK for React
- * 
+ *
  * Build rich, interactive MCP Apps with components designed for the
  * Model Context Protocol. Features first-class tool integration,
  * streaming support, and shadcn-style theming.
- * 
+ *
  * ## Quick Start
  * ```tsx
  * import { AppProvider, ToolButton } from '@leanmcp/ui';
- * 
+ *
  * function MyApp() {
  *   return (
  *     <AppProvider appInfo={{ name: 'MyApp', version: '1.0.0' }}>
@@ -17,13 +17,13 @@
  *   );
  * }
  * ```
- * 
+ *
  * ## Modules
  * - MCP Components - ToolButton, ToolSelect, ToolInput, ToolForm, etc.
  * - MCP Hooks - useTool, useResource, useMessage, useToolStream
  * - UI Components - shadcn-based Card, Button, Input, Alert, etc.
  * - Data Components - DataGrid, Chart
- * 
+ *
  * @packageDocumentation
  */
 
@@ -35,27 +35,12 @@
 // ===========================================
 // MCP Context & Providers
 // ===========================================
-export {
-    AppProvider,
-    useMcpApp,
-} from './mcp/AppProvider';
-export type {
-    AppProviderProps,
-    McpAppContextValue,
-    AppInfo,
-    AppOptions,
-} from './mcp/AppProvider';
+export { AppProvider, useMcpApp } from './mcp/AppProvider';
+export type { AppProviderProps, McpAppContextValue, AppInfo, AppOptions } from './mcp/AppProvider';
 
 // GPT-specific provider (uses ChatGPT's native window.openai SDK)
-export {
-    GPTAppProvider,
-    useGptApp,
-    useGptTool,
-} from './mcp/GPTAppProvider';
-export type {
-    GptAppContextValue,
-    GPTAppProviderProps,
-} from './mcp/GPTAppProvider';
+export { GPTAppProvider, useGptApp, useGptTool } from './mcp/GPTAppProvider';
+export type { GptAppContextValue, GPTAppProviderProps } from './mcp/GPTAppProvider';
 
 export { ToolProvider, useToolContext } from './mcp/ToolProvider';
 export type { ToolProviderProps, ToolContextValue } from './mcp/ToolProvider';
@@ -88,9 +73,9 @@ export type { StreamingContentProps } from './mcp/StreamingContent';
 
 export { ToolDataGrid } from './mcp/ToolDataGrid';
 export type {
-    ToolDataGridProps,
-    ToolDataGridColumn,
-    ToolDataGridRowAction,
+  ToolDataGridProps,
+  ToolDataGridColumn,
+  ToolDataGridRowAction,
 } from './mcp/ToolDataGrid';
 
 // Legacy ActionButton (prefer ToolButton for new code)
@@ -130,19 +115,23 @@ export { useAuth, type UseAuthReturn, type AuthUser } from './mcp/useAuth';
 
 // Spec-compliant hooks
 export { useOpenAiGlobal } from './mcp/useOpenAiGlobal';
-export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './mcp/useToolData';
+export {
+  useToolOutput,
+  useToolResponseMetadata,
+  useToolInput as useToolInputSpec,
+} from './mcp/useToolData';
 export { useWidgetState } from './mcp/useWidgetState';
 
 // ===========================================
 // MCP Types
 // ===========================================
 export type {
-    ToolBinding,
-    McpActionProps,
-    ToolResultConfig,
-    ConfirmConfig,
-    ResourceBinding,
-    ToolCallState,
+  ToolBinding,
+  McpActionProps,
+  ToolResultConfig,
+  ConfirmConfig,
+  ResourceBinding,
+  ToolCallState,
 } from './types/mcp-types';
 export { normalizeToolBinding, INITIAL_TOOL_STATE, DEFAULT_RESULT_CONFIG } from './types/mcp-types';
 
@@ -163,7 +152,7 @@ export { UIApp, getUIAppMetadata, getUIAppUri, type UIAppOptions } from './decor
 export { GPTApp, getGPTAppMetadata, getGPTAppUri, type GPTAppOptions } from './decorator';
 
 // ===========================================
-// Data Visualization Components  
+// Data Visualization Components
 // ===========================================
 export { DataGrid, type DataGridProps, type DataGridColumn } from './data/DataGrid';
 export { Chart, type ChartProps, type ChartType } from './data/Chart';
@@ -172,7 +161,13 @@ export { Chart, type ChartProps, type ChartType } from './data/Chart';
 // Layout Components
 // ===========================================
 export { AppShell, type AppShellProps } from './layout/AppShell';
-export { Tabs, TabContent, type TabsProps, type TabContentProps, type TabItem } from './layout/Tabs';
+export {
+  Tabs,
+  TabContent,
+  type TabsProps,
+  type TabContentProps,
+  type TabItem,
+} from './layout/Tabs';
 export { Modal, type ModalProps } from './layout/Modal';
 
 // ===========================================
@@ -197,30 +192,30 @@ export { AppBridge } from '@modelcontextprotocol/ext-apps/app-bridge';
 
 // Style utility functions
 export {
-    applyHostStyleVariables,
-    applyDocumentTheme,
-    applyHostFonts,
-    getDocumentTheme,
+  applyHostStyleVariables,
+  applyDocumentTheme,
+  applyHostFonts,
+  getDocumentTheme,
 } from '@modelcontextprotocol/ext-apps';
 
 // Constants for server-side integration
 export { RESOURCE_URI_META_KEY, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps';
 
 export type {
-    McpUiHostContext,
-    McpUiToolInputNotification,
-    McpUiToolInputPartialNotification,
-    McpUiToolResultNotification,
-    McpUiToolCancelledNotification,
-    McpUiAppCapabilities,
-    McpUiDisplayMode,
-    McpUiStyles,
-    McpUiHostStyles,
-    // New types in ext-apps 0.2.2
-    McpUiToolMeta,
-    McpUiToolVisibility,
-    McpUiResourceMeta,
-    McpUiResourceCsp,
-    McpUiTheme,
-    McpUiHostCss,
+  McpUiHostContext,
+  McpUiToolInputNotification,
+  McpUiToolInputPartialNotification,
+  McpUiToolResultNotification,
+  McpUiToolCancelledNotification,
+  McpUiAppCapabilities,
+  McpUiDisplayMode,
+  McpUiStyles,
+  McpUiHostStyles,
+  // New types in ext-apps 0.2.2
+  McpUiToolMeta,
+  McpUiToolVisibility,
+  McpUiResourceMeta,
+  McpUiResourceCsp,
+  McpUiTheme,
+  McpUiHostCss,
 } from '@modelcontextprotocol/ext-apps';

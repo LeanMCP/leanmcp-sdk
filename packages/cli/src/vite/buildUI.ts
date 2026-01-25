@@ -1,9 +1,9 @@
 /**
  * Vite build helper for single-file HTML output
- * 
+ *
  * Uses Vite + vite-plugin-singlefile to bundle a React component
  * into a self-contained HTML file.
- * 
+ *
  * Simple approach (like ext-apps examples):
  * 1. Generate HTML with script tag pointing to user's component
  * 2. Let Vite bundle everything (user's TSX imports @leanmcp/ui directly)
@@ -19,9 +19,9 @@ import path from 'path';
 import type { UIAppInfo } from './scanUIApp';
 
 export interface BuildResult {
-    success: boolean;
-    htmlPath: string;
-    error?: string;
+  success: boolean;
+  htmlPath: string;
+  error?: string;
 }
 
 /**
@@ -29,62 +29,64 @@ export interface BuildResult {
  * Checks project's node_modules first, then walks up for workspace setups
  */
 function resolveReactDependency(startDir: string, packageName: string): string {
-    // First check project's local node_modules (most common case, no traversal needed)
-    const localPath = path.join(startDir, 'node_modules', packageName);
-    if (fs.existsSync(localPath)) {
-        return localPath;
-    }
-
-    // If not found locally, walk up for monorepo workspaces (hoisted dependencies)
-    let currentDir = path.dirname(startDir);
-    const maxDepth = 10; // Prevent infinite loops
-    let depth = 0;
-
-    while (depth < maxDepth) {
-        const nodeModulesPath = path.join(currentDir, 'node_modules', packageName);
-        if (fs.existsSync(nodeModulesPath)) {
-            return nodeModulesPath;
-        }
-
-        const parentDir = path.dirname(currentDir);
-        if (parentDir === currentDir) {
-            // Reached root directory
-            break;
-        }
-        currentDir = parentDir;
-        depth++;
-    }
-
-    // Fallback: return local path (will fail gracefully if not found)
+  // First check project's local node_modules (most common case, no traversal needed)
+  const localPath = path.join(startDir, 'node_modules', packageName);
+  if (fs.existsSync(localPath)) {
     return localPath;
+  }
+
+  // If not found locally, walk up for monorepo workspaces (hoisted dependencies)
+  let currentDir = path.dirname(startDir);
+  const maxDepth = 10; // Prevent infinite loops
+  let depth = 0;
+
+  while (depth < maxDepth) {
+    const nodeModulesPath = path.join(currentDir, 'node_modules', packageName);
+    if (fs.existsSync(nodeModulesPath)) {
+      return nodeModulesPath;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      // Reached root directory
+      break;
+    }
+    currentDir = parentDir;
+    depth++;
+  }
+
+  // Fallback: return local path (will fail gracefully if not found)
+  return localPath;
 }
 
 /**
  * Build a UI component to a single-file HTML
  */
 export async function buildUIComponent(
-    uiApp: UIAppInfo,
-    projectDir: string,
-    isDev = false
+  uiApp: UIAppInfo,
+  projectDir: string,
+  isDev = false
 ): Promise<BuildResult> {
-    const { componentPath, componentName, resourceUri } = uiApp;
+  const { componentPath, componentName, resourceUri } = uiApp;
 
-    // Output path: dist/ui/<safe-uri-name>.html
-    const safeFileName = resourceUri.replace('ui://', '').replace(/\//g, '-') + '.html';
-    const outDir = path.join(projectDir, 'dist', 'ui');
-    const htmlPath = path.join(outDir, safeFileName);
+  // Output path: dist/ui/<safe-uri-name>.html
+  const safeFileName = resourceUri.replace('ui://', '').replace(/\//g, '-') + '.html';
+  const outDir = path.join(projectDir, 'dist', 'ui');
+  const htmlPath = path.join(outDir, safeFileName);
 
-    await fs.ensureDir(outDir);
+  await fs.ensureDir(outDir);
 
-    // Create temporary directory for build
-    const tempDir = path.join(projectDir, '.leanmcp-temp');
-    await fs.ensureDir(tempDir);
+  // Create temporary directory for build
+  const tempDir = path.join(projectDir, '.leanmcp-temp');
+  await fs.ensureDir(tempDir);
 
-    const entryHtml = path.join(tempDir, 'index.html');
-    const entryJs = path.join(tempDir, 'entry.tsx');
+  const entryHtml = path.join(tempDir, 'index.html');
+  const entryJs = path.join(tempDir, 'entry.tsx');
 
-    // Generate entry HTML (without CDN, with CSS link)
-    await fs.writeFile(entryHtml, `<!DOCTYPE html>
+  // Generate entry HTML (without CDN, with CSS link)
+  await fs.writeFile(
+    entryHtml,
+    `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,11 +97,14 @@ export async function buildUIComponent(
     <div id="root"></div>
     <script type="module" src="./entry.tsx"></script>
 </body>
-</html>`);
+</html>`
+  );
 
-    // Generate tailwind.config.js with absolute paths
-    const tailwindConfig = path.join(tempDir, 'tailwind.config.js');
-    await fs.writeFile(tailwindConfig, `
+  // Generate tailwind.config.js with absolute paths
+  const tailwindConfig = path.join(tempDir, 'tailwind.config.js');
+  await fs.writeFile(
+    tailwindConfig,
+    `
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
@@ -162,26 +167,34 @@ module.exports = {
     },
     plugins: [],
 }
-`);
+`
+  );
 
-    // Generate tsconfig.json with jsx: react-jsx for proper JSX transformation
-    const tsconfigPath = path.join(tempDir, 'tsconfig.json');
-    await fs.writeFile(tsconfigPath, JSON.stringify({
+  // Generate tsconfig.json with jsx: react-jsx for proper JSX transformation
+  const tsconfigPath = path.join(tempDir, 'tsconfig.json');
+  await fs.writeFile(
+    tsconfigPath,
+    JSON.stringify(
+      {
         compilerOptions: {
-            target: "ES2020",
-            jsx: "react-jsx",  // Critical: Use modern React JSX transform
-            module: "ESNext",
-            moduleResolution: "bundler",
-            skipLibCheck: true,
-            esModuleInterop: true
-        }
-    }, null, 2));
+          target: 'ES2020',
+          jsx: 'react-jsx', // Critical: Use modern React JSX transform
+          module: 'ESNext',
+          moduleResolution: 'bundler',
+          skipLibCheck: true,
+          esModuleInterop: true,
+        },
+      },
+      null,
+      2
+    )
+  );
 
-
-
-    // Generate styles.css with Tailwind directives and CSS variables
-    const stylesCss = path.join(tempDir, 'styles.css');
-    await fs.writeFile(stylesCss, `
+  // Generate styles.css with Tailwind directives and CSS variables
+  const stylesCss = path.join(tempDir, 'styles.css');
+  await fs.writeFile(
+    stylesCss,
+    `
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -238,16 +251,17 @@ module.exports = {
         color: hsl(var(--foreground));
     }
 }
-`);
+`
+  );
 
-    // Generate entry JS that imports and renders the component with appropriate provider
-    const relativeComponentPath = path.relative(tempDir, componentPath).replace(/\\/g, '/');
+  // Generate entry JS that imports and renders the component with appropriate provider
+  const relativeComponentPath = path.relative(tempDir, componentPath).replace(/\\/g, '/');
 
-    // Use GPTAppProvider for ChatGPT apps, AppProvider for ext-apps based MCP apps
-    const isGPTApp = uiApp.isGPTApp;
+  // Use GPTAppProvider for ChatGPT apps, AppProvider for ext-apps based MCP apps
+  const isGPTApp = uiApp.isGPTApp;
 
-    const entryContent = isGPTApp
-        ? `
+  const entryContent = isGPTApp
+    ? `
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GPTAppProvider, Toaster } from '@leanmcp/ui';
@@ -270,7 +284,7 @@ createRoot(document.getElementById('root')!).render(
     </StrictMode>
 );
 `
-        : `
+    : `
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AppProvider, Toaster } from '@leanmcp/ui';
@@ -299,93 +313,84 @@ createRoot(document.getElementById('root')!).render(
 );
 `;
 
-    await fs.writeFile(entryJs, entryContent);
+  await fs.writeFile(entryJs, entryContent);
 
-    try {
-        // Resolve React dependencies (monorepo-safe: checks workspace root too)
-        const reactPath = resolveReactDependency(projectDir, 'react');
-        const reactDomPath = resolveReactDependency(projectDir, 'react-dom');
+  try {
+    // Resolve React dependencies (monorepo-safe: checks workspace root too)
+    const reactPath = resolveReactDependency(projectDir, 'react');
+    const reactDomPath = resolveReactDependency(projectDir, 'react-dom');
 
-        // Build with Vite
-        await vite.build({
-            root: tempDir,
-            plugins: [
-                react(),
-                viteSingleFile(),
-            ],
-            resolve: {
-                alias: {
-                    // Resolve React from project or workspace root node_modules
-                    'react': reactPath,
-                    'react-dom': reactDomPath,
-                    'react/jsx-runtime': path.join(reactPath, 'jsx-runtime'),
-                    'react/jsx-dev-runtime': path.join(reactPath, 'jsx-dev-runtime'),
-                },
-            },
-            css: {
-                postcss: {
-                    plugins: [
-                        tailwindcss({ config: tailwindConfig }),
-                        autoprefixer,
-                    ],
-                },
-            },
-            build: {
-                outDir,
-                emptyOutDir: false,
-                sourcemap: isDev ? 'inline' : false,
-                minify: !isDev,
-                // Force cache invalidation between builds to reduce memory accumulation
-                watch: null,  // Disable watch mode artifacts
-                rollupOptions: {
-                    input: entryHtml,
-                    output: {
-                        entryFileNames: `[name].js`,
-                    },
-                },
-            },
-            logLevel: 'warn',
-        });
+    // Build with Vite
+    await vite.build({
+      root: tempDir,
+      plugins: [react(), viteSingleFile()],
+      resolve: {
+        alias: {
+          // Resolve React from project or workspace root node_modules
+          react: reactPath,
+          'react-dom': reactDomPath,
+          'react/jsx-runtime': path.join(reactPath, 'jsx-runtime'),
+          'react/jsx-dev-runtime': path.join(reactPath, 'jsx-dev-runtime'),
+        },
+      },
+      css: {
+        postcss: {
+          plugins: [tailwindcss({ config: tailwindConfig }), autoprefixer],
+        },
+      },
+      build: {
+        outDir,
+        emptyOutDir: false,
+        sourcemap: isDev ? 'inline' : false,
+        minify: !isDev,
+        // Force cache invalidation between builds to reduce memory accumulation
+        watch: null, // Disable watch mode artifacts
+        rollupOptions: {
+          input: entryHtml,
+          output: {
+            entryFileNames: `[name].js`,
+          },
+        },
+      },
+      logLevel: 'warn',
+    });
 
-        // Rename output to desired filename
-        const builtHtml = path.join(outDir, 'index.html');
-        if (await fs.pathExists(builtHtml)) {
-            await fs.move(builtHtml, htmlPath, { overwrite: true });
-        }
-
-        // Clean up temp files (keep folder for faster rebuilds)
-        await fs.remove(entryHtml);
-        await fs.remove(entryJs);
-
-        return { success: true, htmlPath };
-    } catch (error: any) {
-        return { success: false, htmlPath: '', error: error.message };
+    // Rename output to desired filename
+    const builtHtml = path.join(outDir, 'index.html');
+    if (await fs.pathExists(builtHtml)) {
+      await fs.move(builtHtml, htmlPath, { overwrite: true });
     }
+
+    // Clean up temp files (keep folder for faster rebuilds)
+    await fs.remove(entryHtml);
+    await fs.remove(entryJs);
+
+    return { success: true, htmlPath };
+  } catch (error: any) {
+    return { success: false, htmlPath: '', error: error.message };
+  }
 }
 
 /**
  * Write the UI manifest file for auto-registration
  */
 export async function writeUIManifest(
-    manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }>,
-    projectDir: string
+  manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }>,
+  projectDir: string
 ): Promise<void> {
-    const manifestPath = path.join(projectDir, 'dist', 'ui-manifest.json');
-    await fs.ensureDir(path.dirname(manifestPath));
-    await fs.writeJson(manifestPath, manifest, { spaces: 2 });
+  const manifestPath = path.join(projectDir, 'dist', 'ui-manifest.json');
+  await fs.ensureDir(path.dirname(manifestPath));
+  await fs.writeJson(manifestPath, manifest, { spaces: 2 });
 }
 
 /**
  * Delete a UI component's HTML file and clean up artifacts
  */
-export async function deleteUIComponent(
-    uri: string,
-    projectDir: string
-): Promise<void> {
-    const safeFileName = uri.replace('ui://', '').replace(/\//g, '-') + '.html';
-    const htmlPath = path.join(projectDir, 'dist', 'ui', safeFileName);
+export async function deleteUIComponent(uri: string, projectDir: string): Promise<void> {
+  const safeFileName = uri.replace('ui://', '').replace(/\//g, '-') + '.html';
+  const htmlPath = path.join(projectDir, 'dist', 'ui', safeFileName);
 
-    if (await fs.pathExists(htmlPath)) {
-        await fs.remove(htmlPath);
-    }
+  if (await fs.pathExists(htmlPath)) {
+    await fs.remove(htmlPath);
+  }
 }

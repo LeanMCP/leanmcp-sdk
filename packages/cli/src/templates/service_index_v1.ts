@@ -1,4 +1,7 @@
-export const getServiceIndexTemplate = (serviceName: string, capitalizedName: string): string => `import { Tool, Resource, Prompt, Optional, SchemaConstraint } from "@leanmcp/core";
+export const getServiceIndexTemplate = (
+  serviceName: string,
+  capitalizedName: string
+): string => `import { Tool, Resource, Prompt, Optional, SchemaConstraint } from "@leanmcp/core";
 
 // Input schema for greeting
 class GreetInput {
