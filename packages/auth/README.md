@@ -5,21 +5,16 @@
     width="400"
   />
 </p>
-
+  
 <p align="center">
-  <strong>@leanmcp/auth</strong><br/>
-  Token-based authentication decorators and multi-provider support for MCP tools.
-</p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/@leanmcp/auth">
-    <img src="https://img.shields.io/npm/v/@leanmcp/auth" alt="npm version" />
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
   </a>
-  <a href="https://www.npmjs.com/package/@leanmcp/auth">
-    <img src="https://img.shields.io/npm/dm/@leanmcp/auth" alt="npm downloads" />
+  <a href="https://www.npmjs.com/package/@leanmcp/cli">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/cli" alt="npm downloads" />
   </a>
-  <a href="https://docs.leanmcp.com/sdk/auth">
-    <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
     <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
@@ -27,6 +22,7 @@
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
   </a>
+  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 ## Features
