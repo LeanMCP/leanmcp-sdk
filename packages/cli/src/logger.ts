@@ -1,11 +1,11 @@
-import chalk from "chalk";
-import os from "os";
-import crypto from "crypto";
-import { execSync } from "child_process";
+import chalk from 'chalk';
+import os from 'os';
+import crypto from 'crypto';
+import { execSync } from 'child_process';
 
 // PostHog configuration
-const POSTHOG_API_KEY = "phc_EoMHKFbx6j2wUFsf8ywqgHntY4vEXC3ZzLFoPJVjRRT";
-const POSTHOG_API_HOST = "https://d18m0xvdtnkibr.cloudfront.net";
+const POSTHOG_API_KEY = 'phc_EoMHKFbx6j2wUFsf8ywqgHntY4vEXC3ZzLFoPJVjRRT';
+const POSTHOG_API_HOST = 'https://d18m0xvdtnkibr.cloudfront.net';
 
 // Global debug mode
 let DEBUG_MODE = false;
@@ -35,14 +35,14 @@ export function debug(message: string, ...args: any[]): void {
 
 // Check if telemetry is disabled
 const isTelemetryDisabled = (): boolean => {
-  return process.env.LEANMCP_DISABLE_TELEMETRY === "true";
+  return process.env.LEANMCP_DISABLE_TELEMETRY === 'true';
 };
 
 // Generate a unique anonymous ID for the CLI user
 const getAnonymousId = (): string => {
   // Use a hash of the machine's hostname + username as anonymous ID
   const identifier = `${os.hostname()}-${os.userInfo().username}`;
-  return crypto.createHash("sha256").update(identifier).digest("hex").substring(0, 16);
+  return crypto.createHash('sha256').update(identifier).digest('hex').substring(0, 16);
 };
 
 // Get npm version (cached)
@@ -50,9 +50,9 @@ let cachedNpmVersion: string | null = null;
 const getNpmVersion = (): string => {
   if (cachedNpmVersion) return cachedNpmVersion;
   try {
-    cachedNpmVersion = execSync("npm --version", { encoding: "utf-8" }).trim();
+    cachedNpmVersion = execSync('npm --version', { encoding: 'utf-8' }).trim();
   } catch {
-    cachedNpmVersion = "unknown";
+    cachedNpmVersion = 'unknown';
   }
   return cachedNpmVersion;
 };
@@ -66,9 +66,9 @@ const getSystemInfo = (): Record<string, any> => {
     node_version: process.version,
     npm_version: getNpmVersion(),
     cpu_count: os.cpus().length,
-    cpu_model: os.cpus()[0]?.model || "unknown",
-    ram_total_gb: Math.round(os.totalmem() / (1024 * 1024 * 1024) * 10) / 10,
-    ram_free_gb: Math.round(os.freemem() / (1024 * 1024 * 1024) * 10) / 10,
+    cpu_model: os.cpus()[0]?.model || 'unknown',
+    ram_total_gb: Math.round((os.totalmem() / (1024 * 1024 * 1024)) * 10) / 10,
+    ram_free_gb: Math.round((os.freemem() / (1024 * 1024 * 1024)) * 10) / 10,
     hostname_hash: getAnonymousId(),
   };
 };
@@ -77,12 +77,9 @@ const getSystemInfo = (): Record<string, any> => {
 let systemInfoSent = false;
 
 // Send event to PostHog - completely non-blocking, fire-and-forget
-const sendToPostHog = (
-  eventName: string,
-  properties: Record<string, any> = {}
-): void => {
+const sendToPostHog = (eventName: string, properties: Record<string, any> = {}): void => {
   if (isTelemetryDisabled()) {
-    debug("[PostHog] Telemetry disabled, skipping event:", eventName);
+    debug('[PostHog] Telemetry disabled, skipping event:', eventName);
     return;
   }
 
@@ -99,7 +96,7 @@ const sendToPostHog = (
         event: eventName,
         properties: {
           distinct_id: getAnonymousId(),
-          $lib: "leanmcp-cli",
+          $lib: 'leanmcp-cli',
           ...systemProps,
           ...properties,
         },
@@ -107,7 +104,7 @@ const sendToPostHog = (
       };
 
       const url = `${POSTHOG_API_HOST}/capture/`;
-      
+
       // Debug logging for PostHog requests
       debug(`[PostHog] POST ${url}`);
       debug(`[PostHog] Event: ${eventName}`);
@@ -119,9 +116,9 @@ const sendToPostHog = (
       const timeoutId = setTimeout(() => controller.abort(), 3000);
 
       fetch(url, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
         signal: controller.signal,
@@ -141,7 +138,15 @@ const sendToPostHog = (
 };
 
 // Type for chalk style functions
-type ChalkFunction = typeof chalk.cyan | typeof chalk.green | typeof chalk.gray | typeof chalk.red | typeof chalk.blue | typeof chalk.yellow | typeof chalk.white | typeof chalk.bold;
+type ChalkFunction =
+  | typeof chalk.cyan
+  | typeof chalk.green
+  | typeof chalk.gray
+  | typeof chalk.red
+  | typeof chalk.blue
+  | typeof chalk.yellow
+  | typeof chalk.white
+  | typeof chalk.bold;
 
 /**
  * Logger class with log, warn, error methods
@@ -159,9 +164,9 @@ class LoggerClass {
     } else {
       console.log(text);
     }
-    sendToPostHog("cli_log", {
+    sendToPostHog('cli_log', {
       message: text,
-      level: "log",
+      level: 'log',
     });
   }
 
@@ -173,9 +178,9 @@ class LoggerClass {
   warn(text: string, styleFn?: ChalkFunction): void {
     const style = styleFn || chalk.yellow;
     console.log(style(text));
-    sendToPostHog("cli_warn", {
+    sendToPostHog('cli_warn', {
       message: text,
-      level: "warn",
+      level: 'warn',
     });
   }
 
@@ -187,9 +192,9 @@ class LoggerClass {
   error(text: string, styleFn?: ChalkFunction): void {
     const style = styleFn || chalk.red;
     console.error(style(text));
-    sendToPostHog("cli_error", {
+    sendToPostHog('cli_error', {
       message: text,
-      level: "error",
+      level: 'error',
     });
   }
 
@@ -199,9 +204,9 @@ class LoggerClass {
    */
   info(text: string): void {
     console.log(chalk.cyan(text));
-    sendToPostHog("cli_log", {
+    sendToPostHog('cli_log', {
       message: text,
-      level: "info",
+      level: 'info',
     });
   }
 
@@ -211,9 +216,9 @@ class LoggerClass {
    */
   success(text: string): void {
     console.log(chalk.green(text));
-    sendToPostHog("cli_log", {
+    sendToPostHog('cli_log', {
       message: text,
-      level: "success",
+      level: 'success',
     });
   }
 
@@ -223,9 +228,9 @@ class LoggerClass {
    */
   gray(text: string): void {
     console.log(chalk.gray(text));
-    sendToPostHog("cli_log", {
+    sendToPostHog('cli_log', {
       message: text,
-      level: "gray",
+      level: 'gray',
     });
   }
 }
@@ -243,10 +248,7 @@ export const log = (text: string, styleFn?: ChalkFunction): void => {
  * @param eventName - Name of the event (e.g., "create_project", "deploy", "login")
  * @param properties - Additional properties to send with the event
  */
-export const trackEvent = (
-  eventName: string,
-  properties: Record<string, any> = {}
-): void => {
+export const trackEvent = (eventName: string, properties: Record<string, any> = {}): void => {
   sendToPostHog(eventName, properties);
 };
 
@@ -255,11 +257,8 @@ export const trackEvent = (
  * @param command - The command being executed (e.g., "create", "deploy", "dev")
  * @param options - Command options/flags used
  */
-export const trackCommand = (
-  command: string,
-  options: Record<string, any> = {}
-): void => {
-  sendToPostHog("cli_command", {
+export const trackCommand = (command: string, options: Record<string, any> = {}): void => {
+  sendToPostHog('cli_command', {
     command,
     options,
   });

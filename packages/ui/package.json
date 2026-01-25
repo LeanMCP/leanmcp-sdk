@@ -1,111 +1,111 @@
 {
-    "name": "@leanmcp/ui",
-    "version": "0.3.6",
-    "description": "MCP-Native UI SDK - React components with first-class tool integration for building MCP Apps",
-    "main": "dist/index.js",
-    "module": "dist/index.mjs",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "require": "./dist/index.js",
-            "import": "./dist/index.mjs"
-        },
-        "./client": {
-            "types": "./dist/index.d.ts",
-            "require": "./dist/index.js",
-            "import": "./dist/index.mjs"
-        },
-        "./server": {
-            "types": "./dist/server.d.ts",
-            "require": "./dist/server.js",
-            "import": "./dist/server.mjs"
-        },
-        "./styles.css": "./dist/index.css"
+  "name": "@leanmcp/ui",
+  "version": "0.3.7",
+  "description": "MCP-Native UI SDK - React components with first-class tool integration for building MCP Apps",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
-    "sideEffects": [
-        "*.css"
-    ],
-    "files": [
-        "dist",
-        "README.md",
-        "LICENSE"
-    ],
-    "scripts": {
-        "build": "tsup src/index.ts src/server.ts --format esm,cjs --dts",
-        "dev": "tsup src/index.ts src/server.ts --format esm,cjs --dts --watch",
-        "showcase": "vite --config vite.showcase.config.ts",
-        "test": "jest --passWithNoTests",
-        "clean": "rm -rf dist"
+    "./client": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
     },
-    "peerDependencies": {
-        "react": "^18.0.0 || ^19.0.0",
-        "react-dom": "^18.0.0 || ^19.0.0"
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "require": "./dist/server.js",
+      "import": "./dist/server.mjs"
     },
-    "dependencies": {
-        "@hookform/resolvers": "^5.2.2",
-        "@modelcontextprotocol/ext-apps": "^0.2.2",
-        "@modelcontextprotocol/sdk": "^1.23.0",
-        "@radix-ui/react-checkbox": "^1.3.3",
-        "@radix-ui/react-dialog": "^1.1.15",
-        "@radix-ui/react-dropdown-menu": "^2.1.16",
-        "@radix-ui/react-label": "^2.1.8",
-        "@radix-ui/react-popover": "^1.1.15",
-        "@radix-ui/react-progress": "^1.1.8",
-        "@radix-ui/react-scroll-area": "^1.2.10",
-        "@radix-ui/react-select": "^2.2.6",
-        "@radix-ui/react-separator": "^1.1.8",
-        "@radix-ui/react-slider": "^1.3.6",
-        "@radix-ui/react-slot": "^1.2.4",
-        "@radix-ui/react-switch": "^1.2.6",
-        "@radix-ui/react-tabs": "^1.1.13",
-        "@radix-ui/react-tooltip": "^1.2.8",
-        "@tanstack/react-table": "^8.20.6",
-        "autoprefixer": "^10.4.23",
-        "chart.js": "^4.4.7",
-        "class-variance-authority": "^0.7.1",
-        "clsx": "^2.1.1",
-        "cmdk": "^1.1.1",
-        "lucide-react": "^0.561.0",
-        "next-themes": "^0.4.6",
-        "postcss": "^8.5.6",
-        "prism-react-renderer": "^2.4.1",
-        "react-chartjs-2": "^5.3.0",
-        "react-hook-form": "^7.68.0",
-        "reflect-metadata": "^0.2.2",
-        "sonner": "^2.0.7",
-        "tailwind-merge": "^3.4.0",
-        "tailwindcss": "^3.4.17",
-        "tailwindcss-animate": "^1.0.7",
-        "zod": "^4.2.1"
-    },
-    "devDependencies": {
-        "@types/react": "^18.3.0",
-        "@types/react-dom": "^18.3.0",
-        "react": "^18.3.0",
-        "react-dom": "^18.3.0",
-        "tsup": "^8.5.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
-        "directory": "packages/ui"
-    },
-    "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
-    "bugs": {
-        "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
-    },
-    "keywords": [
-        "mcp",
-        "mcp-apps",
-        "model-context-protocol",
-        "react",
-        "ui",
-        "components"
-    ],
-    "author": "LeanMCP <admin@leanmcp.com>",
-    "license": "MIT",
-    "publishConfig": {
-        "access": "public"
-    }
+    "./styles.css": "./dist/index.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/server.ts --format esm,cjs --dts",
+    "dev": "tsup src/index.ts src/server.ts --format esm,cjs --dts --watch",
+    "showcase": "vite --config vite.showcase.config.ts",
+    "test": "jest --passWithNoTests",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@modelcontextprotocol/ext-apps": "^0.2.2",
+    "@modelcontextprotocol/sdk": "^1.23.0",
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-progress": "^1.1.8",
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slider": "^1.3.6",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "@tanstack/react-table": "^8.20.6",
+    "autoprefixer": "^10.4.23",
+    "chart.js": "^4.4.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "lucide-react": "^0.561.0",
+    "next-themes": "^0.4.6",
+    "postcss": "^8.5.6",
+    "prism-react-renderer": "^2.4.1",
+    "react-chartjs-2": "^5.3.0",
+    "react-hook-form": "^7.68.0",
+    "reflect-metadata": "^0.2.2",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^3.4.17",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tsup": "^8.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LeanMCP/leanmcp-sdk.git",
+    "directory": "packages/ui"
+  },
+  "homepage": "https://github.com/LeanMCP/leanmcp-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-apps",
+    "model-context-protocol",
+    "react",
+    "ui",
+    "components"
+  ],
+  "author": "LeanMCP <admin@leanmcp.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

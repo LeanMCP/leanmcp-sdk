@@ -1,6 +1,6 @@
 /**
  * leanmcp projects commands
- * 
+ *
  * Manage LeanMCP cloud projects via API key authentication.
  */
 import ora from 'ora';
@@ -34,7 +34,7 @@ export async function projectsListCommand() {
   try {
     const apiUrl = await getApiUrl();
     const response = await fetch(`${apiUrl}${API_ENDPOINT}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!response.ok) {
@@ -61,7 +61,6 @@ export async function projectsListCommand() {
       logger.gray(`    Created: ${new Date(project.createdAt).toLocaleDateString()}`);
       logger.log('');
     }
-
   } catch (error) {
     spinner.fail('Failed to fetch projects');
     logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
@@ -85,7 +84,7 @@ export async function projectsGetCommand(projectId: string) {
   try {
     const apiUrl = await getApiUrl();
     const response = await fetch(`${apiUrl}${API_ENDPOINT}/${projectId}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!response.ok) {
@@ -111,7 +110,6 @@ export async function projectsGetCommand(projectId: string) {
       logger.gray(`  Updated: ${new Date(project.updatedAt).toLocaleString()}`);
     }
     logger.log('');
-
   } catch (error) {
     spinner.fail('Failed to fetch project');
     logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
@@ -150,7 +148,7 @@ export async function projectsDeleteCommand(projectId: string, options: { force?
     const apiUrl = await getApiUrl();
     const response = await fetch(`${apiUrl}${API_ENDPOINT}/${projectId}`, {
       method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!response.ok) {
@@ -162,7 +160,6 @@ export async function projectsDeleteCommand(projectId: string, options: { force?
 
     spinner.succeed('Project deleted successfully');
     logger.log('');
-
   } catch (error) {
     spinner.fail('Failed to delete project');
     logger.error(`\n${error instanceof Error ? error.message : String(error)}`);

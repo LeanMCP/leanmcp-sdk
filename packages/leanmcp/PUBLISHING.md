@@ -19,6 +19,7 @@ npm run build
 ```
 
 This builds all packages including:
+
 - `@leanmcp/core`
 - `@leanmcp/auth`
 - `@leanmcp/ui`
@@ -34,6 +35,7 @@ npm run build
 ```
 
 Check that `dist/` contains:
+
 - `index.js` (CommonJS)
 - `index.mjs` (ES Module)
 - `index.d.ts` (TypeScript declarations)
@@ -100,8 +102,8 @@ When updating versions, ensure consistency:
    ```json
    {
      "dependencies": {
-       "@leanmcp/core": "^0.3.1",  // Update to match
-       "@leanmcp/auth": "^0.3.1",
+       "@leanmcp/core": "^0.3.1", // Update to match
+       "@leanmcp/auth": "^0.3.1"
        // ... etc
      }
    }
@@ -145,6 +147,7 @@ console.log('All imports successful!');
 ## Package Contents
 
 The published package includes:
+
 - `dist/` - Compiled JavaScript and TypeScript declarations
 - `README.md` - Package documentation
 - `LICENSE` - MIT license
@@ -185,10 +188,10 @@ jobs:
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      
+
       - run: npm install
       - run: npm run build
-      
+
       - name: Publish meta-package
         run: |
           cd packages/leanmcp
@@ -200,5 +203,6 @@ jobs:
 ## Support
 
 For issues or questions:
+
 - GitHub Issues: https://github.com/LeanMCP/leanmcp-sdk/issues
 - Email: admin@leanmcp.com

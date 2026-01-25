@@ -5,10 +5,10 @@
 
 /**
  * Validates that a port number is within valid range (1-65535)
- * 
+ *
  * @param port - Port number to validate
  * @throws {Error} If port is invalid
- * 
+ *
  * @example
  * ```typescript
  * validatePort(3000); // OK
@@ -25,10 +25,10 @@ export function validatePort(port: number): void {
 /**
  * Validates that a file path doesn't contain directory traversal patterns
  * Prevents path traversal attacks by checking for '..' and '~'
- * 
+ *
  * @param path - File path to validate
  * @throws {Error} If path contains unsafe patterns
- * 
+ *
  * @example
  * ```typescript
  * validatePath('./services'); // OK
@@ -45,10 +45,10 @@ export function validatePath(path: string): void {
 /**
  * Validates that a service name contains only safe characters
  * Allows alphanumeric, hyphens, and underscores only
- * 
+ *
  * @param name - Service name to validate
  * @throws {Error} If name contains unsafe characters
- * 
+ *
  * @example
  * ```typescript
  * validateServiceName('my-service'); // OK
@@ -68,11 +68,11 @@ export function validateServiceName(name: string): void {
 
 /**
  * Validates that a string is not empty or only whitespace
- * 
+ *
  * @param value - String to validate
  * @param fieldName - Name of the field for error message
  * @throws {Error} If string is empty or only whitespace
- * 
+ *
  * @example
  * ```typescript
  * validateNonEmpty('hello', 'name'); // OK
@@ -88,11 +88,11 @@ export function validateNonEmpty(value: string, fieldName: string): void {
 
 /**
  * Validates that a URL is well-formed and uses allowed protocols
- * 
+ *
  * @param url - URL to validate
  * @param allowedProtocols - Array of allowed protocols (default: ['http:', 'https:'])
  * @throws {Error} If URL is invalid or uses disallowed protocol
- * 
+ *
  * @example
  * ```typescript
  * validateUrl('https://example.com'); // OK

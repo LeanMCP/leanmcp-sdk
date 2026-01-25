@@ -1,6 +1,6 @@
 /**
  * Local HTTP callback server for OAuth redirects
- * 
+ *
  * Spins up a temporary HTTP server to catch OAuth authorization callbacks.
  * Used during browser-based OAuth flows.
  */
@@ -13,59 +13,59 @@ import { AddressInfo } from 'net';
  * Result from OAuth callback
  */
 export interface CallbackResult {
-    /** Authorization code from the OAuth server */
-    code: string;
+  /** Authorization code from the OAuth server */
+  code: string;
 
-    /** State parameter for CSRF protection */
-    state: string;
+  /** State parameter for CSRF protection */
+  state: string;
 }
 
 /**
  * Error from OAuth callback
  */
 export interface CallbackError {
-    error: string;
-    error_description?: string;
+  error: string;
+  error_description?: string;
 }
 
 /**
  * Options for the callback server
  */
 export interface CallbackServerOptions {
-    /** Port to listen on (0 = auto-assign) */
-    port?: number;
+  /** Port to listen on (0 = auto-assign) */
+  port?: number;
 
-    /** Host to bind to (default: 127.0.0.1) */
-    host?: string;
+  /** Host to bind to (default: 127.0.0.1) */
+  host?: string;
 
-    /** Callback path (default: /callback) */
-    path?: string;
+  /** Callback path (default: /callback) */
+  path?: string;
 
-    /** Timeout in milliseconds (default: 5 minutes) */
-    timeout?: number;
+  /** Timeout in milliseconds (default: 5 minutes) */
+  timeout?: number;
 
-    /** Custom success HTML */
-    successHtml?: string;
+  /** Custom success HTML */
+  successHtml?: string;
 
-    /** Custom error HTML */
-    errorHtml?: string;
+  /** Custom error HTML */
+  errorHtml?: string;
 }
 
 /**
  * Running callback server instance
  */
 export interface CallbackServer {
-    /** Full URL to use as redirect_uri */
-    redirectUri: string;
+  /** Full URL to use as redirect_uri */
+  redirectUri: string;
 
-    /** Port the server is listening on */
-    port: number;
+  /** Port the server is listening on */
+  port: number;
 
-    /** Wait for the OAuth callback */
-    waitForCallback(): Promise<CallbackResult>;
+  /** Wait for the OAuth callback */
+  waitForCallback(): Promise<CallbackResult>;
 
-    /** Shutdown the server */
-    shutdown(): Promise<void>;
+  /** Shutdown the server */
+  shutdown(): Promise<void>;
 }
 
 const DEFAULT_SUCCESS_HTML = `
@@ -147,152 +147,152 @@ const DEFAULT_ERROR_HTML = `
 
 /**
  * Start a local callback server for OAuth redirects
- * 
+ *
  * @example
  * ```typescript
  * const server = await startCallbackServer({ port: 0 });
  * console.log('Redirect URI:', server.redirectUri);
- * 
+ *
  * // Open browser to authorization URL with redirect_uri set to server.redirectUri
- * 
+ *
  * const result = await server.waitForCallback();
  * console.log('Got code:', result.code);
- * 
+ *
  * await server.shutdown();
  * ```
  */
 export async function startCallbackServer(
-    options: CallbackServerOptions = {}
+  options: CallbackServerOptions = {}
 ): Promise<CallbackServer> {
-    const {
-        port = 0,
-        host = '127.0.0.1',
-        path = '/callback',
-        timeout = 5 * 60 * 1000, // 5 minutes
-        successHtml = DEFAULT_SUCCESS_HTML,
-        errorHtml = DEFAULT_ERROR_HTML,
-    } = options;
+  const {
+    port = 0,
+    host = '127.0.0.1',
+    path = '/callback',
+    timeout = 5 * 60 * 1000, // 5 minutes
+    successHtml = DEFAULT_SUCCESS_HTML,
+    errorHtml = DEFAULT_ERROR_HTML,
+  } = options;
 
-    let resolveCallback: (result: CallbackResult) => void;
-    let rejectCallback: (error: Error) => void;
+  let resolveCallback: (result: CallbackResult) => void;
+  let rejectCallback: (error: Error) => void;
 
-    const callbackPromise = new Promise<CallbackResult>((resolve, reject) => {
-        resolveCallback = resolve;
-        rejectCallback = reject;
+  const callbackPromise = new Promise<CallbackResult>((resolve, reject) => {
+    resolveCallback = resolve;
+    rejectCallback = reject;
+  });
+
+  // Create HTTP server
+  const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
+    const url = new URL(req.url || '/', `http://${host}:${port}`);
+
+    if (url.pathname !== path) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+      return;
+    }
+
+    // Parse query parameters
+    const code = url.searchParams.get('code');
+    const state = url.searchParams.get('state');
+    const error = url.searchParams.get('error');
+    const errorDescription = url.searchParams.get('error_description');
+
+    if (error) {
+      // OAuth error response
+      const html = errorHtml
+        .replace('{{ERROR_MESSAGE}}', error)
+        .replace('{{ERROR_DESCRIPTION}}', errorDescription || '');
+
+      res.writeHead(400, { 'Content-Type': 'text/html' });
+      res.end(html);
+
+      rejectCallback(new Error(`OAuth error: ${error} - ${errorDescription || 'No description'}`));
+      return;
+    }
+
+    if (!code) {
+      const html = errorHtml
+        .replace('{{ERROR_MESSAGE}}', 'Missing authorization code')
+        .replace('{{ERROR_DESCRIPTION}}', 'The OAuth server did not return an authorization code.');
+
+      res.writeHead(400, { 'Content-Type': 'text/html' });
+      res.end(html);
+
+      rejectCallback(new Error('No authorization code received'));
+      return;
+    }
+
+    if (!state) {
+      const html = errorHtml
+        .replace('{{ERROR_MESSAGE}}', 'Missing state parameter')
+        .replace('{{ERROR_DESCRIPTION}}', 'The OAuth server did not return the state parameter.');
+
+      res.writeHead(400, { 'Content-Type': 'text/html' });
+      res.end(html);
+
+      rejectCallback(new Error('No state parameter received'));
+      return;
+    }
+
+    // Success!
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(successHtml);
+
+    resolveCallback({ code, state });
+  });
+
+  // Start listening
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, host, () => {
+      server.removeListener('error', reject);
+      resolve();
     });
+  });
 
-    // Create HTTP server
-    const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
-        const url = new URL(req.url || '/', `http://${host}:${port}`);
+  const actualPort = (server.address() as AddressInfo).port;
+  const redirectUri = `http://${host}:${actualPort}${path}`;
 
-        if (url.pathname !== path) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Not Found');
-            return;
-        }
+  // Set up timeout
+  const timeoutId = setTimeout(() => {
+    rejectCallback(new Error(`OAuth callback timed out after ${timeout / 1000} seconds`));
+  }, timeout);
 
-        // Parse query parameters
-        const code = url.searchParams.get('code');
-        const state = url.searchParams.get('state');
-        const error = url.searchParams.get('error');
-        const errorDescription = url.searchParams.get('error_description');
-
-        if (error) {
-            // OAuth error response
-            const html = errorHtml
-                .replace('{{ERROR_MESSAGE}}', error)
-                .replace('{{ERROR_DESCRIPTION}}', errorDescription || '');
-
-            res.writeHead(400, { 'Content-Type': 'text/html' });
-            res.end(html);
-
-            rejectCallback(new Error(`OAuth error: ${error} - ${errorDescription || 'No description'}`));
-            return;
-        }
-
-        if (!code) {
-            const html = errorHtml
-                .replace('{{ERROR_MESSAGE}}', 'Missing authorization code')
-                .replace('{{ERROR_DESCRIPTION}}', 'The OAuth server did not return an authorization code.');
-
-            res.writeHead(400, { 'Content-Type': 'text/html' });
-            res.end(html);
-
-            rejectCallback(new Error('No authorization code received'));
-            return;
-        }
-
-        if (!state) {
-            const html = errorHtml
-                .replace('{{ERROR_MESSAGE}}', 'Missing state parameter')
-                .replace('{{ERROR_DESCRIPTION}}', 'The OAuth server did not return the state parameter.');
-
-            res.writeHead(400, { 'Content-Type': 'text/html' });
-            res.end(html);
-
-            rejectCallback(new Error('No state parameter received'));
-            return;
-        }
-
-        // Success!
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.end(successHtml);
-
-        resolveCallback({ code, state });
+  // Cleanup function
+  const shutdown = async (): Promise<void> => {
+    clearTimeout(timeoutId);
+    return new Promise((resolve, reject) => {
+      server.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
     });
+  };
 
-    // Start listening
-    await new Promise<void>((resolve, reject) => {
-        server.once('error', reject);
-        server.listen(port, host, () => {
-            server.removeListener('error', reject);
-            resolve();
-        });
-    });
-
-    const actualPort = (server.address() as AddressInfo).port;
-    const redirectUri = `http://${host}:${actualPort}${path}`;
-
-    // Set up timeout
-    const timeoutId = setTimeout(() => {
-        rejectCallback(new Error(`OAuth callback timed out after ${timeout / 1000} seconds`));
-    }, timeout);
-
-    // Cleanup function
-    const shutdown = async (): Promise<void> => {
-        clearTimeout(timeoutId);
-        return new Promise((resolve, reject) => {
-            server.close((err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
-    };
-
-    return {
-        redirectUri,
-        port: actualPort,
-        waitForCallback: async () => {
-            try {
-                return await callbackPromise;
-            } finally {
-                await shutdown().catch(() => { }); // Ignore shutdown errors
-            }
-        },
-        shutdown,
-    };
+  return {
+    redirectUri,
+    port: actualPort,
+    waitForCallback: async () => {
+      try {
+        return await callbackPromise;
+      } finally {
+        await shutdown().catch(() => {}); // Ignore shutdown errors
+      }
+    },
+    shutdown,
+  };
 }
 
 /**
  * Find an available port
  */
 export async function findAvailablePort(preferredPort?: number): Promise<number> {
-    return new Promise((resolve, reject) => {
-        const server = createServer();
-        server.once('error', reject);
-        server.listen(preferredPort || 0, '127.0.0.1', () => {
-            const port = (server.address() as AddressInfo).port;
-            server.close(() => resolve(port));
-        });
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once('error', reject);
+    server.listen(preferredPort || 0, '127.0.0.1', () => {
+      const port = (server.address() as AddressInfo).port;
+      server.close(() => resolve(port));
     });
+  });
 }

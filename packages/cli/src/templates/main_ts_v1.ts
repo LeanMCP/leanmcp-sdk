@@ -1,4 +1,7 @@
-export const getMainTsTemplate = (projectName: string, dashboardLine: string): string => `import dotenv from "dotenv";
+export const getMainTsTemplate = (
+  projectName: string,
+  dashboardLine: string
+): string => `import dotenv from "dotenv";
 import { createHTTPServer } from "@leanmcp/core";
 
 // Load environment variables

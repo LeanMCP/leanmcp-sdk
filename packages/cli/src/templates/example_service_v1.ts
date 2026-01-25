@@ -1,4 +1,6 @@
-export const getExampleServiceTemplate = (projectName: string): string => `import { Tool, Resource, Prompt, SchemaConstraint, Optional } from "@leanmcp/core";
+export const getExampleServiceTemplate = (
+  projectName: string
+): string => `import { Tool, Resource, Prompt, SchemaConstraint, Optional } from "@leanmcp/core";
 
     /**
      * Example service demonstrating LeanMCP SDK decorators

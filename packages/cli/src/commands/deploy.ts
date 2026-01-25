@@ -1,6 +1,6 @@
 /**
  * leanmcp deploy command
- * 
+ *
  * Deploys an MCP server to LeanMCP cloud using the stored API key.
  */
 import ora from 'ora';
@@ -36,11 +36,11 @@ async function debugFetch(url: string, options: RequestInit = {}): Promise<Respo
       debug('Request body:', options.body);
     }
   }
-  
+
   const startTime = Date.now();
   const response = await fetch(url, options);
   const duration = Date.now() - startTime;
-  
+
   debug(`Response: ${response.status} ${response.statusText} (${duration}ms)`);
   return response;
 }
@@ -103,7 +103,7 @@ async function readLeanMCPConfig(projectPath: string): Promise<LeanMCPConfig | n
 async function writeLeanMCPConfig(projectPath: string, config: LeanMCPConfig): Promise<void> {
   const configDir = path.join(projectPath, LEANMCP_CONFIG_DIR);
   const configPath = path.join(configDir, LEANMCP_CONFIG_FILE);
-  
+
   await fs.ensureDir(configDir);
   await fs.writeJSON(configPath, config, { spaces: 2 });
   debug('Saved .leanmcp config:', config);
@@ -157,7 +157,7 @@ async function waitForBuild(
 
   while (attempts < maxAttempts) {
     const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!response.ok) {
@@ -175,7 +175,7 @@ async function waitForBuild(
       throw new Error(`Build failed: ${build.errorMessage || 'Unknown error'}`);
     }
 
-    await new Promise(r => setTimeout(r, 5000)); // Wait 5 seconds
+    await new Promise((r) => setTimeout(r, 5000)); // Wait 5 seconds
     attempts++;
   }
 
@@ -196,7 +196,7 @@ async function waitForDeployment(
 
   while (attempts < maxAttempts) {
     const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!response.ok) {
@@ -214,7 +214,7 @@ async function waitForDeployment(
       throw new Error(`Deployment failed: ${deployment.errorMessage || 'Unknown error'}`);
     }
 
-    await new Promise(r => setTimeout(r, 5000)); // Wait 5 seconds
+    await new Promise((r) => setTimeout(r, 5000)); // Wait 5 seconds
     attempts++;
   }
 
@@ -226,9 +226,9 @@ async function waitForDeployment(
  */
 export async function deployCommand(folderPath: string, options: DeployOptions = {}) {
   const deployStartTime = Date.now();
-  
+
   logger.info('\nLeanMCP Deploy\n');
-  
+
   debug('Starting deployment...');
 
   // Check authentication
@@ -246,7 +246,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const absolutePath = path.resolve(process.cwd(), folderPath);
 
   // Validate folder exists
-  if (!await fs.pathExists(absolutePath)) {
+  if (!(await fs.pathExists(absolutePath))) {
     logger.error(`Folder not found: ${absolutePath}`);
     process.exit(1);
   }
@@ -263,13 +263,15 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   if (!isNodeProject && !isPythonProject) {
     logger.error('Not a valid project folder.');
-    logger.gray('Expected one of: main.ts, package.json, main.py, requirements.txt, or pyproject.toml\n');
+    logger.gray(
+      'Expected one of: main.ts, package.json, main.py, requirements.txt, or pyproject.toml\n'
+    );
     process.exit(1);
   }
 
   // Check for existing .leanmcp config first
   const existingConfig = await readLeanMCPConfig(absolutePath);
-  
+
   // Get project name - check if we should use existing or create new
   let projectName: string;
   let existingProject: { id: string; name: string; s3Location?: string } | null = null;
@@ -315,7 +317,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     let existingProjects: Array<{ id: string; name: string; s3Location?: string }> = [];
     try {
       const projectsResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` },
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
       if (projectsResponse.ok) {
         existingProjects = await projectsResponse.json();
@@ -337,11 +339,11 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     }
 
     // Check if a project with the folder name exists
-    const matchingProject = existingProjects.find(p => p.name === folderName);
-    
+    const matchingProject = existingProjects.find((p) => p.name === folderName);
+
     if (matchingProject) {
       logger.warn(`Project '${folderName}' already exists.\n`);
-      
+
       const choice = await select({
         message: 'What would you like to do?',
         choices: [
@@ -407,31 +409,38 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
   const checkSpinner = ora('Checking subdomain availability...').start();
   try {
     debug('Checking subdomain:', subdomain);
-    const checkResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.checkSubdomain}/${subdomain}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` },
-    });
+    const checkResponse = await debugFetch(
+      `${apiUrl}${API_ENDPOINTS.checkSubdomain}/${subdomain}`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      }
+    );
 
     if (checkResponse.ok) {
       const result = await checkResponse.json();
       debug('Subdomain check result:', result);
-      
+
       if (!result.available) {
         // Subdomain is taken - check ownership
         const ourProjectId = isUpdate && existingProject ? existingProject.id : null;
-        
+
         if (ourProjectId && result.ownedByProject === ourProjectId) {
           // It's our subdomain from the same project - proceed with update
           checkSpinner.succeed(`Subdomain '${subdomain}' is yours - will update existing mapping`);
         } else if (result.ownedByCurrentUser) {
           // User owns it but for a different project
           checkSpinner.fail(`Subdomain '${subdomain}' is used by your other project`);
-          logger.gray(`\nThis subdomain is associated with project: ${result.ownedByProject?.substring(0, 8)}...`);
+          logger.gray(
+            `\nThis subdomain is associated with project: ${result.ownedByProject?.substring(0, 8)}...`
+          );
           logger.gray('Please choose a different subdomain or update that project instead.\n');
           process.exit(1);
         } else {
           // Someone else owns it
           checkSpinner.fail(`Subdomain '${subdomain}' is not available`);
-          logger.gray('\nThis subdomain is taken by another user. Please choose a different subdomain.\n');
+          logger.gray(
+            '\nThis subdomain is taken by another user. Please choose a different subdomain.\n'
+          );
           process.exit(1);
         }
       } else {
@@ -464,7 +473,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
   // Step 1: Create or use existing project
   let projectId: string;
-  
+
   if (isUpdate && existingProject) {
     // Use existing project
     projectId = existingProject.id;
@@ -477,7 +486,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       const createResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name: projectName }),
@@ -508,18 +517,21 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
 
     // Get presigned URL
     debug('Step 2a: Getting upload URL for project:', projectId);
-    const uploadUrlResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}/upload-url`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        fileName: `${subdomain}.zip`,
-        fileType: 'application/zip',
-        fileSize: zipSize,
-      }),
-    });
+    const uploadUrlResponse = await debugFetch(
+      `${apiUrl}${API_ENDPOINTS.projects}/${projectId}/upload-url`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fileName: `${subdomain}.zip`,
+          fileType: 'application/zip',
+          fileSize: zipSize,
+        }),
+      }
+    );
 
     if (!uploadUrlResponse.ok) {
       throw new Error('Failed to get upload URL');
@@ -528,9 +540,9 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const uploadResult = await uploadUrlResponse.json();
     const uploadUrl = uploadResult.url || uploadResult.uploadUrl;
     const s3Location = uploadResult.s3Location;
-    
+
     debug('Upload URL response:', JSON.stringify(uploadResult));
-    
+
     if (!uploadUrl) {
       throw new Error('Backend did not return upload URL');
     }
@@ -554,7 +566,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     await debugFetch(`${apiUrl}${API_ENDPOINTS.projects}/${projectId}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ s3Location }),
@@ -579,7 +591,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     debug('Step 3: Triggering build for project:', projectId);
     const buildResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.triggerBuild}/${projectId}`, {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     if (!buildResponse.ok) {
@@ -611,7 +623,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const deployResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.createDeployment}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ buildId }),
@@ -643,7 +655,7 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     const mappingResponse = await debugFetch(`${apiUrl}${API_ENDPOINTS.createMapping}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

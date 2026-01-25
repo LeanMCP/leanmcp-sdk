@@ -6,5 +6,5 @@ import { twMerge } from 'tailwind-merge';
  * Uses clsx for conditional classes and tailwind-merge to handle conflicts
  */
 export function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs));
 }

@@ -1,9 +1,5 @@
 import { ElicitationStrategyBase } from './base';
-import {
-  ElicitationRequest,
-  ElicitationConfig,
-  ElicitationContext
-} from '../types';
+import { ElicitationRequest, ElicitationConfig, ElicitationContext } from '../types';
 
 /**
  * Form-based elicitation strategy
@@ -18,8 +14,8 @@ export class FormElicitationStrategy extends ElicitationStrategyBase {
       fields: config.fields || [],
       metadata: {
         strategy: 'form',
-        previousValues: context.args
-      }
+        previousValues: context.args,
+      },
     };
   }
 }

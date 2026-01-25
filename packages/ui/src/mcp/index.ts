@@ -1,6 +1,6 @@
 /**
  * @leanmcp/ui/mcp - MCP-Native Components and Hooks
- * 
+ *
  * This module exports all MCP-specific components and hooks that integrate
  * with the Model Context Protocol for building interactive MCP Apps.
  */
@@ -10,12 +10,7 @@
 // ============================================================================
 
 export { AppProvider, useMcpApp } from './AppProvider';
-export type {
-    AppProviderProps,
-    McpAppContextValue,
-    AppInfo,
-    AppOptions,
-} from './AppProvider';
+export type { AppProviderProps, McpAppContextValue, AppInfo, AppOptions } from './AppProvider';
 
 export { ToolProvider, useToolContext } from './ToolProvider';
 export type { ToolProviderProps, ToolContextValue } from './ToolProvider';
@@ -44,10 +39,10 @@ export type { StreamingContentProps } from './StreamingContent';
 
 export { ToolDataGrid } from './ToolDataGrid';
 export type {
-    ToolDataGridProps,
-    ToolDataGridColumn,
-    ToolDataGridRowAction,
-    ToolDataGridData,
+  ToolDataGridProps,
+  ToolDataGridColumn,
+  ToolDataGridRowAction,
+  ToolDataGridData,
 } from './ToolDataGrid';
 
 // Legacy ActionButton (kept for compatibility, prefer ToolButton)
@@ -69,23 +64,13 @@ export type { ToolErrorBoundaryProps } from './ToolErrorBoundary';
 // ============================================================================
 
 export { useTool } from './useTool';
-export type {
-    UseToolOptions,
-    UseToolReturn,
-    ToolState,
-} from './useTool';
+export type { UseToolOptions, UseToolReturn, ToolState } from './useTool';
 
 export { useToolStream } from './useToolStream';
-export type {
-    UseToolStreamOptions,
-    UseToolStreamReturn,
-} from './useToolStream';
+export type { UseToolStreamOptions, UseToolStreamReturn } from './useToolStream';
 
 export { useResource } from './useResource';
-export type {
-    UseResourceOptions,
-    UseResourceReturn,
-} from './useResource';
+export type { UseResourceOptions, UseResourceReturn } from './useResource';
 
 export { useMessage } from './useMessage';
 export type { UseMessageReturn } from './useMessage';
@@ -99,5 +84,9 @@ export { useToolSubscription } from './useToolSubscription';
 
 // Spec-compliant hooks
 export { useOpenAiGlobal } from './useOpenAiGlobal';
-export { useToolOutput, useToolResponseMetadata, useToolInput as useToolInputSpec } from './useToolData';
+export {
+  useToolOutput,
+  useToolResponseMetadata,
+  useToolInput as useToolInputSpec,
+} from './useToolData';
 export { useWidgetState } from './useWidgetState';

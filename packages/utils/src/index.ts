@@ -1,6 +1,6 @@
 /**
  * @leanmcp/utils - Utility Functions
- * 
+ *
  * This module provides helper utilities and shared functions across the LeanMCP SDK.
  */
 
@@ -10,7 +10,7 @@
  */
 export function validateSchema(data: any, schema: any): { valid: boolean; errors?: any[] } {
   const errors: any[] = [];
-  
+
   if (!schema || typeof schema !== 'object') {
     return { valid: true };
   }
@@ -43,7 +43,9 @@ export function formatResponse(data: any, format: string): string {
     case 'json':
       return JSON.stringify(data, null, 2);
     case 'markdown':
-      return typeof data === 'string' ? data : `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
+      return typeof data === 'string'
+        ? data
+        : `\`\`\`json\n${JSON.stringify(data, null, 2)}\n\`\`\``;
     case 'html':
       return typeof data === 'string' ? data : `<pre>${JSON.stringify(data, null, 2)}</pre>`;
     case 'table':
@@ -64,7 +66,7 @@ export function formatAsTable(data: any[]): string {
   const keys = Object.keys(data[0]);
   const header = `| ${keys.join(' | ')} |`;
   const separator = `| ${keys.map(() => '---').join(' | ')} |`;
-  const rows = data.map(row => `| ${keys.map(key => row[key]).join(' | ')} |`);
+  const rows = data.map((row) => `| ${keys.map((key) => row[key]).join(' | ')} |`);
 
   return [header, separator, ...rows].join('\n');
 }
@@ -125,7 +127,7 @@ export async function retry<T>(
  * Sleep for a given duration
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -137,7 +139,7 @@ export function debounce<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let timeout: NodeJS.Timeout | null = null;
 
-  return function(this: any, ...args: Parameters<T>) {
+  return function (this: any, ...args: Parameters<T>) {
     if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), waitMs);
   };
@@ -152,7 +154,7 @@ export function throttle<T extends (...args: any[]) => any>(
 ): (...args: Parameters<T>) => void {
   let inThrottle = false;
 
-  return function(this: any, ...args: Parameters<T>) {
+  return function (this: any, ...args: Parameters<T>) {
     if (!inThrottle) {
       func.apply(this, args);
       inThrottle = true;
@@ -164,7 +166,11 @@ export function throttle<T extends (...args: any[]) => any>(
 /**
  * Parse environment variables with type coercion
  */
-export function parseEnv(value: string | undefined, defaultValue: any, type: 'string' | 'number' | 'boolean' = 'string'): any {
+export function parseEnv(
+  value: string | undefined,
+  defaultValue: any,
+  type: 'string' | 'number' | 'boolean' = 'string'
+): any {
   if (value === undefined) return defaultValue;
 
   switch (type) {
@@ -199,12 +205,14 @@ export function truncate(str: string, maxLength: number, suffix: string = '...')
 /**
  * Add timeout to a promise
  */
-export function timeout<T>(promise: Promise<T>, ms: number, errorMessage: string = 'Operation timed out'): Promise<T> {
+export function timeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  errorMessage: string = 'Operation timed out'
+): Promise<T> {
   return Promise.race([
     promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(errorMessage)), ms)
-    )
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(errorMessage)), ms)),
   ]);
 }
 

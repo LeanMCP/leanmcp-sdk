@@ -1,9 +1,9 @@
 /**
  * ToolProvider - Scoped configuration provider for MCP tool components
- * 
+ *
  * Allows setting default behaviors for all tool components within its scope,
  * such as default result display, error handling, and loading states.
- * 
+ *
  * @example Set default toast display
  * ```tsx
  * <ToolProvider defaults={{ resultDisplay: { display: 'toast' } }}>
@@ -12,13 +12,13 @@
  *   {/* Both buttons will show toast on success *\/}
  * </ToolProvider>
  * ```
- * 
+ *
  * @example Global error handler
  * ```tsx
- * <ToolProvider 
- *   defaults={{ 
+ * <ToolProvider
+ *   defaults={{
  *     onError: (err) => logError(err),
- *     showLoading: true 
+ *     showLoading: true
  *   }}
  * >
  *   <MyApp />
@@ -35,20 +35,20 @@ import type { ToolResultConfig, ToolProviderConfig } from '@/types/mcp-types';
  * ToolContext value
  */
 export interface ToolContextValue {
-    /** Default result display configuration */
-    resultDisplay: ToolResultConfig;
-    /** Default error handler */
-    onError?: (error: Error) => void;
-    /** Show loading states globally */
-    showLoading: boolean;
+  /** Default result display configuration */
+  resultDisplay: ToolResultConfig;
+  /** Default error handler */
+  onError?: (error: Error) => void;
+  /** Show loading states globally */
+  showLoading: boolean;
 }
 
 /**
  * Default context value
  */
 const DEFAULT_CONTEXT: ToolContextValue = {
-    resultDisplay: { display: 'none' },
-    showLoading: true,
+  resultDisplay: { display: 'none' },
+  showLoading: true,
 };
 
 /**
@@ -60,38 +60,34 @@ const ToolContext = createContext<ToolContextValue>(DEFAULT_CONTEXT);
  * ToolProvider props
  */
 export interface ToolProviderProps {
-    /** Default configuration for all tool components */
-    defaults?: ToolProviderConfig;
-    /** Children */
-    children: ReactNode;
+  /** Default configuration for all tool components */
+  defaults?: ToolProviderConfig;
+  /** Children */
+  children: ReactNode;
 }
 
 /**
  * ToolProvider component
  */
-export function ToolProvider({
-    defaults = {},
-    children,
-}: ToolProviderProps) {
-    const parentContext = useContext(ToolContext);
+export function ToolProvider({ defaults = {}, children }: ToolProviderProps) {
+  const parentContext = useContext(ToolContext);
 
-    // Merge with parent context
-    const value = useMemo<ToolContextValue>(() => ({
-        resultDisplay: defaults.resultDisplay ?? parentContext.resultDisplay,
-        onError: defaults.onError ?? parentContext.onError,
-        showLoading: defaults.showLoading ?? parentContext.showLoading,
-    }), [defaults, parentContext]);
+  // Merge with parent context
+  const value = useMemo<ToolContextValue>(
+    () => ({
+      resultDisplay: defaults.resultDisplay ?? parentContext.resultDisplay,
+      onError: defaults.onError ?? parentContext.onError,
+      showLoading: defaults.showLoading ?? parentContext.showLoading,
+    }),
+    [defaults, parentContext]
+  );
 
-    return (
-        <ToolContext.Provider value={value}>
-            {children}
-        </ToolContext.Provider>
-    );
+  return <ToolContext.Provider value={value}>{children}</ToolContext.Provider>;
 }
 
 /**
  * Hook to access tool context
  */
 export function useToolContext(): ToolContextValue {
-    return useContext(ToolContext);
+  return useContext(ToolContext);
 }

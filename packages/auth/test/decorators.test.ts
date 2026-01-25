@@ -1,32 +1,32 @@
-import "reflect-metadata";
-import { Authenticated, AuthenticationError } from "../src/decorators";
-import { AuthProviderBase } from "../src/index";
+import 'reflect-metadata';
+import { Authenticated, AuthenticationError } from '../src/decorators';
+import { AuthProviderBase } from '../src/index';
 
 /**
  * Mock Auth Provider for testing
  */
 class MockAuthProvider extends AuthProviderBase {
   private validTokens = new Set(['valid-token-123', 'valid-token-456']);
-  
+
   async init(config?: any): Promise<void> {
     // Mock initialization
   }
-  
+
   async verifyToken(token: string): Promise<boolean> {
     return this.validTokens.has(token);
   }
-  
+
   async refreshToken(refreshToken: string): Promise<any> {
     return { accessToken: 'new-token', refreshToken: 'new-refresh' };
   }
-  
+
   async getUser(token: string): Promise<any> {
     if (this.validTokens.has(token)) {
       return { id: '123', email: 'test@example.com' };
     }
     throw new Error('Invalid token');
   }
-  
+
   addValidToken(token: string) {
     this.validTokens.add(token);
   }
@@ -49,7 +49,7 @@ describe('@Authenticated Decorator', () => {
       async protectedMethod(args: { text: string }, meta?: any) {
         return { result: `Protected: ${args.text}` };
       }
-      
+
       async publicMethod(args: { text: string }) {
         return { result: `Public: ${args.text}` };
       }
@@ -57,11 +57,9 @@ describe('@Authenticated Decorator', () => {
 
     test('should throw MISSING_TOKEN error when no token provided', async () => {
       const service = new TestServicePartial();
-      
-      await expect(
-        service.protectedMethod({ text: 'Hello' })
-      ).rejects.toThrow(AuthenticationError);
-      
+
+      await expect(service.protectedMethod({ text: 'Hello' })).rejects.toThrow(AuthenticationError);
+
       try {
         await service.protectedMethod({ text: 'Hello' });
       } catch (error) {
@@ -73,11 +71,11 @@ describe('@Authenticated Decorator', () => {
     test('should throw INVALID_TOKEN error with invalid token', async () => {
       const service = new TestServicePartial();
       const meta = { authorization: { type: 'bearer', token: 'invalid-token' } };
-      
-      await expect(
-        service.protectedMethod({ text: 'Hello' }, meta)
-      ).rejects.toThrow(AuthenticationError);
-      
+
+      await expect(service.protectedMethod({ text: 'Hello' }, meta)).rejects.toThrow(
+        AuthenticationError
+      );
+
       try {
         await service.protectedMethod({ text: 'Hello' }, meta);
       } catch (error) {
@@ -90,14 +88,14 @@ describe('@Authenticated Decorator', () => {
       const service = new TestServicePartial();
       const meta = { authorization: { type: 'bearer', token: 'valid-token-123' } };
       const result = await service.protectedMethod({ text: 'Hello' }, meta);
-      
+
       expect(result).toEqual({ result: 'Protected: Hello' });
     });
 
     test('should allow public method without token', async () => {
       const service = new TestServicePartial();
       const result = await service.publicMethod({ text: 'Hello' });
-      
+
       expect(result).toEqual({ result: 'Public: Hello' });
     });
 
@@ -105,7 +103,7 @@ describe('@Authenticated Decorator', () => {
       const service = new TestServicePartial();
       const meta = { authorization: { type: 'bearer', token: 'valid-token-123' } };
       const result = await service.protectedMethod({ text: 'Test' }, meta);
-      
+
       // Verify that only the business arguments are passed, not _meta
       expect(result).toEqual({ result: 'Protected: Test' });
     });
@@ -117,7 +115,7 @@ describe('@Authenticated Decorator', () => {
       async method1(args: { text: string }, meta?: any) {
         return { result: `Method1: ${args.text}` };
       }
-      
+
       async method2(args: { text: string }, meta?: any) {
         return { result: `Method2: ${args.text}` };
       }
@@ -125,11 +123,9 @@ describe('@Authenticated Decorator', () => {
 
     test('should protect method1 when applied to class', async () => {
       const service = new TestServiceFull();
-      
-      await expect(
-        service.method1({ text: 'Hello' })
-      ).rejects.toThrow(AuthenticationError);
-      
+
+      await expect(service.method1({ text: 'Hello' })).rejects.toThrow(AuthenticationError);
+
       try {
         await service.method1({ text: 'Hello' });
       } catch (error) {
@@ -140,11 +136,9 @@ describe('@Authenticated Decorator', () => {
 
     test('should protect method2 when applied to class', async () => {
       const service = new TestServiceFull();
-      
-      await expect(
-        service.method2({ text: 'Hello' })
-      ).rejects.toThrow(AuthenticationError);
-      
+
+      await expect(service.method2({ text: 'Hello' })).rejects.toThrow(AuthenticationError);
+
       try {
         await service.method2({ text: 'Hello' });
       } catch (error) {
@@ -157,7 +151,7 @@ describe('@Authenticated Decorator', () => {
       const service = new TestServiceFull();
       const meta = { authorization: { type: 'bearer', token: 'valid-token-456' } };
       const result = await service.method1({ text: 'Hello' }, meta);
-      
+
       expect(result).toEqual({ result: 'Method1: Hello' });
     });
   });

@@ -27,6 +27,10 @@
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
   </a>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 ## Features
@@ -48,14 +52,14 @@ npm install @leanmcp/env-injection @leanmcp/auth @leanmcp/core
 ### 1. Configure Auth Provider with projectId
 
 ```typescript
-import { AuthProvider } from "@leanmcp/auth";
+import { AuthProvider } from '@leanmcp/auth';
 
 export const projectId = process.env.LEANMCP_PROJECT_ID;
 
 export const authProvider = new AuthProvider('leanmcp', {
-    apiKey: process.env.LEANMCP_API_KEY,
-    orchestrationApiUrl: 'https://api.leanmcp.com',
-    authUrl: 'https://auth.leanmcp.com'
+  apiKey: process.env.LEANMCP_API_KEY,
+  orchestrationApiUrl: 'https://api.leanmcp.com',
+  authUrl: 'https://auth.leanmcp.com',
 });
 
 await authProvider.init();
@@ -64,26 +68,25 @@ await authProvider.init();
 ### 2. Use @RequireEnv and getEnv()
 
 ```typescript
-import { Tool } from "@leanmcp/core";
-import { Authenticated } from "@leanmcp/auth";
-import { RequireEnv, getEnv } from "@leanmcp/env-injection";
-import { authProvider, projectId } from "./config.js";
+import { Tool } from '@leanmcp/core';
+import { Authenticated } from '@leanmcp/auth';
+import { RequireEnv, getEnv } from '@leanmcp/env-injection';
+import { authProvider, projectId } from './config.js';
 
 @Authenticated(authProvider, { projectId })
 export class SlackService {
+  @Tool({ description: 'Send a message to Slack' })
+  @RequireEnv(['SLACK_TOKEN', 'SLACK_CHANNEL'])
+  async sendMessage(args: { message: string }) {
+    // getEnv() returns THIS USER's secret, not a global env var
+    const token = getEnv('SLACK_TOKEN')!;
+    const channel = getEnv('SLACK_CHANNEL')!;
 
-    @Tool({ description: 'Send a message to Slack' })
-    @RequireEnv(["SLACK_TOKEN", "SLACK_CHANNEL"])
-    async sendMessage(args: { message: string }) {
-        // getEnv() returns THIS USER's secret, not a global env var
-        const token = getEnv("SLACK_TOKEN")!;
-        const channel = getEnv("SLACK_CHANNEL")!;
+    // Send message using user's own Slack token
+    await slackApi.postMessage(channel, args.message, token);
 
-        // Send message using user's own Slack token
-        await slackApi.postMessage(channel, args.message, token);
-
-        return { success: true, channel };
-    }
+    return { success: true, channel };
+  }
 }
 ```
 
@@ -94,10 +97,10 @@ export class SlackService {
 Run a function with environment variables in scope. Used internally by `@Authenticated`.
 
 ```typescript
-import { runWithEnv } from "@leanmcp/env-injection";
+import { runWithEnv } from '@leanmcp/env-injection';
 
-await runWithEnv({ API_KEY: "secret123" }, async () => {
-    console.log(getEnv("API_KEY")); // "secret123"
+await runWithEnv({ API_KEY: 'secret123' }, async () => {
+  console.log(getEnv('API_KEY')); // "secret123"
 });
 ```
 
@@ -106,9 +109,9 @@ await runWithEnv({ API_KEY: "secret123" }, async () => {
 Get a single environment variable from the current request context.
 
 ```typescript
-import { getEnv } from "@leanmcp/env-injection";
+import { getEnv } from '@leanmcp/env-injection';
 
-const token = getEnv("SLACK_TOKEN");
+const token = getEnv('SLACK_TOKEN');
 // Returns undefined if key doesn't exist
 // Throws if called outside env context (projectId not configured)
 ```
@@ -118,7 +121,7 @@ const token = getEnv("SLACK_TOKEN");
 Get all environment variables from the current request context.
 
 ```typescript
-import { getAllEnv } from "@leanmcp/env-injection";
+import { getAllEnv } from '@leanmcp/env-injection';
 
 const env = getAllEnv();
 // { SLACK_TOKEN: "xoxb-...", SLACK_CHANNEL: "#general" }
@@ -129,10 +132,10 @@ const env = getAllEnv();
 Check if currently inside an env context.
 
 ```typescript
-import { hasEnvContext } from "@leanmcp/env-injection";
+import { hasEnvContext } from '@leanmcp/env-injection';
 
 if (hasEnvContext()) {
-    // Safe to call getEnv()
+  // Safe to call getEnv()
 }
 ```
 
@@ -151,7 +154,8 @@ async sendMessage(args: { message: string }) {
 ```
 
 **Requirements:**
-- Must be used with `@Authenticated(authProvider, { projectId })` 
+
+- Must be used with `@Authenticated(authProvider, { projectId })`
 - Throws clear error if `projectId` is not configured
 
 ## Error Messages
@@ -196,12 +200,12 @@ Request → @Authenticated(projectId) → Fetch Secrets → runWithEnv() → @Re
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `LEANMCP_API_KEY` | Your LeanMCP API key (with SDK scope) |
-| `LEANMCP_PROJECT_ID` | Project ID to scope secrets to |
-| `LEANMCP_ORCHESTRATION_API_URL` | API URL (default: https://api.leanmcp.com) |
-| `LEANMCP_AUTH_URL` | Auth URL (default: https://auth.leanmcp.com) |
+| Variable                        | Description                                  |
+| ------------------------------- | -------------------------------------------- |
+| `LEANMCP_API_KEY`               | Your LeanMCP API key (with SDK scope)        |
+| `LEANMCP_PROJECT_ID`            | Project ID to scope secrets to               |
+| `LEANMCP_ORCHESTRATION_API_URL` | API URL (default: https://api.leanmcp.com)   |
+| `LEANMCP_AUTH_URL`              | Auth URL (default: https://auth.leanmcp.com) |
 
 ## Best Practices
 

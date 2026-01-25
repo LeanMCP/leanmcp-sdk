@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 
 /**
  * Elicitation request structure following MCP spec
@@ -22,7 +22,16 @@ export interface ElicitationRequest {
 export interface ElicitationField {
   name: string;
   label: string;
-  type: 'text' | 'number' | 'boolean' | 'select' | 'multiselect' | 'date' | 'email' | 'url' | 'textarea';
+  type:
+    | 'text'
+    | 'number'
+    | 'boolean'
+    | 'select'
+    | 'multiselect'
+    | 'date'
+    | 'email'
+    | 'url'
+    | 'textarea';
   description?: string;
   required?: boolean;
   defaultValue?: any;

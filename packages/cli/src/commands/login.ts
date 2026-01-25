@@ -1,6 +1,6 @@
 /**
  * leanmcp login command
- * 
+ *
  * Authenticates with LeanMCP cloud using an API key.
  * Stores the API key in ~/.leanmcp/config.json
  */
@@ -101,22 +101,22 @@ function isValidApiUrl(url: string): boolean {
  */
 export async function getApiUrl(): Promise<string> {
   const config = await loadConfig();
-  
+
   if (!config.apiUrl) {
     return DEFAULT_API_URL;
   }
-  
+
   if (!isValidApiUrl(config.apiUrl)) {
     throw new Error(
       `Invalid API URL: ${config.apiUrl}\n` +
-      `Allowed URLs:\n` +
-      `  - https://api.leanmcp.com\n` +
-      `  - https://devapi.leanmcp.com\n` +
-      `  - https://qaapi.leanmcp.com\n` +
-      `  - http://localhost:3001`
+        `Allowed URLs:\n` +
+        `  - https://api.leanmcp.com\n` +
+        `  - https://devapi.leanmcp.com\n` +
+        `  - https://qaapi.leanmcp.com\n` +
+        `  - http://localhost:3001`
     );
   }
-  
+
   return config.apiUrl;
 }
 
@@ -130,7 +130,7 @@ export async function loginCommand() {
   const existingConfig = await loadConfig();
   if (existingConfig.apiKey) {
     logger.warn('You are already logged in.');
-    
+
     const shouldRelogin = await confirm({
       message: 'Do you want to replace the existing API key?',
       default: false,
@@ -145,7 +145,10 @@ export async function loginCommand() {
   // Show instructions
   logger.log('To authenticate, you need an API key from LeanMCP.\n', chalk.white);
   logger.info('Steps:');
-  logger.log('  1. Go to: ' + chalk.blue.underline('https://ship.leanmcp.com/api-keys'), chalk.gray);
+  logger.log(
+    '  1. Go to: ' + chalk.blue.underline('https://ship.leanmcp.com/api-keys'),
+    chalk.gray
+  );
   logger.gray('  2. Create a new API key with "BUILD_AND_DEPLOY" scope');
   logger.gray('  3. Copy the API key and paste it below\n');
 
@@ -169,19 +172,19 @@ export async function loginCommand() {
   try {
     const apiUrl = await getApiUrl();
     const validateUrl = `${apiUrl}/api-keys/validate`;
-    
+
     debug('API URL:', apiUrl);
     debug('Validate URL:', validateUrl);
     debug('Making validation request...');
-    
+
     const response = await fetch(validateUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${apiKey.trim()}`,
+        Authorization: `Bearer ${apiKey.trim()}`,
         'Content-Type': 'application/json',
       },
     });
-    
+
     debug('Response status:', response.status);
     debug('Response ok:', response.ok);
 
@@ -211,11 +214,10 @@ export async function loginCommand() {
     logger.info('You can now use:');
     logger.gray('  leanmcp deploy <folder>   - Deploy your MCP server');
     logger.gray('  leanmcp logout            - Remove your API key');
-
   } catch (error) {
     spinner.fail('Failed to validate API key');
     debug('Error:', error);
-    
+
     if (error instanceof Error && error.message.includes('fetch')) {
       logger.error('\nCould not connect to LeanMCP servers.');
       logger.gray('Please check your internet connection and try again.');
@@ -236,7 +238,7 @@ export async function logoutCommand() {
   logger.info('\nLeanMCP Logout\n');
 
   const config = await loadConfig();
-  
+
   if (!config.apiKey) {
     logger.warn('You are not currently logged in.');
     return;
@@ -268,7 +270,7 @@ export async function logoutCommand() {
  */
 export async function whoamiCommand() {
   const config = await loadConfig();
-  
+
   if (!config.apiKey) {
     logger.warn('\nYou are not logged in.');
     logger.gray('Run `leanmcp login` to authenticate.\n');
@@ -280,14 +282,14 @@ export async function whoamiCommand() {
   try {
     const apiUrl = await getApiUrl();
     const whoamiUrl = `${apiUrl}/api-keys/whoami`;
-    
+
     debug('API URL:', apiUrl);
     debug('Whoami URL:', whoamiUrl);
 
     const response = await fetch(whoamiUrl, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
+        Authorization: `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -315,11 +317,10 @@ export async function whoamiCommand() {
     logger.log(`  ${chalk.bold('Tier:')}     ${user.userTier || 'free'}`);
     logger.gray(`\n  API Key: ${config.apiKey.substring(0, 20)}...`);
     logger.log('');
-
   } catch (error) {
     spinner.fail('Failed to fetch account info');
     debug('Error:', error);
-    
+
     if (error instanceof Error && error.message.includes('fetch')) {
       logger.error('\nCould not connect to LeanMCP servers.');
       logger.gray('Please check your internet connection and try again.');

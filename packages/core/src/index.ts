@@ -1,9 +1,9 @@
-import "reflect-metadata";
-import fs from "fs";
-import path from "path";
-import { pathToFileURL } from "url";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import 'reflect-metadata';
+import fs from 'fs';
+import path from 'path';
+import { pathToFileURL } from 'url';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
@@ -11,8 +11,8 @@ import {
   ReadResourceRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import Ajv from "ajv";
+} from '@modelcontextprotocol/sdk/types.js';
+import Ajv from 'ajv';
 
 export * from "./decorators";
 export * from "./schema-generator";
@@ -41,19 +41,21 @@ export interface MCPServerConstructorOptions {
   name: string;
   version: string;
   logging?: boolean;
-  debug?: boolean;         // Enable detailed debug logs (default: false)
-  autoDiscover?: boolean;  // Enable automatic service discovery (default: true)
-  mcpDir?: string;         // Custom mcp directory path (optional)
-  serviceFactories?: Record<string, () => any>;  // Dependency injection factories
+  debug?: boolean; // Enable detailed debug logs (default: false)
+  autoDiscover?: boolean; // Enable automatic service discovery (default: true)
+  mcpDir?: string; // Custom mcp directory path (optional)
+  serviceFactories?: Record<string, () => any>; // Dependency injection factories
   // HTTP Server options (used when passing to createHTTPServer directly)
   port?: number;
-  cors?: boolean | {
-    origin?: string | string[];
-    credentials?: boolean;
-  };
+  cors?:
+    | boolean
+    | {
+        origin?: string | string[];
+        credentials?: boolean;
+      };
   sessionTimeout?: number;
-  stateless?: boolean;     // Stateless mode for Lambda/serverless (default: true)
-  dashboard?: boolean;     // Serve dashboard UI (default: true)
+  stateless?: boolean; // Stateless mode for Lambda/serverless (default: true)
+  dashboard?: boolean; // Serve dashboard UI (default: true)
   /** OAuth/Auth configuration (MCP authorization spec) - passed to HTTPServerOptions */
   auth?: import('./http-server').HTTPServerAuthOptions;
 }
@@ -65,7 +67,7 @@ interface RegisteredTool {
   method: Function;
   instance: any;
   propertyKey: string;
-  _meta?: Record<string, unknown>;  // Tool metadata (e.g., ui/resourceUri)
+  _meta?: Record<string, unknown>; // Tool metadata (e.g., ui/resourceUri)
 }
 
 interface RegisteredPrompt {
@@ -116,7 +118,7 @@ export class MCPServer {
 
     this.logger = new Logger({
       level: logLevel,
-      prefix: 'MCPServer'
+      prefix: 'MCPServer',
     });
 
     this.server = new Server(
@@ -248,13 +250,13 @@ export class MCPServer {
         const normalizedPath = fileName.replace(/\\/g, '/');
 
         // Check if this file is NOT from the @leanmcp/core package
-        const isLeanMCPCore = normalizedPath.includes('@leanmcp/core') ||
+        const isLeanMCPCore =
+          normalizedPath.includes('@leanmcp/core') ||
           normalizedPath.includes('leanmcp-sdk/packages/core');
 
         // Check if this is a valid TypeScript/JavaScript file
-        const isValidExtension = fileName.endsWith('.ts') ||
-          fileName.endsWith('.js') ||
-          fileName.endsWith('.mjs');
+        const isValidExtension =
+          fileName.endsWith('.ts') || fileName.endsWith('.js') || fileName.endsWith('.mjs');
 
         if (!isLeanMCPCore && isValidExtension) {
           return fileName;
@@ -278,7 +280,7 @@ export class MCPServer {
           name,
           description: tool.description,
           inputSchema: tool.inputSchema || {
-            type: "object",
+            type: 'object',
             properties: {},
           },
         };
@@ -359,7 +361,7 @@ export class MCPServer {
         const response: any = {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: formattedResult,
             },
           ],
@@ -368,7 +370,9 @@ export class MCPServer {
         if (structuredContent) {
           response.structuredContent = structuredContent;
           if (this.logger) {
-            this.logger.debug(`[MCPServer] Setting structuredContent: ${JSON.stringify(structuredContent).slice(0, 100)}...`);
+            this.logger.debug(
+              `[MCPServer] Setting structuredContent: ${JSON.stringify(structuredContent).slice(0, 100)}...`
+            );
           }
         }
 
@@ -382,7 +386,7 @@ export class MCPServer {
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Error: ${error.message}`,
             },
           ],
@@ -487,9 +491,9 @@ export class MCPServer {
           description: prompt.description,
           messages: [
             {
-              role: "user",
+              role: 'user',
               content: {
-                type: "text",
+                type: 'text',
                 text: typeof result === 'string' ? result : JSON.stringify(result),
               },
             },
@@ -504,14 +508,14 @@ export class MCPServer {
   /**
    * Auto-register all services from the mcp directory
    * Scans the directory recursively and registers all exported classes
-   * 
+   *
    * @param mcpDir - Path to the mcp directory containing service files
    * @param serviceFactories - Optional map of service class names to factory functions for dependency injection
-   * 
+   *
    * @example
    * // Auto-register services with no dependencies
    * await server.autoRegisterServices('./mcp');
-   * 
+   *
    * @example
    * // Auto-register with dependency injection
    * await server.autoRegisterServices('./mcp', {
@@ -519,10 +523,7 @@ export class MCPServer {
    *   AuthService: () => new AuthService(authProvider)
    * });
    */
-  async autoRegisterServices(
-    mcpDir: string,
-    serviceFactories?: Record<string, () => any>
-  ) {
+  async autoRegisterServices(mcpDir: string, serviceFactories?: Record<string, () => any>) {
     this.logger.debug(`Auto-registering services from: ${mcpDir}`);
 
     if (!fs.existsSync(mcpDir)) {
@@ -620,12 +621,12 @@ export class MCPServer {
     const cls = instance.constructor;
 
     // Find all @Tool decorated methods
-    const toolMethods = getDecoratedMethods(cls, "tool:name");
+    const toolMethods = getDecoratedMethods(cls, 'tool:name');
     for (const { method, propertyKey } of toolMethods) {
       const methodMeta = getMethodMetadata(method);
 
       // Check if this is a class-based schema (automatic type inference)
-      const inputClass = (Reflect as any).getMetadata?.("tool:inputClass", method);
+      const inputClass = (Reflect as any).getMetadata?.('tool:inputClass', method);
 
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
@@ -638,7 +639,7 @@ export class MCPServer {
 
       this.tools.set(methodMeta.toolName!, {
         name: methodMeta.toolName!,
-        description: methodMeta.toolDescription || "",
+        description: methodMeta.toolDescription || '',
         inputSchema: inputSchema,
         method,
         instance,
@@ -648,17 +649,19 @@ export class MCPServer {
 
       if (this.logging) {
         const hasUi = toolMeta['ui/resourceUri'] ? ' (with UI)' : '';
-        this.logger.debug(`Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}${hasUi}`);
+        this.logger.debug(
+          `Registered tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}${hasUi}`
+        );
       }
     }
 
     // Find all @Prompt decorated methods
-    const promptMethods = getDecoratedMethods(cls, "prompt:name");
+    const promptMethods = getDecoratedMethods(cls, 'prompt:name');
     for (const { method, propertyKey } of promptMethods) {
       const methodMeta = getMethodMetadata(method);
 
       // Check if this is a class-based schema (automatic type inference)
-      const inputClass = (Reflect as any).getMetadata?.("prompt:inputClass", method);
+      const inputClass = (Reflect as any).getMetadata?.('prompt:inputClass', method);
 
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
@@ -667,16 +670,16 @@ export class MCPServer {
       }
 
       const promptArgs = inputSchema?.properties
-        ? Object.keys(inputSchema.properties).map(key => ({
-          name: key,
-          description: inputSchema?.properties?.[key]?.description || "",
-          required: inputSchema?.required?.includes(key) || false,
-        }))
+        ? Object.keys(inputSchema.properties).map((key) => ({
+            name: key,
+            description: inputSchema?.properties?.[key]?.description || '',
+            required: inputSchema?.required?.includes(key) || false,
+          }))
         : [];
 
       this.prompts.set(methodMeta.promptName!, {
         name: methodMeta.promptName!,
-        description: methodMeta.promptDescription || "",
+        description: methodMeta.promptDescription || '',
         arguments: promptArgs,
         method,
         instance,
@@ -689,12 +692,12 @@ export class MCPServer {
     }
 
     // Find all @Resource decorated methods
-    const resourceMethods = getDecoratedMethods(cls, "resource:uri");
+    const resourceMethods = getDecoratedMethods(cls, 'resource:uri');
     for (const { method, propertyKey } of resourceMethods) {
       const methodMeta = getMethodMetadata(method);
 
       // Check if this is a class-based schema (automatic type inference)
-      const inputClass = (Reflect as any).getMetadata?.("resource:inputClass", method);
+      const inputClass = (Reflect as any).getMetadata?.('resource:inputClass', method);
 
       let inputSchema = methodMeta.inputSchema;
       if (inputClass) {
@@ -703,12 +706,13 @@ export class MCPServer {
       }
 
       // Read mimeType from metadata (set by @Resource decorator)
-      const mimeType = (Reflect as any).getMetadata?.("resource:mimeType", method) || "application/json";
+      const mimeType =
+        (Reflect as any).getMetadata?.('resource:mimeType', method) || 'application/json';
 
       this.resources.set(methodMeta.resourceUri!, {
         uri: methodMeta.resourceUri!,
         name: methodMeta.resourceName || methodMeta.resourceUri!,
-        description: methodMeta.resourceDescription || "",
+        description: methodMeta.resourceDescription || '',
         mimeType: mimeType,
         inputSchema: inputSchema,
         method,
@@ -724,7 +728,7 @@ export class MCPServer {
 
   /**
    * Watch UI manifest for changes and reload resources dynamically
-   * 
+   *
    * CRITICAL: Only for stateful mode. In stateless mode, each request
    * creates a fresh server that reads the manifest directly, making
    * watchers both unnecessary and a memory leak source.
@@ -747,33 +751,35 @@ export class MCPServer {
         this.logger.debug(`Watching UI manifest: ${manifestPath}`);
       }
 
-      import('chokidar').then(({ default: chokidar }) => {
-        this.manifestWatcher = chokidar.watch(manifestPath, {
-          ignoreInitial: true,
-          persistent: true,
-          awaitWriteFinish: {
-            stabilityThreshold: 100,
-            pollInterval: 50
-          }
-        });
+      import('chokidar')
+        .then(({ default: chokidar }) => {
+          this.manifestWatcher = chokidar.watch(manifestPath, {
+            ignoreInitial: true,
+            persistent: true,
+            awaitWriteFinish: {
+              stabilityThreshold: 100,
+              pollInterval: 50,
+            },
+          });
 
-        this.manifestWatcher.on('change', async () => {
-          if (this.logging) {
-            this.logger.debug('UI manifest changed, reloading resources');
-          }
-          await this.reloadUIManifest();
-        });
+          this.manifestWatcher.on('change', async () => {
+            if (this.logging) {
+              this.logger.debug('UI manifest changed, reloading resources');
+            }
+            await this.reloadUIManifest();
+          });
 
-        this.manifestWatcher.on('error', (error: any) => {
+          this.manifestWatcher.on('error', (error: any) => {
+            if (this.logging) {
+              this.logger.warn(`Manifest watcher error: ${error.message}`);
+            }
+          });
+        })
+        .catch((error: any) => {
           if (this.logging) {
-            this.logger.warn(`Manifest watcher error: ${error.message}`);
+            this.logger.warn(`Failed to initialize manifest watcher: ${error.message}`);
           }
         });
-      }).catch((error: any) => {
-        if (this.logging) {
-          this.logger.warn(`Failed to initialize manifest watcher: ${error.message}`);
-        }
-      });
     } catch (error: any) {
       if (this.logging) {
         this.logger.warn(`Failed to setup manifest watcher: ${error.message}`);
@@ -789,7 +795,9 @@ export class MCPServer {
       const manifestPath = path.join(process.cwd(), 'dist', 'ui-manifest.json');
 
       if (!fs.existsSync(manifestPath)) {
-        const uiResourceUris = Array.from(this.resources.keys()).filter(uri => uri.startsWith('ui://'));
+        const uiResourceUris = Array.from(this.resources.keys()).filter((uri) =>
+          uri.startsWith('ui://')
+        );
         for (const uri of uiResourceUris) {
           this.resources.delete(uri);
           if (this.logging) {
@@ -799,9 +807,14 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<
+        string,
+        string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }
+      > = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
       const currentUIUris = new Set(Object.keys(manifest));
-      const registeredUIUris = Array.from(this.resources.keys()).filter(uri => uri.startsWith('ui://'));
+      const registeredUIUris = Array.from(this.resources.keys()).filter((uri) =>
+        uri.startsWith('ui://')
+      );
 
       // Remove resources no longer in manifest
       for (const uri of registeredUIUris) {
@@ -831,14 +844,15 @@ export class MCPServer {
         const wasRegistered = this.resources.has(uri);
 
         // Determine mimeType (ChatGPT requires text/html+skybridge)
-        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+        const mimeType = isGPTApp ? 'text/html+skybridge' : 'text/html;profile=mcp-app';
 
         // Construct metadata
         const _meta: Record<string, any> = {};
         if (isGPTApp) {
           _meta['openai/outputTemplate'] = uri;
           if (gptMeta) Object.assign(_meta, gptMeta);
-          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+          if (_meta['openai/widgetPrefersBorder'] === undefined)
+            _meta['openai/widgetPrefersBorder'] = true;
         }
 
         this.resources.set(uri, {
@@ -852,7 +866,7 @@ export class MCPServer {
               const html = fs.readFileSync(htmlPath, 'utf-8');
               return {
                 text: html,
-                _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+                _meta: Object.keys(_meta).length > 0 ? _meta : undefined,
               };
             }
             throw new Error(`UI HTML file not found: ${htmlPath}`);
@@ -887,7 +901,10 @@ export class MCPServer {
         return;
       }
 
-      const manifest: Record<string, string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }> = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
+      const manifest: Record<
+        string,
+        string | { htmlPath: string; isGPTApp?: boolean; gptMeta?: any }
+      > = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
 
       for (const [uri, entry] of Object.entries(manifest)) {
         // Normalize entry
@@ -916,14 +933,15 @@ export class MCPServer {
         const html = fs.readFileSync(htmlPath, 'utf-8');
 
         // Determine mimeType (ChatGPT requires text/html+skybridge)
-        const mimeType = isGPTApp ? "text/html+skybridge" : "text/html;profile=mcp-app";
+        const mimeType = isGPTApp ? 'text/html+skybridge' : 'text/html;profile=mcp-app';
 
         // Construct metadata
         const _meta: Record<string, any> = {};
         if (isGPTApp) {
           _meta['openai/outputTemplate'] = uri;
           if (gptMeta) Object.assign(_meta, gptMeta);
-          if (_meta['openai/widgetPrefersBorder'] === undefined) _meta['openai/widgetPrefersBorder'] = true;
+          if (_meta['openai/widgetPrefersBorder'] === undefined)
+            _meta['openai/widgetPrefersBorder'] = true;
         }
 
         this.resources.set(uri, {
@@ -934,7 +952,7 @@ export class MCPServer {
           inputSchema: undefined,
           method: async () => ({
             text: html,
-            _meta: Object.keys(_meta).length > 0 ? _meta : undefined
+            _meta: Object.keys(_meta).length > 0 ? _meta : undefined,
           }),
           instance: null,
           propertyKey: 'getUI',
@@ -1010,12 +1028,12 @@ export class MCPServerRuntime {
     this.options = options;
     this.logger = new Logger({
       level: this.options.logging ? LogLevel.INFO : LogLevel.NONE,
-      prefix: 'MCPServerRuntime'
+      prefix: 'MCPServerRuntime',
     });
     this.server = new Server(
       {
-        name: "leanmcp-server",
-        version: "0.1.0",
+        name: 'leanmcp-server',
+        version: '0.1.0',
       },
       {
         capabilities: {
@@ -1039,7 +1057,7 @@ export class MCPServerRuntime {
           name,
           description: tool.description,
           inputSchema: tool.inputSchema || {
-            type: "object",
+            type: 'object',
             properties: {},
           },
         });
@@ -1086,7 +1104,7 @@ export class MCPServerRuntime {
           return {
             content: [
               {
-                type: "text",
+                type: 'text',
                 text: JSON.stringify(result, null, 2),
               },
             ],
@@ -1107,7 +1125,7 @@ export class MCPServerRuntime {
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: formattedResult,
             },
           ],
@@ -1116,7 +1134,7 @@ export class MCPServerRuntime {
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Error: ${error.message}`,
             },
           ],
@@ -1205,9 +1223,9 @@ export class MCPServerRuntime {
           description: prompt.description,
           messages: [
             {
-              role: "user",
+              role: 'user',
               content: {
-                type: "text",
+                type: 'text',
                 text: typeof result === 'string' ? result : JSON.stringify(result),
               },
             },
@@ -1233,11 +1251,14 @@ export class MCPServerRuntime {
     let resourceCount = 0;
 
     for (const dir of files) {
-      const modulePath = path.join(absPath, dir, "index.ts");
-      const modulePathJs = path.join(absPath, dir, "index.js");
+      const modulePath = path.join(absPath, dir, 'index.ts');
+      const modulePathJs = path.join(absPath, dir, 'index.js');
 
-      const finalPath = fs.existsSync(modulePath) ? modulePath :
-        fs.existsSync(modulePathJs) ? modulePathJs : null;
+      const finalPath = fs.existsSync(modulePath)
+        ? modulePath
+        : fs.existsSync(modulePathJs)
+          ? modulePathJs
+          : null;
 
       if (finalPath) {
         try {
@@ -1245,7 +1266,7 @@ export class MCPServerRuntime {
           const fileUrl = pathToFileURL(finalPath).href;
           const mod = await import(fileUrl);
           const exportedClasses = Object.values(mod).filter(
-            (val) => typeof val === "function" && val.prototype
+            (val) => typeof val === 'function' && val.prototype
           );
 
           for (const cls of exportedClasses) {
@@ -1253,19 +1274,19 @@ export class MCPServerRuntime {
             const instance = new (cls as any)();
 
             // Inject user envs if decorator is present
-            const envsPropKey = (Reflect as any).getMetadata?.("userenvs:propertyKey", cls);
+            const envsPropKey = (Reflect as any).getMetadata?.('userenvs:propertyKey', cls);
             if (envsPropKey) {
               instance[envsPropKey] = process.env;
             }
 
             // Find all @Tool decorated methods
-            const toolMethods = getDecoratedMethods(cls, "tool:name");
+            const toolMethods = getDecoratedMethods(cls, 'tool:name');
             for (const { method, propertyKey, metadata } of toolMethods) {
               const methodMeta = getMethodMetadata(method);
 
               // Check if this is a class-based schema (automatic type inference)
-              const inputClass = (Reflect as any).getMetadata?.("tool:inputClass", method);
-              const outputClass = (Reflect as any).getMetadata?.("tool:outputClass", method);
+              const inputClass = (Reflect as any).getMetadata?.('tool:inputClass', method);
+              const outputClass = (Reflect as any).getMetadata?.('tool:outputClass', method);
 
               let inputSchema = methodMeta.inputSchema;
               if (inputClass) {
@@ -1275,7 +1296,7 @@ export class MCPServerRuntime {
 
               this.tools.set(methodMeta.toolName!, {
                 name: methodMeta.toolName!,
-                description: methodMeta.toolDescription || "",
+                description: methodMeta.toolDescription || '',
                 inputSchema: inputSchema,
                 method,
                 instance,
@@ -1283,25 +1304,27 @@ export class MCPServerRuntime {
               });
               toolCount++;
               if (this.options.logging) {
-                this.logger.info(`Loaded tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`);
+                this.logger.info(
+                  `Loaded tool: ${methodMeta.toolName}${inputClass ? ' (class-based schema)' : ''}`
+                );
               }
             }
 
             // Find all @Prompt decorated methods
-            const promptMethods = getDecoratedMethods(cls, "prompt:name");
+            const promptMethods = getDecoratedMethods(cls, 'prompt:name');
             for (const { method, propertyKey, metadata } of promptMethods) {
               const methodMeta = getMethodMetadata(method);
               const promptArgs = methodMeta.inputSchema?.properties
-                ? Object.keys(methodMeta.inputSchema.properties).map(key => ({
-                  name: key,
-                  description: methodMeta.inputSchema?.properties?.[key]?.description || "",
-                  required: methodMeta.inputSchema?.required?.includes(key) || false,
-                }))
+                ? Object.keys(methodMeta.inputSchema.properties).map((key) => ({
+                    name: key,
+                    description: methodMeta.inputSchema?.properties?.[key]?.description || '',
+                    required: methodMeta.inputSchema?.required?.includes(key) || false,
+                  }))
                 : [];
 
               this.prompts.set(methodMeta.promptName!, {
                 name: methodMeta.promptName!,
-                description: methodMeta.promptDescription || "",
+                description: methodMeta.promptDescription || '',
                 arguments: promptArgs,
                 method,
                 instance,
@@ -1314,14 +1337,14 @@ export class MCPServerRuntime {
             }
 
             // Find all @Resource decorated methods
-            const resourceMethods = getDecoratedMethods(cls, "resource:uri");
+            const resourceMethods = getDecoratedMethods(cls, 'resource:uri');
             for (const { method, propertyKey, metadata } of resourceMethods) {
               const methodMeta = getMethodMetadata(method);
               this.resources.set(methodMeta.resourceUri!, {
                 uri: methodMeta.resourceUri!,
                 name: methodMeta.resourceName || methodMeta.resourceUri!,
-                description: methodMeta.resourceDescription || "",
-                mimeType: "application/json",
+                description: methodMeta.resourceDescription || '',
+                mimeType: 'application/json',
                 method,
                 instance,
                 propertyKey,
@@ -1342,7 +1365,9 @@ export class MCPServerRuntime {
     }
 
     if (this.options.logging) {
-      this.logger.info(`\nLoaded ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`);
+      this.logger.info(
+        `\nLoaded ${toolCount} tools, ${promptCount} prompts, ${resourceCount} resources`
+      );
     }
   }
 
@@ -1353,7 +1378,7 @@ export class MCPServerRuntime {
     await this.server.connect(transport);
 
     if (this.options.logging) {
-      this.logger.info("LeanMCP server running on stdio");
+      this.logger.info('LeanMCP server running on stdio');
     }
   }
 

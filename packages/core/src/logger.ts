@@ -7,7 +7,7 @@ export enum LogLevel {
   INFO = 1,
   WARN = 2,
   ERROR = 3,
-  NONE = 4
+  NONE = 4,
 }
 
 export interface LoggerOptions {
@@ -46,7 +46,7 @@ const COLORS = {
   gray: '\u001b[38;5;244m',
   blue: '\u001b[1;34m',
   amber: '\u001b[38;5;214m',
-  red: '\u001b[1;31m'
+  red: '\u001b[1;31m',
 };
 
 const levelStyles: Record<LogLevel, { label: string; color: string }> = {
@@ -54,7 +54,7 @@ const levelStyles: Record<LogLevel, { label: string; color: string }> = {
   [LogLevel.INFO]: { label: 'INFO', color: COLORS.blue },
   [LogLevel.WARN]: { label: 'WARN', color: COLORS.amber },
   [LogLevel.ERROR]: { label: 'ERROR', color: COLORS.red },
-  [LogLevel.NONE]: { label: 'NONE', color: COLORS.gray }
+  [LogLevel.NONE]: { label: 'NONE', color: COLORS.gray },
 };
 
 export class Logger {
@@ -91,7 +91,12 @@ export class Logger {
     return level >= this.level && this.level !== LogLevel.NONE;
   }
 
-  private emit(level: LogLevel, message: string, consoleFn: (...args: any[]) => void, ...args: any[]): void {
+  private emit(
+    level: LogLevel,
+    message: string,
+    consoleFn: (...args: any[]) => void,
+    ...args: any[]
+  ): void {
     if (!this.shouldLog(level)) return;
 
     const payload: LogPayload = {
@@ -101,11 +106,11 @@ export class Logger {
       args,
       prefix: this.prefix,
       context: this.context,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     consoleFn(this.format(level, message), ...args);
-    this.handlers.forEach(handler => {
+    this.handlers.forEach((handler) => {
       try {
         handler(payload);
       } catch (err) {
@@ -143,5 +148,5 @@ export class Logger {
 // Default logger instance
 export const defaultLogger = new Logger({
   level: LogLevel.INFO,
-  prefix: 'LeanMCP'
+  prefix: 'LeanMCP',
 });

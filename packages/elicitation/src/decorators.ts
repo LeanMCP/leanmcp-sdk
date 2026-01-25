@@ -1,9 +1,9 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import {
   ElicitationConfig,
   ElicitationContext,
   ElicitationRequest,
-  ElicitationStep
+  ElicitationStep,
 } from './types';
 import { FormElicitationStrategy } from './strategies/form';
 import { MultiStepElicitationStrategy } from './strategies/multi-step';
@@ -28,7 +28,7 @@ export function checkMissingFields(args: any, config: ElicitationConfig): boolea
 
 /**
  * Decorator to mark a method as requiring elicitation
- * 
+ *
  * @example
  * // Simple form elicitation
  * @Tool({ description: 'Create Slack channel' })
@@ -42,7 +42,7 @@ export function checkMissingFields(args: any, config: ElicitationConfig): boolea
  * async createChannel(args: CreateChannelInput) {
  *   // Method receives complete args after elicitation
  * }
- * 
+ *
  * @example
  * // Conditional elicitation
  * @Tool({ description: 'Send message' })
@@ -56,7 +56,7 @@ export function checkMissingFields(args: any, config: ElicitationConfig): boolea
  * async sendMessage(args: SendMessageInput) {
  *   // Only elicits if channelId is missing
  * }
- * 
+ *
  * @example
  * // Multi-step elicitation
  * @Tool({ description: 'Deploy app' })
@@ -80,26 +80,26 @@ export function checkMissingFields(args: any, config: ElicitationConfig): boolea
 export function Elicitation(config: ElicitationConfig): MethodDecorator {
   return (target, propertyKey, descriptor) => {
     if (!descriptor || typeof descriptor.value !== 'function') {
-      throw new Error("@Elicitation can only be applied to methods");
+      throw new Error('@Elicitation can only be applied to methods');
     }
 
     const originalMethod = descriptor.value;
 
     // Store elicitation config in metadata
-    Reflect.defineMetadata("elicitation:config", config, originalMethod);
-    Reflect.defineMetadata("elicitation:enabled", true, originalMethod);
+    Reflect.defineMetadata('elicitation:config', config, originalMethod);
+    Reflect.defineMetadata('elicitation:enabled', true, originalMethod);
 
     // Store strategy type
     const strategy = config.strategy || 'form';
-    Reflect.defineMetadata("elicitation:strategy", strategy, originalMethod);
+    Reflect.defineMetadata('elicitation:strategy', strategy, originalMethod);
 
     // Wrap the method to handle elicitation
-    descriptor.value = async function(this: any, args: any, meta?: any) {
+    descriptor.value = async function (this: any, args: any, meta?: any) {
       // Check if elicitation is needed
       const context: ElicitationContext = {
         args: args || {},
         meta,
-        previousAttempts: 0
+        previousAttempts: 0,
       };
 
       // Check condition if provided
@@ -115,7 +115,7 @@ export function Elicitation(config: ElicitationConfig): MethodDecorator {
       // If builder is provided, build the config first to get fields
       if (config.builder) {
         const builtConfig = config.builder(context);
-        
+
         // If builder returns ElicitationConfig (from fluent builder)
         if (builtConfig && typeof builtConfig === 'object' && 'fields' in builtConfig) {
           fieldsToCheck = (builtConfig as any).fields || [];
@@ -146,7 +146,7 @@ export function Elicitation(config: ElicitationConfig): MethodDecorator {
       if (needsElicitation) {
         // Build and return elicitation request
         const elicitationRequest = buildElicitationRequestInternal(config, context);
-        
+
         // Return elicitation request (core will format it)
         return elicitationRequest;
       }
@@ -185,50 +185,52 @@ function buildElicitationRequestInternal(
   // Use builder if provided
   if (config.builder) {
     const result = config.builder(context);
-    
+
     // If builder returns steps array, use multi-step strategy
     if (Array.isArray(result)) {
       const strategy = new MultiStepElicitationStrategy(result as ElicitationStep[]);
       return strategy.buildRequest(config, context);
     }
-    
+
     // If builder returns ElicitationConfig (from fluent builder)
     if (result && typeof result === 'object' && 'fields' in result) {
       const builtConfig = result as any;
       const strategy = new FormElicitationStrategy();
       return strategy.buildRequest(builtConfig, context);
     }
-    
+
     // If builder returns ElicitationRequest directly
     return result as ElicitationRequest;
   }
 
   // Use strategy-based building
   const strategyType = config.strategy || 'form';
-  
+
   switch (strategyType) {
     case 'form': {
       const strategy = new FormElicitationStrategy();
       return strategy.buildRequest(config, context);
     }
-    
+
     case 'multi-step': {
       // For multi-step without builder, fields should be provided as steps
       if (!config.fields) {
-        throw new Error("Multi-step elicitation requires either a builder or fields");
+        throw new Error('Multi-step elicitation requires either a builder or fields');
       }
-      
+
       // Convert fields to a single step
-      const steps: ElicitationStep[] = [{
-        title: config.title || 'Step 1',
-        description: config.description,
-        fields: config.fields
-      }];
-      
+      const steps: ElicitationStep[] = [
+        {
+          title: config.title || 'Step 1',
+          description: config.description,
+          fields: config.fields,
+        },
+      ];
+
       const strategy = new MultiStepElicitationStrategy(steps);
       return strategy.buildRequest(config, context);
     }
-    
+
     default:
       throw new Error(`Unsupported elicitation strategy: ${strategyType}`);
   }
@@ -238,21 +240,21 @@ function buildElicitationRequestInternal(
  * Check if a method requires elicitation
  */
 export function isElicitationEnabled(method: Function): boolean {
-  return Reflect.getMetadata("elicitation:enabled", method) === true;
+  return Reflect.getMetadata('elicitation:enabled', method) === true;
 }
 
 /**
  * Get elicitation configuration for a method
  */
 export function getElicitationConfig(method: Function): ElicitationConfig | undefined {
-  return Reflect.getMetadata("elicitation:config", method);
+  return Reflect.getMetadata('elicitation:config', method);
 }
 
 /**
  * Get elicitation strategy type for a method
  */
 export function getElicitationStrategy(method: Function): string | undefined {
-  return Reflect.getMetadata("elicitation:strategy", method);
+  return Reflect.getMetadata('elicitation:strategy', method);
 }
 
 /**
@@ -269,7 +271,7 @@ export function buildElicitationRequest(
   const context: ElicitationContext = {
     args,
     meta,
-    previousAttempts: 0
+    previousAttempts: 0,
   };
 
   // Check condition if provided
@@ -280,43 +282,45 @@ export function buildElicitationRequest(
   // Use builder if provided
   if (config.builder) {
     const result = config.builder(context);
-    
+
     // If builder returns steps, use multi-step strategy
     if (Array.isArray(result)) {
       const strategy = new MultiStepElicitationStrategy(result as ElicitationStep[]);
       return strategy.buildRequest(config, context);
     }
-    
+
     // If builder returns request directly
     return result as ElicitationRequest;
   }
 
   // Use strategy-based building
   const strategyType = config.strategy || 'form';
-  
+
   switch (strategyType) {
     case 'form': {
       const strategy = new FormElicitationStrategy();
       return strategy.buildRequest(config, context);
     }
-    
+
     case 'multi-step': {
       // For multi-step without builder, fields should be provided as steps
       if (!config.fields) {
-        throw new Error("Multi-step elicitation requires either a builder or fields");
+        throw new Error('Multi-step elicitation requires either a builder or fields');
       }
-      
+
       // Convert fields to a single step
-      const steps: ElicitationStep[] = [{
-        title: config.title || 'Step 1',
-        description: config.description,
-        fields: config.fields
-      }];
-      
+      const steps: ElicitationStep[] = [
+        {
+          title: config.title || 'Step 1',
+          description: config.description,
+          fields: config.fields,
+        },
+      ];
+
       const strategy = new MultiStepElicitationStrategy(steps);
       return strategy.buildRequest(config, context);
     }
-    
+
     default:
       throw new Error(`Unsupported elicitation strategy: ${strategyType}`);
   }

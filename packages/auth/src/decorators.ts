@@ -1,7 +1,7 @@
-import "reflect-metadata";
-import { AsyncLocalStorage } from "async_hooks";
-import { AuthProviderBase } from "./index";
-import type { AuthenticatedOptions } from "./types";
+import 'reflect-metadata';
+import { AsyncLocalStorage } from 'async_hooks';
+import { AuthProviderBase } from './index';
+import type { AuthenticatedOptions } from './types';
 
 /**
  * Global authUser type declaration
@@ -10,7 +10,7 @@ import type { AuthenticatedOptions } from "./types";
 declare global {
   /**
    * Authenticated user object automatically available in @Authenticated methods
-   * 
+   *
    * Implemented as a getter that reads from AsyncLocalStorage for concurrency safety.
    * Each request has its own isolated context - 100% safe for concurrent requests.
    */
@@ -42,7 +42,7 @@ if (typeof globalThis !== 'undefined' && !Object.getOwnPropertyDescriptor(global
       return authUserStorage.getStore();
     },
     configurable: true,
-    enumerable: false
+    enumerable: false,
   });
 }
 
@@ -50,20 +50,23 @@ if (typeof globalThis !== 'undefined' && !Object.getOwnPropertyDescriptor(global
  * Authentication error class for better error handling
  */
 export class AuthenticationError extends Error {
-  constructor(message: string, public code: string) {
+  constructor(
+    message: string,
+    public code: string
+  ) {
     super(message);
-    this.name = "AuthenticationError";
+    this.name = 'AuthenticationError';
   }
 }
 
 /**
  * Decorator to protect MCP tools, prompts, resources, or entire services with authentication
- * 
+ *
  * CONCURRENCY SAFE: Uses AsyncLocalStorage to ensure each request has its own isolated
  * authUser context, preventing race conditions in high-concurrency scenarios.
- * 
+ *
  * Usage:
- * 
+ *
  * 1. Protect individual methods with automatic user info:
  * ```typescript
  * @Tool({ description: 'Analyze sentiment' })
@@ -74,7 +77,7 @@ export class AuthenticationError extends Error {
  *   console.log('User ID:', authUser.sub);
  * }
  * ```
- * 
+ *
  * 2. Protect without fetching user info:
  * ```typescript
  * @Tool({ description: 'Public tool' })
@@ -83,7 +86,7 @@ export class AuthenticationError extends Error {
  *   // Only verifies token, doesn't fetch user info
  * }
  * ```
- * 
+ *
  * 3. Protect entire service (all tools/prompts/resources):
  * ```typescript
  * @Authenticated(authProvider)
@@ -96,7 +99,7 @@ export class AuthenticationError extends Error {
  *   }
  * }
  * ```
- * 
+ *
  * The decorator expects authentication token in the MCP request _meta field:
  * ```json
  * {
@@ -113,7 +116,7 @@ export class AuthenticationError extends Error {
  *   }
  * }
  * ```
- * 
+ *
  * @param authProvider - Instance of AuthProviderBase to use for token verification
  * @param options - Optional configuration for authentication behavior
  */
@@ -124,14 +127,14 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
     // Case 1: Applied to a class (protect all methods)
     if (!propertyKey && !descriptor) {
       // Store auth provider on the class
-      Reflect.defineMetadata("auth:provider", authProvider, target);
-      Reflect.defineMetadata("auth:required", true, target);
-      Reflect.defineMetadata("auth:options", authOptions, target);
+      Reflect.defineMetadata('auth:provider', authProvider, target);
+      Reflect.defineMetadata('auth:required', true, target);
+      Reflect.defineMetadata('auth:options', authOptions, target);
 
       // Get all method names from the prototype
       const prototype = target.prototype;
       const methodNames = Object.getOwnPropertyNames(prototype).filter(
-        name => name !== 'constructor' && typeof prototype[name] === 'function'
+        (name) => name !== 'constructor' && typeof prototype[name] === 'function'
       );
 
       // Wrap each method with authentication
@@ -141,12 +144,16 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
           const originalMethod = originalDescriptor.value;
 
           // Store auth metadata on the method
-          Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
-          Reflect.defineMetadata("auth:required", true, originalMethod);
-          Reflect.defineMetadata("auth:options", authOptions, originalMethod);
+          Reflect.defineMetadata('auth:provider', authProvider, originalMethod);
+          Reflect.defineMetadata('auth:required', true, originalMethod);
+          Reflect.defineMetadata('auth:options', authOptions, originalMethod);
 
           // Wrap the method with authentication logic
-          prototype[methodName] = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
+          prototype[methodName] = createAuthenticatedMethod(
+            originalMethod,
+            authProvider,
+            authOptions
+          );
 
           // Copy metadata from original method to wrapped method
           copyMetadata(originalMethod, prototype[methodName]);
@@ -161,9 +168,9 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
       const originalMethod = descriptor.value;
 
       // Store auth metadata on the method
-      Reflect.defineMetadata("auth:provider", authProvider, originalMethod);
-      Reflect.defineMetadata("auth:required", true, originalMethod);
-      Reflect.defineMetadata("auth:options", authOptions, originalMethod);
+      Reflect.defineMetadata('auth:provider', authProvider, originalMethod);
+      Reflect.defineMetadata('auth:required', true, originalMethod);
+      Reflect.defineMetadata('auth:options', authOptions, originalMethod);
 
       // Wrap the method with authentication logic
       descriptor.value = createAuthenticatedMethod(originalMethod, authProvider, authOptions);
@@ -174,7 +181,7 @@ export function Authenticated(authProvider: AuthProviderBase, options?: Authenti
       return descriptor;
     }
 
-    throw new Error("@Authenticated can only be applied to classes or methods");
+    throw new Error('@Authenticated can only be applied to classes or methods');
   };
 }
 
@@ -196,8 +203,8 @@ function createAuthenticatedMethod(
     // Check if token is provided
     if (!token) {
       throw new AuthenticationError(
-        "Authentication required. Please provide a valid token in _meta.authorization.token",
-        "MISSING_TOKEN"
+        'Authentication required. Please provide a valid token in _meta.authorization.token',
+        'MISSING_TOKEN'
       );
     }
 
@@ -207,8 +214,8 @@ function createAuthenticatedMethod(
 
       if (!isValid) {
         throw new AuthenticationError(
-          "Invalid or expired token. Please authenticate again.",
-          "INVALID_TOKEN"
+          'Invalid or expired token. Please authenticate again.',
+          'INVALID_TOKEN'
         );
       }
     } catch (error) {
@@ -220,7 +227,7 @@ function createAuthenticatedMethod(
       // Otherwise, wrap the error
       throw new AuthenticationError(
         `Token verification failed: ${error instanceof Error ? error.message : String(error)}`,
-        "VERIFICATION_FAILED"
+        'VERIFICATION_FAILED'
       );
     }
 
@@ -239,17 +246,23 @@ function createAuthenticatedMethod(
     if (options.projectId) {
       try {
         // Check if auth provider supports getUserSecrets (LeanMCP provider)
-        if ('getUserSecrets' in authProvider && typeof (authProvider as any).getUserSecrets === 'function') {
+        if (
+          'getUserSecrets' in authProvider &&
+          typeof (authProvider as any).getUserSecrets === 'function'
+        ) {
           userSecrets = await (authProvider as any).getUserSecrets(token, options.projectId);
         } else {
           console.warn(
             '[Auth] Auth provider does not support user secrets. ' +
-            'Only the LeanMCP provider supports @RequireEnv and getEnv(). ' +
-            'Use: new AuthProvider("leanmcp", { apiKey: "..." })'
+              'Only the LeanMCP provider supports @RequireEnv and getEnv(). ' +
+              'Use: new AuthProvider("leanmcp", { apiKey: "..." })'
           );
         }
       } catch (error) {
-        console.warn('[Auth] Failed to fetch user secrets:', error instanceof Error ? error.message : error);
+        console.warn(
+          '[Auth] Failed to fetch user secrets:',
+          error instanceof Error ? error.message : error
+        );
       }
     }
 
@@ -299,12 +312,12 @@ function copyMetadata(source: Function, target: Function) {
  * Check if a method or class requires authentication
  */
 export function isAuthenticationRequired(target: any): boolean {
-  return Reflect.getMetadata("auth:required", target) === true;
+  return Reflect.getMetadata('auth:required', target) === true;
 }
 
 /**
  * Get the auth provider for a method or class
  */
 export function getAuthProvider(target: any): AuthProviderBase | undefined {
-  return Reflect.getMetadata("auth:provider", target);
+  return Reflect.getMetadata('auth:provider', target);
 }

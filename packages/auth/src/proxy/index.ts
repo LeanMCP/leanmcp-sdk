@@ -1,6 +1,6 @@
 /**
  * OAuth Proxy subpath exports
- * 
+ *
  * @example
  * ```typescript
  * import { OAuthProxy, googleProvider, githubProvider } from '@leanmcp/auth/proxy';

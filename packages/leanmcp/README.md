@@ -27,6 +27,10 @@
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
   </a>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  </a>
+  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
 ## Installation
@@ -36,6 +40,7 @@ npm install leanmcp
 ```
 
 This meta-package includes all LeanMCP packages:
+
 - `@leanmcp/core` — Core decorators (`@Tool`, `@Prompt`, `@Resource`) and HTTP server
 - `@leanmcp/auth` — Authentication with Cognito, Clerk, Auth0, LeanMCP providers
 - `@leanmcp/ui` — MCP-native React components, hooks, and `@UIApp`/`@GPTApp` decorators
@@ -61,15 +66,15 @@ import { Tool, SchemaConstraint } from 'leanmcp';
 class GreetInput {
   @SchemaConstraint({
     description: 'Name to greet',
-    minLength: 1
+    minLength: 1,
   })
   name!: string;
 }
 
 export class GreetingService {
-  @Tool({ 
+  @Tool({
     description: 'Greet someone',
-    inputClass: GreetInput
+    inputClass: GreetInput,
   })
   async greet(args: GreetInput) {
     return { message: `Hello, ${args.name}!` };
@@ -84,6 +89,7 @@ npm start
 ```
 
 Your MCP server starts on `http://localhost:8080` with:
+
 - HTTP endpoint: `http://localhost:8080/mcp`
 - Health check: `http://localhost:8080/health`
 
@@ -108,11 +114,11 @@ import { createHTTPServer, Tool } from 'leanmcp';
 
 // Services are automatically discovered from ./mcp directory
 await createHTTPServer({
-  name: "my-mcp-server",
-  version: "1.0.0",
+  name: 'my-mcp-server',
+  version: '1.0.0',
   port: 8080,
   cors: true,
-  logging: true
+  logging: true,
 });
 ```
 
@@ -124,7 +130,7 @@ import { Tool, AuthProvider, Authenticated } from 'leanmcp';
 const authProvider = new AuthProvider('cognito', {
   region: process.env.AWS_REGION,
   userPoolId: process.env.COGNITO_USER_POOL_ID,
-  clientId: process.env.COGNITO_CLIENT_ID
+  clientId: process.env.COGNITO_CLIENT_ID,
 });
 await authProvider.init();
 
@@ -145,7 +151,7 @@ import 'leanmcp/ui/styles.css';
 
 function App() {
   const transport = new HTTPTransport('http://localhost:8080/mcp');
-  
+
   return (
     <AppProvider transport={transport}>
       <AppShell />
@@ -183,6 +189,7 @@ npm install @leanmcp/cli         # CLI tools
 ## Documentation
 
 For complete documentation, examples, and API reference, visit:
+
 - [GitHub Repository](https://github.com/LeanMCP/leanmcp-sdk)
 - [Full Documentation](https://github.com/LeanMCP/leanmcp-sdk#readme)
 
