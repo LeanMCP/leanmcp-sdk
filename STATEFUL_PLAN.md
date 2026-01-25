@@ -11,8 +11,8 @@ MCP servers deployed on AWS Lambda lose in-memory state when containers recycle.
 
 | Component | Description | Persistable? | Solution |
 |-----------|-------------|--------------|----------|
-| **Transport** | HTTP connection object (`StreamableHTTPServerTransport`) | ❌ No | Recreate on-demand |
-| **Session Data** | User state (totals, history, context) | ✅ Yes | DynamoDB |
+| **Transport** | HTTP connection object (`StreamableHTTPServerTransport`) | No | Recreate on-demand |
+| **Session Data** | User state (totals, history, context) | Yes | DynamoDB |
 
 ### Current Flow (Broken on Lambda)
 
@@ -28,7 +28,7 @@ Request 2: tools/call with mcp-session-id: abc123
 ├── Container B starts (fresh memory)
 ├── transports = {} (empty!)
 ├── transports["abc123"] = undefined
-└── ❌ Returns 400 Bad Request
+└── Returns 400 Bad Request
 ```
 
 ### Target Flow (Fixed)
@@ -38,23 +38,23 @@ Request 1: initialize (first request)
 ├── Container A starts
 ├── Creates transport with sessionIdGenerator: () => randomUUID()
 ├── Transport generates session ID: "abc123"
-├── ⭐ Store in memory: transports["abc123"] = transport
-├── ⭐ Store in DynamoDB: sessions.createSession("abc123")
+├── Store in memory: transports["abc123"] = transport
+├── Store in DynamoDB: sessions.createSession("abc123")
 ├── Returns response with mcp-session-id: abc123
-└── ✅ Client saves session ID for future requests
+└── Client saves session ID for future requests
 
      ↓ Lambda recycles (or different container) ↓
 
 Request 2: tools/call with mcp-session-id: abc123
 ├── Container B starts (fresh memory)
 ├── transports["abc123"] = undefined (memory is empty!)
-├── ⭐ Check DynamoDB: session "abc123" exists? YES
-├── ⭐ Recreate transport with sessionIdGenerator: () => "abc123" (reuse ID!)
+├── Check DynamoDB: session "abc123" exists? YES
+├── Recreate transport with sessionIdGenerator: () => "abc123" (reuse ID!)
 ├── Store in memory: transports["abc123"] = newTransport
 ├── Create fresh MCP server instance
 ├── Connect server to recreated transport
 ├── Handle the request normally
-└── ✅ Session continues seamlessly
+└── Session continues seamlessly
 ```
 
 ---
@@ -153,12 +153,12 @@ const handleMCPRequestStateful = async (req: any, res: any) => {
 
   try {
     if (sessionId && transports[sessionId]) {
-      // ✅ Transport exists in memory - reuse it
+      // Transport exists in memory - reuse it
       transport = transports[sessionId];
       logger.debug(`Reusing session: ${sessionId}`);
       
     } else if (sessionId && !isInitializeRequest(req.body)) {
-      // ⭐ NEW: Session ID provided but transport missing (Lambda recycled)
+      // NEW: Session ID provided but transport missing (Lambda recycled)
       logger.info(`Transport missing for session ${sessionId}, checking session store...`);
       
       // Check if session exists in persistent store
@@ -207,7 +207,7 @@ const handleMCPRequestStateful = async (req: any, res: any) => {
       }
       
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      // ✅ New session - create transport
+      // New session - create transport
       logger.info("Creating new MCP session...");
       
       transport = new StreamableHTTPServerTransport({
@@ -216,7 +216,7 @@ const handleMCPRequestStateful = async (req: any, res: any) => {
           transports[newSessionId] = transport;
           logger.info(`Session initialized: ${newSessionId}`);
           
-          // ⭐ NEW: Persist session to store
+          // NEW: Persist session to store
           if (httpOptions.sessionStore) {
             await httpOptions.sessionStore.createSession(newSessionId);
           }
@@ -228,7 +228,7 @@ const handleMCPRequestStateful = async (req: any, res: any) => {
           delete transports[transport.sessionId];
           logger.debug(`Session cleaned up: ${transport.sessionId}`);
           
-          // ⭐ NEW: Remove from session store
+          // NEW: Remove from session store
           if (httpOptions.sessionStore) {
             await httpOptions.sessionStore.deleteSession(transport.sessionId);
           }
@@ -534,7 +534,7 @@ import { z } from 'zod';
 const app = express();
 app.use(express.json());
 
-// ⭐ ONE LINE CHANGE: Replace Map with LeanMCPSessionProvider
+// ONE LINE CHANGE: Replace Map with LeanMCPSessionProvider
 const sessions = new LeanMCPSessionProvider();
 
 // Your MCP server factory
@@ -547,7 +547,7 @@ function createServer() {
   server.tool('add', { number: z.number() }, async ({ number }, extra) => {
     const sessionId = extra.sessionId;
     
-    // ⭐ Get/update session data from DynamoDB
+    // Get/update session data from DynamoDB
     const data = await sessions.getSessionData(sessionId) || { total: 0 };
     data.total += number;
     await sessions.updateSessionData(sessionId, data);
@@ -570,11 +570,11 @@ app.post('/mcp', async (req, res) => {
     let transport: StreamableHTTPServerTransport;
 
     if (sessionId && sessions.get(sessionId)) {
-      // ✅ Transport exists in memory
+      // Transport exists in memory
       transport = sessions.get(sessionId)!;
       
     } else if (sessionId && !isInitializeRequest(req.body)) {
-      // ⭐ KEY: Transport missing but session might exist in DynamoDB
+      // KEY: Transport missing but session might exist in DynamoDB
       const recreated = await sessions.getOrRecreate(sessionId, createServer);
       if (!recreated) {
         return res.status(404).json({
@@ -586,7 +586,7 @@ app.post('/mcp', async (req, res) => {
       transport = recreated;
       
     } else if (!sessionId && isInitializeRequest(req.body)) {
-      // ✅ New session
+      // New session
       transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: async (newSessionId) => {
@@ -689,7 +689,7 @@ import { createHTTPServer } from '@leanmcp/core';
 await createHTTPServer({
   name: 'my-server',
   version: '1.0.0',
-  stateless: false,  // ⭐ Just set this to false
+  stateless: false,  // Just set this to false
   // DynamoDB auto-configured on LeanMCP Lambda!
 });
 ```
@@ -700,7 +700,7 @@ await createHTTPServer({
 // server.ts
 import { LeanMCPSessionProvider } from '@leanmcp/core';
 
-// ⭐ Replace: const transports = new Map();
+// Replace: const transports = new Map();
 const sessions = new LeanMCPSessionProvider();
 
 // Then use sessions.get(), sessions.set(), sessions.getOrRecreate()
