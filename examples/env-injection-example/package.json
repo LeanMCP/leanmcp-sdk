@@ -11,13 +11,13 @@
         "start:node": "node dist/main.js"
     },
     "dependencies": {
-        "@leanmcp/auth": "^0.3.0",
-        "@leanmcp/core": "^0.3.2",
+        "@leanmcp/auth": "^0.4.0",
+        "@leanmcp/core": "^0.4.0",
         "@leanmcp/env-injection": "^0.1.0",
         "dotenv": "^16.4.5"
     },
     "devDependencies": {
-        "@leanmcp/cli": "^0.3.1",
+        "@leanmcp/cli": "^0.4.0",
         "@types/node": "^22.10.1",
         "tsx": "^4.19.2",
         "typescript": "^5.7.2"

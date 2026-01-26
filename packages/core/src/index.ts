@@ -20,6 +20,14 @@ export * from './http-server';
 export * from './logger';
 export * from './validation';
 export * from './auth-helpers';
+export * from './session-store';
+export * from './session-provider';
+export {
+  DynamoDBSessionStore,
+  DEFAULT_TABLE_NAME,
+  DEFAULT_TTL_SECONDS,
+} from './dynamodb-session-store';
+export { InMemorySessionStore } from './inmemory-session-store';
 import { getMethodMetadata, getDecoratedMethods } from './decorators';
 import { classToJsonSchemaWithConstraints } from './schema-generator';
 import { Logger, LogLevel } from './logger';
