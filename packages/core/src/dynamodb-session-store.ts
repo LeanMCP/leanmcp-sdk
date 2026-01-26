@@ -1,10 +1,10 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { 
-  DynamoDBDocumentClient, 
-  GetCommand, 
-  PutCommand, 
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
   DeleteCommand,
-  UpdateCommand 
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { ISessionStore, SessionData } from './session-store';
 import { Logger, LogLevel } from './logger';
@@ -32,17 +32,17 @@ export class DynamoDBSessionStore implements ISessionStore {
   constructor(options?: DynamoDBSessionStoreOptions) {
     this.tableName = options?.tableName || process.env.DYNAMODB_TABLE_NAME || DEFAULT_TABLE_NAME;
     this.ttlSeconds = options?.ttlSeconds || DEFAULT_TTL_SECONDS;
-    
+
     this.logger = new Logger({
       level: options?.logging ? LogLevel.INFO : LogLevel.NONE,
-      prefix: 'DynamoDBSessionStore'
+      prefix: 'DynamoDBSessionStore',
     });
-    
+
     const dynamoClient = new DynamoDBClient({
       region: options?.region || process.env.AWS_REGION || 'us-east-1',
     });
     this.client = DynamoDBDocumentClient.from(dynamoClient);
-    
+
     this.logger.info(`Initialized with table: ${this.tableName}, TTL: ${this.ttlSeconds}s`);
   }
 
@@ -51,12 +51,14 @@ export class DynamoDBSessionStore implements ISessionStore {
    */
   async sessionExists(sessionId: string): Promise<boolean> {
     try {
-      const result = await this.client.send(new GetCommand({
-        TableName: this.tableName,
-        Key: { sessionId },
-        ProjectionExpression: 'sessionId',
-      }));
-      
+      const result = await this.client.send(
+        new GetCommand({
+          TableName: this.tableName,
+          Key: { sessionId },
+          ProjectionExpression: 'sessionId',
+        })
+      );
+
       const exists = !!result.Item;
       this.logger.debug(`Session ${sessionId} exists: ${exists}`);
       return exists;
@@ -74,19 +76,23 @@ export class DynamoDBSessionStore implements ISessionStore {
     try {
       const now = new Date();
       const ttl = Math.floor(Date.now() / 1000) + this.ttlSeconds;
-      
-      await this.client.send(new PutCommand({
-        TableName: this.tableName,
-        Item: {
-          sessionId,
-          createdAt: now.toISOString(),
-          updatedAt: now.toISOString(),
-          ttl,
-          data: data || {},
-        },
-      }));
-      
-      this.logger.info(`Created session: ${sessionId} (TTL: ${new Date(ttl * 1000).toISOString()})`);
+
+      await this.client.send(
+        new PutCommand({
+          TableName: this.tableName,
+          Item: {
+            sessionId,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+            ttl,
+            data: data || {},
+          },
+        })
+      );
+
+      this.logger.info(
+        `Created session: ${sessionId} (TTL: ${new Date(ttl * 1000).toISOString()})`
+      );
     } catch (error: any) {
       this.logger.error(`Error creating session ${sessionId}: ${error.message}`);
       throw new Error(`Failed to create session: ${error.message}`);
@@ -98,16 +104,18 @@ export class DynamoDBSessionStore implements ISessionStore {
    */
   async getSession(sessionId: string): Promise<SessionData | null> {
     try {
-      const result = await this.client.send(new GetCommand({
-        TableName: this.tableName,
-        Key: { sessionId },
-      }));
-      
+      const result = await this.client.send(
+        new GetCommand({
+          TableName: this.tableName,
+          Key: { sessionId },
+        })
+      );
+
       if (!result.Item) {
         this.logger.debug(`Session ${sessionId} not found`);
         return null;
       }
-      
+
       const sessionData: SessionData = {
         sessionId: result.Item.sessionId,
         createdAt: new Date(result.Item.createdAt),
@@ -115,7 +123,7 @@ export class DynamoDBSessionStore implements ISessionStore {
         ttl: result.Item.ttl,
         data: result.Item.data,
       };
-      
+
       this.logger.debug(`Retrieved session: ${sessionId}`);
       return sessionData;
     } catch (error: any) {
@@ -131,22 +139,24 @@ export class DynamoDBSessionStore implements ISessionStore {
   async updateSession(sessionId: string, updates: Partial<SessionData>): Promise<void> {
     try {
       const ttl = Math.floor(Date.now() / 1000) + this.ttlSeconds;
-      
-      await this.client.send(new UpdateCommand({
-        TableName: this.tableName,
-        Key: { sessionId },
-        UpdateExpression: 'SET updatedAt = :now, #data = :data, #ttl = :ttl',
-        ExpressionAttributeNames: { 
-          '#data': 'data', 
-          '#ttl': 'ttl' 
-        },
-        ExpressionAttributeValues: {
-          ':now': new Date().toISOString(),
-          ':data': updates.data || {},
-          ':ttl': ttl,
-        },
-      }));
-      
+
+      await this.client.send(
+        new UpdateCommand({
+          TableName: this.tableName,
+          Key: { sessionId },
+          UpdateExpression: 'SET updatedAt = :now, #data = :data, #ttl = :ttl',
+          ExpressionAttributeNames: {
+            '#data': 'data',
+            '#ttl': 'ttl',
+          },
+          ExpressionAttributeValues: {
+            ':now': new Date().toISOString(),
+            ':data': updates.data || {},
+            ':ttl': ttl,
+          },
+        })
+      );
+
       this.logger.debug(`Updated session: ${sessionId}`);
     } catch (error: any) {
       this.logger.error(`Error updating session ${sessionId}: ${error.message}`);
@@ -159,11 +169,13 @@ export class DynamoDBSessionStore implements ISessionStore {
    */
   async deleteSession(sessionId: string): Promise<void> {
     try {
-      await this.client.send(new DeleteCommand({
-        TableName: this.tableName,
-        Key: { sessionId },
-      }));
-      
+      await this.client.send(
+        new DeleteCommand({
+          TableName: this.tableName,
+          Key: { sessionId },
+        })
+      );
+
       this.logger.info(`Deleted session: ${sessionId}`);
     } catch (error: any) {
       this.logger.error(`Error deleting session ${sessionId}: ${error.message}`);
