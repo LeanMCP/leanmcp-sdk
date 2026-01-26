@@ -144,6 +144,21 @@ async function createZipArchive(folderPath: string, outputPath: string): Promise
 }
 
 /**
+ * Custom error for build failures with structured data
+ */
+class BuildError extends Error {
+  constructor(
+    message: string,
+    public buildId: string,
+    public errorSummary?: string,
+    public errorDetails?: string[]
+  ) {
+    super(message);
+    this.name = 'BuildError';
+  }
+}
+
+/**
  * Poll for build completion
  */
 async function waitForBuild(
@@ -172,7 +187,12 @@ async function waitForBuild(
     }
 
     if (build.status === 'failed' || build.status === 'FAILED') {
-      throw new Error(`Build failed: ${build.errorMessage || 'Unknown error'}`);
+      throw new BuildError(
+        build.errorSummary || build.errorMessage || 'Unknown error',
+        buildId,
+        build.errorSummary,
+        build.errorDetails
+      );
     }
 
     await new Promise((r) => setTimeout(r, 5000)); // Wait 5 seconds
@@ -181,6 +201,7 @@ async function waitForBuild(
 
   throw new Error('Build timed out after 5 minutes');
 }
+
 
 /**
  * Poll for deployment completion
@@ -610,9 +631,18 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     buildSpinner.succeed(`Build complete (${buildDuration}s)`);
   } catch (error) {
     buildSpinner.fail('Build failed');
-    logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
+
+    // Display structured build errors if available
+    if (error instanceof BuildError && error.errorDetails?.length) {
+      logger.error(`\n${error.errorSummary || 'Build failed'}\n`);
+      error.errorDetails.forEach((err) => logger.gray(`  ${err}`));
+      // logger.gray(`\nFull logs: https://ship.leanmcp.com/builds/${error.buildId}`);
+    } else {
+      logger.error(`\n${error instanceof Error ? error.message : String(error)}`);
+    }
     process.exit(1);
   }
+
 
   // Step 4: Deploy to LeanMCP
   const deploySpinner = ora('Deploying to LeanMCP...').start();
