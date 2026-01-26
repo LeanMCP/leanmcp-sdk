@@ -14,18 +14,23 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import Ajv from 'ajv';
 
-export * from "./decorators";
-export * from "./schema-generator";
-export * from "./http-server";
-export * from "./logger";
-export * from "./validation";
-export * from "./auth-helpers";
-export * from "./session-store";
-export * from "./session-provider";
-export { DynamoDBSessionStore, DEFAULT_TABLE_NAME, DEFAULT_TTL_SECONDS } from "./dynamodb-session-store";
-import { getMethodMetadata, getDecoratedMethods } from "./decorators";
-import { classToJsonSchemaWithConstraints } from "./schema-generator";
-import { Logger, LogLevel } from "./logger";
+export * from './decorators';
+export * from './schema-generator';
+export * from './http-server';
+export * from './logger';
+export * from './validation';
+export * from './auth-helpers';
+export * from './session-store';
+export * from './session-provider';
+export {
+  DynamoDBSessionStore,
+  DEFAULT_TABLE_NAME,
+  DEFAULT_TTL_SECONDS,
+} from './dynamodb-session-store';
+export { InMemorySessionStore } from './inmemory-session-store';
+import { getMethodMetadata, getDecoratedMethods } from './decorators';
+import { classToJsonSchemaWithConstraints } from './schema-generator';
+import { Logger, LogLevel } from './logger';
 
 // Schema validator
 const ajv = new Ajv();

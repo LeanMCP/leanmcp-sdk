@@ -1,6 +1,7 @@
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { DynamoDBSessionStore } from './dynamodb-session-store';
+import { InMemorySessionStore } from './inmemory-session-store';
 import type { ISessionStore } from './session-store';
 
 export interface LeanMCPSessionProviderOptions {
@@ -9,34 +10,64 @@ export interface LeanMCPSessionProviderOptions {
   ttlSeconds?: number;
   logging?: boolean;
   sessionStore?: ISessionStore;
+  /**
+   * Force DynamoDB even when not on Lambda (for local testing with real DynamoDB)
+   */
+  forceDynamoDB?: boolean;
 }
 
 /**
  * Drop-in replacement for Map<string, StreamableHTTPServerTransport>
  * Provides automatic session persistence for Lambda deployments
- * 
+ *
+ * Environment auto-detection:
+ * - Local development (default): Uses in-memory session store
+ * - LeanMCP Lambda (LEANMCP_LAMBDA=true): Uses DynamoDB session store
+ * - Explicit override: Pass sessionStore option or forceDynamoDB: true
+ *
  * @example
  * // Before: const transports = new Map<string, StreamableHTTPServerTransport>();
  * // After:  const sessions = new LeanMCPSessionProvider();
- * 
+ *
  * // Then use sessions.get(), sessions.set(), sessions.getOrRecreate()
  */
 export class LeanMCPSessionProvider {
   private transports = new Map<string, StreamableHTTPServerTransport>();
   private sessionStore: ISessionStore;
+  private isUsingDynamoDB: boolean;
 
   constructor(options?: LeanMCPSessionProviderOptions) {
-    // Use provided session store or create DynamoDB store
+    // Priority: explicit sessionStore > forceDynamoDB > auto-detect
     if (options?.sessionStore) {
       this.sessionStore = options.sessionStore;
-    } else {
+      this.isUsingDynamoDB = false;
+    } else if (options?.forceDynamoDB || process.env.LEANMCP_LAMBDA === 'true') {
+      // Use DynamoDB when on Lambda or explicitly requested
       this.sessionStore = new DynamoDBSessionStore({
         tableName: options?.tableName,
         region: options?.region,
         ttlSeconds: options?.ttlSeconds,
         logging: options?.logging,
       });
+      this.isUsingDynamoDB = true;
+      if (options?.logging) {
+        console.log('[LeanMCPSessionProvider] Using DynamoDB session store');
+      }
+    } else {
+      // Default: in-memory for local development
+      this.sessionStore = new InMemorySessionStore();
+      this.isUsingDynamoDB = false;
+      if (options?.logging) {
+        console.log('[LeanMCPSessionProvider] Using in-memory session store (local dev mode)');
+      }
     }
+  }
+
+  /**
+   * Check if using DynamoDB (useful for debugging)
+   */
+  get usingDynamoDB(): boolean {
+    return this.isUsingDynamoDB;
   }
 
   /**
@@ -73,7 +104,7 @@ export class LeanMCPSessionProvider {
   /**
    * Get or recreate transport for a session
    * This is the key method for Lambda support - handles container recycling
-   * 
+   *
    * @param sessionId - Session ID to get or recreate
    * @param serverFactory - Factory function to create fresh MCP server instances
    * @param transportOptions - Optional callbacks for transport lifecycle events
@@ -103,6 +134,18 @@ export class LeanMCPSessionProvider {
         transportOptions?.onsessioninitialized?.(sid);
       },
     });
+
+    // Store immediately - onsessioninitialized only fires on initialize requests
+    this.transports.set(sessionId, transport);
+
+    // CRITICAL: Set the transport's internal _initialized flag
+    // The MCP SDK transport rejects non-init requests if this flag is false
+    // Since we're restoring an already-initialized session, we bypass this check
+    const webTransport = (transport as any)._webStandardTransport;
+    if (webTransport) {
+      webTransport._initialized = true;
+      webTransport.sessionId = sessionId;
+    }
 
     transport.onclose = () => {
       this.transports.delete(sessionId);
