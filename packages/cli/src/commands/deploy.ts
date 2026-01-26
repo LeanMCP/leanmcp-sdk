@@ -202,7 +202,6 @@ async function waitForBuild(
   throw new Error('Build timed out after 5 minutes');
 }
 
-
 /**
  * Poll for deployment completion
  */
@@ -642,7 +641,6 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     }
     process.exit(1);
   }
-
 
   // Step 4: Deploy to LeanMCP
   const deploySpinner = ora('Deploying to LeanMCP...').start();
