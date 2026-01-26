@@ -1,0 +1,34 @@
+{
+  "name": "test-stateful-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server with Streamable HTTP Transport and LeanMCP SDK",
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "leanmcp dev",
+    "build": "leanmcp build",
+    "start": "leanmcp start",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/main.js",
+    "start:node": "node dist/main.js",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "streamable-http",
+    "leanmcp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@leanmcp/core": "^0.4.3",
+    "@leanmcp/auth": "^0.4.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@leanmcp/cli": "^0.4.0",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.6.3"
+  }
+}
