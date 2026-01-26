@@ -523,8 +523,87 @@ export async function createHTTPServer(
         transport = transports[sessionId];
         logger.debug(`Reusing session: ${sessionId}`);
         
+      } else if (sessionId && isInitializeRequest(req.body)) {
+        // Session ID provided with initialize request (session restoration after container recycle)
+        logger.info(`Initialize request with session ${sessionId} - checking for session restoration...`);
+        
+        if (httpOptions.sessionStore) {
+          const exists = await httpOptions.sessionStore.sessionExists(sessionId);
+          if (exists) {
+            // Session exists in DynamoDB - recreate transport with same session ID
+            logger.info(`Restoring session: ${sessionId}`);
+            
+            transport = new StreamableHTTPServerTransport({
+              sessionIdGenerator: () => sessionId,  // Reuse existing session ID
+              onsessioninitialized: (sid: string) => {
+                logger.info(`Session restored (onsessioninitialized): ${sid}`);
+              }
+            });
+            
+            // Store transport immediately for consistency
+            transports[sessionId] = transport;
+            logger.info(`Transport stored for restored session: ${sessionId}`);
+            
+            transport.onclose = async () => {
+              if (transport.sessionId) {
+                delete transports[transport.sessionId];
+                logger.debug(`Session cleaned up: ${transport.sessionId}`);
+                
+                // Remove from session store
+                if (httpOptions.sessionStore) {
+                  await httpOptions.sessionStore.deleteSession(transport.sessionId);
+                }
+              }
+            };
+            
+            // Create fresh MCP server instance (Lambda container recycled)
+            const freshServer = await serverFactory();
+            if (freshServer && typeof (freshServer as any).waitForInit === 'function') {
+              await (freshServer as any).waitForInit();
+            }
+            await (freshServer as Server).connect(transport);
+          } else {
+            // Session doesn't exist - fall through to create new session
+            logger.info(`Session ${sessionId} not found in store, creating new session`);
+          }
+        }
+        
+        // If no session store or session doesn't exist, create new session (fall through)
+        if (!transport) {
+          transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: () => randomUUID(),
+            onsessioninitialized: async (newSessionId: string) => {
+              transports[newSessionId] = transport;
+              logger.info(`Session initialized: ${newSessionId}`);
+              
+              // Persist session to store
+              if (httpOptions.sessionStore) {
+                await httpOptions.sessionStore.createSession(newSessionId);
+              }
+            }
+          });
+
+          transport.onclose = async () => {
+            if (transport.sessionId) {
+              delete transports[transport.sessionId];
+              logger.debug(`Session cleaned up: ${transport.sessionId}`);
+              
+              // Remove from session store
+              if (httpOptions.sessionStore) {
+                await httpOptions.sessionStore.deleteSession(transport.sessionId);
+              }
+            }
+          };
+
+          // Use the pre-initialized server instance
+          if (!mcpServer) {
+            throw new Error('MCP server not initialized');
+          }
+          await (mcpServer as Server).connect(transport);
+        }
+        
       } else if (sessionId && !isInitializeRequest(req.body)) {
-        // Session ID provided but transport missing (Lambda container recycled)
+        // Session ID provided but transport missing and NOT an initialize request
         logger.info(`Transport missing for session ${sessionId}, checking session store...`);
         
         if (httpOptions.sessionStore) {
@@ -539,14 +618,29 @@ export async function createHTTPServer(
             return;
           }
           
-          // Recreate transport with existing session ID
+          // Session exists in DynamoDB but transport is missing (Lambda container recycled)
+          // Auto-restore the session by recreating transport and server
+          logger.info(`Auto-restoring session: ${sessionId}`);
+          
           transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => sessionId,  // Reuse existing ID
+            sessionIdGenerator: () => sessionId,  // Reuse existing session ID
             onsessioninitialized: (sid: string) => {
-              transports[sid] = transport;
-              logger.info(`Transport recreated for session: ${sid}`);
+              logger.info(`Session auto-restored (onsessioninitialized): ${sid}`);
             }
           });
+          
+          // Store transport immediately - onsessioninitialized won't fire for non-init requests
+          transports[sessionId] = transport;
+          
+          // CRITICAL: Manually set the transport's internal _initialized flag
+          // The MCP SDK's transport checks this flag and rejects non-init requests if false
+          // Since we're restoring a session that was already initialized, we need to bypass this check
+          const webTransport = (transport as any)._webStandardTransport;
+          if (webTransport) {
+            webTransport._initialized = true;
+            webTransport.sessionId = sessionId;
+            logger.info(`Transport initialized flag set for session: ${sessionId}`);
+          }
           
           transport.onclose = async () => {
             if (transport.sessionId) {
