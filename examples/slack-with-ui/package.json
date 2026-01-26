@@ -21,9 +21,9 @@
     "author": "",
     "license": "MIT",
     "dependencies": {
-        "@leanmcp/core": "^0.3.10",
+        "@leanmcp/core": "^0.4.0",
         "@leanmcp/ui": "^0.3.0",
-        "@leanmcp/auth": "^0.3.2",
+        "@leanmcp/auth": "^0.4.0",
         "@slack/web-api": "^7.0.0",
         "dotenv": "^16.5.0"
     },

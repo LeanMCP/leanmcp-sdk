@@ -30,15 +30,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@leanmcp/core": "^0.3.1",
-    "@leanmcp/auth": "^0.3.1",
-    "@leanmcp/ui": "^0.1.0",
-    "@leanmcp/utils": "^0.1.0",
-    "@leanmcp/elicitation": "^0.1.0",
-    "@leanmcp/env-injection": "^0.1.0"
+    "@leanmcp/core": "latest",
+    "@leanmcp/auth": "latest",
+    "@leanmcp/ui": "latest",
+    "@leanmcp/utils": "latest",
+    "@leanmcp/elicitation": "latest",
+    "@leanmcp/env-injection": "latest"
   },
   "devDependencies": {
-    "@leanmcp/cli": "^0.2.1"
+    "@leanmcp/cli": "latest"
   },
   "repository": {
     "type": "git",
