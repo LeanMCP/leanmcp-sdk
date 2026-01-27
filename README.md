@@ -17,6 +17,12 @@
   <a href="https://www.npmjs.com/package/@leanmcp/core">
     <img src="https://img.shields.io/npm/v/@leanmcp/core?style=flat-square&logo=npm&logoColor=white&label=Version&color=CB3837" alt="npm version" />
   </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/cli">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/cli?style=flat-square&logo=npm&logoColor=white&label=Downloads&color=CB3837" alt="npm downloads" />
+  </a>
+  <a href="https://pypi.org/project/modelcontextprotocol/">
+    <img src="https://img.shields.io/pypi/dm/modelcontextprotocol?style=flat-square&logo=python&logoColor=white&label=Python%20Downloads&color=3776ab" alt="PyPI downloads" />
+  </a>
   <a href="https://github.com/LeanMCP/leanmcp-sdk/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="MIT License" />
   </a>
