@@ -1,6 +1,4 @@
-export const getReadmeTemplate = (
-  projectName: string
-): string => `# ${projectName}
+export const getReadmeTemplate = (projectName: string): string => `# ${projectName}
 
 MCP server built with LeanMCP SDK.
 
