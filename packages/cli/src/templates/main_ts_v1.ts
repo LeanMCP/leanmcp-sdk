@@ -7,12 +7,12 @@ import { createHTTPServer } from "@leanmcp/core";
 // Load environment variables
 dotenv.config();
 
-console.log("🚀 Starting ${projectName} MCP Server...");
-console.log("📋 Features included:");
-console.log("   🧮 Schema validation with decorators");
-console.log("   📊 Resource endpoints");
-console.log("   🎯 Prompt templates");
-console.log("   💬 Type-safe tool definitions");
+console.log("Starting ${projectName} MCP Server...");
+console.log("Features included:");
+console.log("   Schema validation with decorators");
+console.log("   Resource endpoints");
+console.log("   Prompt templates");
+console.log("   Type-safe tool definitions");
 console.log("");
 
 // Services are automatically discovered from ./mcp directory
@@ -24,8 +24,8 @@ await createHTTPServer({
   logging: true${dashboardLine}
 });
 
-console.log("\\n✅ ${projectName} MCP Server is running!");
-console.log("\\n🧪 Try these commands to test your server:");
+console.log("\\n${projectName} MCP Server is running!");
+console.log("\\nTry these commands to test your server:");
 console.log("");
 console.log("# Test calculation tool (schema validation)");
 console.log('curl -X POST http://localhost:3001/mcp \\\\');
@@ -42,5 +42,5 @@ console.log('curl -X POST http://localhost:3001/mcp \\\\');
 console.log('  -H "Content-Type: application/json" \\\\');
 console.log('  -d \'{"method": "resources/read", "params": {"uri": "server://info"}}\'');
 console.log("");
-console.log("🎉 Ready to customize - add your own tools, resources, and prompts!");
+console.log("Ready to customize - add your own tools, resources, and prompts!");
 `;

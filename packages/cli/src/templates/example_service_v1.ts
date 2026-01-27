@@ -38,7 +38,7 @@ export const getExampleServiceTemplate = (
     }
 
     export class ${projectName}Service {
-      // 🧮 CALCULATION TOOL - Shows schema validation
+      // CALCULATION TOOL - Shows schema validation
       @Tool({
         description: "Perform arithmetic operations with automatic schema validation",
         inputClass: CalculateInput
@@ -80,7 +80,7 @@ export const getExampleServiceTemplate = (
         };
       }
 
-      // 💬 ECHO TOOL - Shows basic functionality
+      // ECHO TOOL - Shows basic functionality
       @Tool({
         description: "Echo a message back with timestamp",
         inputClass: EchoInput
@@ -98,7 +98,7 @@ export const getExampleServiceTemplate = (
         };
       }
 
-      // 📊 SERVER INFO RESOURCE - Shows resource capabilities
+      // SERVER INFO RESOURCE - Shows resource capabilities
       @Resource({ description: "Get server information and health status" })
       async serverInfo() {
         return {
@@ -126,7 +126,7 @@ export const getExampleServiceTemplate = (
         };
       }
 
-      // 🎯 WELCOME PROMPT - Shows prompt capabilities
+      // WELCOME PROMPT - Shows prompt capabilities
       @Prompt({ description: "Generate a welcome prompt for the server" })
       async welcome(args: { name?: string }) {
         return {
@@ -136,7 +136,7 @@ export const getExampleServiceTemplate = (
               type: "text" as const,
               text: \`Welcome \${args.name || 'there'} to ${projectName}! 
 
-🎉 Your MCP server is running with these tools:
+Your MCP server is running with these tools:
 - calculate: Perform arithmetic operations
 - echo: Echo messages back
 - serverInfo: Get server status and information

@@ -17,44 +17,28 @@
   <a href="https://www.npmjs.com/package/@leanmcp/core">
     <img src="https://img.shields.io/npm/v/@leanmcp/core?style=flat-square&logo=npm&logoColor=white&label=Version&color=CB3837" alt="npm version" />
   </a>
-  <a href="https://www.npmjs.com/package/@leanmcp/cli">
-    <img src="https://img.shields.io/npm/dm/@leanmcp/cli?style=flat-square&logo=npm&logoColor=white&label=Downloads&color=CB3837" alt="npm downloads" />
-  </a>
-  <a href="https://github.com/LeanMCP/leanmcp-sdk">
-    <img src="https://img.shields.io/github/stars/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Stars&color=181717" alt="GitHub stars" />
-  </a>
-  <a href="https://github.com/LeanMCP/leanmcp-sdk/network/members">
-    <img src="https://img.shields.io/github/forks/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Forks&color=181717" alt="GitHub forks" />
-  </a>
-  <br/>
   <a href="https://github.com/LeanMCP/leanmcp-sdk/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="MIT License" />
   </a>
   <a href="https://www.typescriptlang.org/">
     <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Ready" />
   </a>
+  <br/>
   <a href="https://nodejs.org/">
     <img src="https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 18+" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Community" />
+    <img src="https://img.shields.io/badge/Discord-406%20members-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Community" />
   </a>
-  <br/>
   <a href="https://leanmcp.com/">
     <img src="https://img.shields.io/badge/Website-leanmcp.com-0A66C2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website" />
   </a>
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/Follow-@LeanMCP-1DA1F2?style=flat-square&logo=x&logoColor=white" alt="Follow on X" />
   </a>
-  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk">
-    <img src="https://deepwiki.com/badge.svg?style=flat-square" alt="Ask DeepWiki" />
-  </a>
-  <a href="https://github.com/LeanMCP/leanmcp-sdk/graphs/contributors">
-    <img src="https://img.shields.io/github/contributors/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Contributors&color=181717" alt="Contributors" />
-  </a>
 </p>
 
-## 60-Second Quickstart
+## Quick Start
 
 ```bash
 npx @leanmcp/cli create my-server
@@ -62,7 +46,7 @@ cd my-server
 npm run dev
 ```
 
-Your MCP server is now running with authentication, multi-tenancy, and human-in-the-loop capabilities built-in.
+Your MCP server is now running with schema validation, resources, and prompt capabilities.
 
 ## Choose Your Path
 
@@ -70,7 +54,7 @@ Your MCP server is now running with authentication, multi-tenancy, and human-in-
 <tr>
 <td width="20%" align="center">
 
-### 🔧 Build a Secure MCP Server
+### Build a Secure MCP Server
 
 Start with basic tools and add authentication
 
@@ -79,7 +63,7 @@ Start with basic tools and add authentication
 </td>
 <td width="20%" align="center">
 
-### 🏢 Add Auth & Multi-tenancy
+### Add Auth & Multi-tenancy
 
 User-level API keys and permissions
 
@@ -88,7 +72,7 @@ User-level API keys and permissions
 </td>
 <td width="20%" align="center">
 
-### 🤝 Human-in-the-loop Tools
+### Human-in-the-loop Tools
 
 Collect user input during execution
 
@@ -97,7 +81,7 @@ Collect user input during execution
 </td>
 <td width="20%" align="center">
 
-### 🎨 MCP UI / Apps
+### MCP UI / Apps
 
 Build ChatGPT Apps with UI components
 
@@ -106,7 +90,7 @@ Build ChatGPT Apps with UI components
 </td>
 <td width="20%" align="center">
 
-### 🚀 Deploy to Production
+### Deploy to Production
 
 HTTP transport, monitoring, observability
 
@@ -118,16 +102,16 @@ HTTP transport, monitoring, observability
 
 ## Why LeanMCP?
 
-**Other MCP SDKs**: Just connect tools to AI agents → **LeanMCP**: Production features out of the box
+**Other MCP SDKs**: Just connect tools to AI agents - **LeanMCP**: Production features out of the box
 
 | Feature | Basic MCP | LeanMCP | Time Saved |
 |---------|-----------|---------|------------|
-| Basic Tools | ✅ | ✅ | - |
-| Authentication | ❌ | ✅ | 2-3 weeks |
-| Payment Integration | ❌ | ✅ | 1-2 weeks |
-| UI Components | ❌ | ✅ | 1-2 weeks |
-| Production Deploy | ❌ | ✅ | 1 week |
-| Monitoring & Logs | ❌ | ✅ | 1 week |
+| Basic Tools | Yes | Yes | - |
+| Authentication | No | Yes | 2-3 weeks |
+| Payment Integration | No | Yes | 1-2 weeks |
+| UI Components | No | Yes | 1-2 weeks |
+| Production Deploy | No | Yes | 1 week |
+| Monitoring & Logs | No | Yes | 1 week |
 
 ### Production-Ready Features
 - **Authentication**: Auth0, Supabase, Cognito, Firebase out of the box
