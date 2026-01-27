@@ -1,14 +1,26 @@
 # Contributing to LeanMCP
 
-Thank you for your interest in contributing to LeanMCP.
+**We actively welcome contributors!** 🎉
 
-LeanMCP is an early-stage, opinionated infrastructure project focused on building a
-**production-ready runtime for Model Context Protocol (MCP) servers**.
+Thank you for your interest in contributing to LeanMCP - the production-ready MCP server SDK for TypeScript.
 
-We welcome contributors who care deeply about correctness, clarity, and long-term
-maintainability of developer infrastructure.
+## Quick Start for Contributors
 
-This document explains how we collaborate and how to contribute effectively.
+1. **Fork** the repository
+2. **Clone** your fork: `git clone https://github.com/YOUR_USERNAME/leanmcp-sdk.git`
+3. **Create a branch**: `git checkout -b feature/your-feature-name`
+4. **Make changes** and commit: `git commit -m "Add your feature"`
+5. **Push** and create a **Pull Request**
+
+## Good First Issues
+
+Looking for a place to start? Check out issues labeled [`good first issue`](https://github.com/LeanMCP/leanmcp-sdk/labels/good%20first%20issue):
+
+- 📖 **Documentation improvements** - Help make our docs clearer
+- 🔧 **Example additions** - Add new service examples  
+- 🔐 **Auth provider integrations** - Add support for new auth providers
+- 🧪 **Test coverage** - Write tests for existing features
+- 🐛 **Bug fixes** - Fix reported issues
 
 ---
 

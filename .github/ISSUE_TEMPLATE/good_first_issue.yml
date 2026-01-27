@@ -1,0 +1,67 @@
+name: Good First Issue
+description: Suggest a beginner-friendly task for new contributors
+title: "[Good First Issue] "
+labels: ["good first issue", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a good first issue! This helps new contributors get started with LeanMCP.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What type of contribution is this?
+      options:
+        - Documentation
+        - Examples
+        - Testing
+        - Bug Fix
+        - Auth Provider Integration
+        - UI/UX Improvement
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the task clearly for new contributors
+      placeholder: |
+        What needs to be done?
+        Why is this a good first issue?
+        What skills are needed?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What does "done" look like?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Tests pass
+        - [ ] Documentation updated
+    validations:
+      required: true
+
+  - type: textarea
+    id: resources
+    attributes:
+      label: Helpful Resources
+      description: Links, documentation, or examples that might help
+      placeholder: |
+        - Link to relevant documentation
+        - Similar examples in the codebase
+        - External resources
+
+  - type: input
+    id: estimated_time
+    attributes:
+      label: Estimated Time
+      description: How long might this take? (e.g., "1-2 hours", "Half day")
+      placeholder: "2-3 hours"

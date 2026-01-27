@@ -6,11 +6,11 @@
   />
 </p>
 
-<h1 align="center">Production-Ready MCP Servers in Minutes</h1>
+<h1 align="center">Production-ready MCP server SDK for TypeScript</h1>
 
 <p align="center">
-  <strong>Skip weeks of auth, payments, and UI work with built-in production features</strong><br/>
-  <em>TypeScript SDK for building Model Context Protocol servers with enterprise-grade capabilities</em>
+  <strong>TypeScript SDK for building MCP servers</strong><br/>
+  with built-in Auth, Multi-tenancy, Human-in-the-loop, and MCP-Apps (including ChatGPT Apps).
 </p>
 
 <p align="center">
@@ -54,21 +54,67 @@
   </a>
 </p>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Production%20Ready-orange?style=for-the-badge" alt="Production Ready" />
-  <img src="https://img.shields.io/badge/Quick%20Start-yellow?style=for-the-badge" alt="Quick Start" />
-  <img src="https://img.shields.io/badge/Type%20Safe-blue?style=for-the-badge" alt="Type Safe" />
-</p>
-
-## Quick Start
+## 60-Second Quickstart
 
 ```bash
-# Create new project
-npx @leanmcp/cli create my-awesome-server
-cd my-awesome-server && npm start
-
-# Server running at http://localhost:8080
+npx @leanmcp/cli create my-server
+cd my-server
+npm run dev
 ```
+
+Your MCP server is now running with authentication, multi-tenancy, and human-in-the-loop capabilities built-in.
+
+## Choose Your Path
+
+<table>
+<tr>
+<td width="20%" align="center">
+
+### 🔧 Build a Secure MCP Server
+
+Start with basic tools and add authentication
+
+[Get Started →](#installation)
+
+</td>
+<td width="20%" align="center">
+
+### 🏢 Add Auth & Multi-tenancy
+
+User-level API keys and permissions
+
+[Learn More →](#authenticated-service-with-aws-cognito)
+
+</td>
+<td width="20%" align="center">
+
+### 🤝 Human-in-the-loop Tools
+
+Collect user input during execution
+
+[See Examples →](#core-concepts)
+
+</td>
+<td width="20%" align="center">
+
+### 🎨 MCP UI / Apps
+
+Build ChatGPT Apps with UI components
+
+[Build Apps →](#examples)
+
+</td>
+<td width="20%" align="center">
+
+### 🚀 Deploy to Production
+
+HTTP transport, monitoring, observability
+
+[Deploy Now →](#api-reference)
+
+</td>
+</tr>
+</table>
 
 ## Why LeanMCP?
 
@@ -83,15 +129,13 @@ cd my-awesome-server && npm start
 | Production Deploy | ❌ | ✅ | 1 week |
 | Monitoring & Logs | ❌ | ✅ | 1 week |
 
-## Core Advantages
-
-### Production-Ready
+### Production-Ready Features
 - **Authentication**: Auth0, Supabase, Cognito, Firebase out of the box
 - **Multi-tenancy**: User-level API keys and permission management
 - **Payment Integration**: Stripe integration, subscription checks, usage-based billing
 - **Monitoring & Audit**: Logging, monitoring, production-grade observability
 
-### Developer Experience First  
+### Developer Experience
 - **Decorator Pattern**: Type-safe decorators with auto-discovery
 - **Convention over Configuration**: Sensible defaults
 - **TypeScript First**: Complete type safety + schema validation
@@ -855,7 +899,7 @@ npm run build
 
 ---
 
-## Call to Action
+## We Actively Welcome Contributors
 
 <div align="center">
 
@@ -870,7 +914,11 @@ npm run build
   </a>
 </p>
 
-### Get Involved
+</div>
+
+### Contributing is Easy
+
+**New to open source?** Perfect! We have plenty of [good first issues](https://github.com/LeanMCP/leanmcp-sdk/labels/good%20first%20issue) waiting for you.
 
 <table>
 <tr>
@@ -878,25 +926,31 @@ npm run build
 
 **Fork & Contribute**
 
-Fork the repo and contribute via PR
+1. Fork the repo
+2. Create a branch
+3. Make changes
+4. Submit PR
 
 [Fork Now →](https://github.com/LeanMCP/leanmcp-sdk/fork)
 
 </td>
 <td align="center" width="33%">
 
-**Report Issues**
+**Good First Issues**
 
-Found a bug or have a feature request?
+- 📖 Documentation improvements
+- 🔧 Example additions
+- 🔐 Auth provider integrations
+- 🧪 Test coverage
 
-[Open Issue →](https://github.com/LeanMCP/leanmcp-sdk/issues/new)
+[Browse Issues →](https://github.com/LeanMCP/leanmcp-sdk/labels/good%20first%20issue)
 
 </td>
 <td align="center" width="33%">
 
 **Join Community**
 
-Chat with other developers on Discord
+Chat with maintainers and contributors
 
 [Join Discord →](https://discord.com/invite/DsRcA3GwPy)
 
@@ -904,16 +958,16 @@ Chat with other developers on Discord
 </tr>
 </table>
 
-### Spread the Word
+### What You Can Contribute
 
-Help more developers discover LeanMCP:
+- **Documentation**: Help make our guides clearer
+- **Examples**: Add new service examples (weather, payments, etc.)
+- **Auth Integrations**: Add support for new auth providers
+- **Bug Fixes**: Fix reported issues
+- **Tests**: Improve test coverage
+- **Features**: Propose and implement new capabilities
 
-- [Share on Twitter](https://twitter.com/intent/tweet?text=🚀%20LeanMCP%20-%20Production-Ready%20MCP%20Servers%20in%20Minutes!%20Skip%20weeks%20of%20auth,%20payments%20%26%20UI%20work.%20%23MCP%20%23AI%20%23TypeScript&url=https://github.com/LeanMCP/leanmcp-sdk)
-- Write a blog post about your experience with LeanMCP
-- Recommend to your colleagues and friends
-- Star the project to help others discover it
-
-</div>
+See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
 
 ---
 
