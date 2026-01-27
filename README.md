@@ -6,59 +6,101 @@
   />
 </p>
 
+<h1 align="center">Production-Ready MCP Servers in Minutes</h1>
+
 <p align="center">
-  <strong>TypeScript SDK for building Model Context Protocol servers</strong><br/>
-  with built-in support for Auth, Elicitation, and MCP-Apps (including ChatGPT Apps).
+  <strong>Skip weeks of auth, payments, and UI work with built-in production features</strong><br/>
+  <em>TypeScript SDK for building Model Context Protocol servers with enterprise-grade capabilities</em>
 </p>
-</p>
-  
+
 <p align="center">
   <a href="https://www.npmjs.com/package/@leanmcp/core">
-    <img src="https://img.shields.io/npm/v/@leanmcp/core" alt="npm version" />
+    <img src="https://img.shields.io/npm/v/@leanmcp/core?style=flat-square&logo=npm&logoColor=white&label=Version&color=CB3837" alt="npm version" />
   </a>
   <a href="https://www.npmjs.com/package/@leanmcp/cli">
-    <img src="https://img.shields.io/npm/dm/@leanmcp/cli" alt="npm downloads" />
+    <img src="https://img.shields.io/npm/dm/@leanmcp/cli?style=flat-square&logo=npm&logoColor=white&label=Downloads&color=CB3837" alt="npm downloads" />
   </a>
-  <a href="https://leanmcp.com/">
-    <img src="https://img.shields.io/badge/Website-leanmcp-0A66C2?" />
+  <a href="https://github.com/LeanMCP/leanmcp-sdk">
+    <img src="https://img.shields.io/github/stars/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Stars&color=181717" alt="GitHub stars" />
+  </a>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk/network/members">
+    <img src="https://img.shields.io/github/forks/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Forks&color=181717" alt="GitHub forks" />
+  </a>
+  <br/>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="MIT License" />
+  </a>
+  <a href="https://www.typescriptlang.org/">
+    <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Ready" />
+  </a>
+  <a href="https://nodejs.org/">
+    <img src="https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 18+" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+    <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Community" />
+  </a>
+  <br/>
+  <a href="https://leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-leanmcp.com-0A66C2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website" />
   </a>
   <a href="https://x.com/LeanMcp">
-    <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
+    <img src="https://img.shields.io/badge/Follow-@LeanMCP-1DA1F2?style=flat-square&logo=x&logoColor=white" alt="Follow on X" />
   </a>
-  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk">
+    <img src="https://deepwiki.com/badge.svg?style=flat-square" alt="Ask DeepWiki" />
+  </a>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk/graphs/contributors">
+    <img src="https://img.shields.io/github/contributors/LeanMCP/leanmcp-sdk?style=flat-square&logo=github&logoColor=white&label=Contributors&color=181717" alt="Contributors" />
+  </a>
 </p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Production%20Ready-orange?style=for-the-badge" alt="Production Ready" />
+  <img src="https://img.shields.io/badge/Quick%20Start-yellow?style=for-the-badge" alt="Quick Start" />
+  <img src="https://img.shields.io/badge/Type%20Safe-blue?style=for-the-badge" alt="Type Safe" />
+</p>
+
+## Quick Start
+
+```bash
+# Create new project
+npx @leanmcp/cli create my-awesome-server
+cd my-awesome-server && npm start
+
+# Server running at http://localhost:8080
+```
 
 ## Why LeanMCP?
 
-A basic MCP connects tools to AI agents. But production means solving real problems:
+**Other MCP SDKs**: Just connect tools to AI agents → **LeanMCP**: Production features out of the box
 
-| Problem | LeanMCP Solution |
-|---------|------------------|
-| **Auth** | Integrate with Auth0, Supabase, Cognito, Firebase, or custom |
-| **Multi-tenancy** | Per-user API keys and permissions |
-| **Elicitation** | Handle user input during tool execution |
-| **Audit** | Logging, monitoring, production observability |
+| Feature | Basic MCP | LeanMCP | Time Saved |
+|---------|-----------|---------|------------|
+| Basic Tools | ✅ | ✅ | - |
+| Authentication | ❌ | ✅ | 2-3 weeks |
+| Payment Integration | ❌ | ✅ | 1-2 weeks |
+| UI Components | ❌ | ✅ | 1-2 weeks |
+| Production Deploy | ❌ | ✅ | 1 week |
+| Monitoring & Logs | ❌ | ✅ | 1 week |
 
-## Core Principles
+## Core Advantages
 
-- **Developer Experience first** — decorators, auto-discovery
-- **Convention over configuration** — sensible defaults  
-- **Type-safe by default** — TypeScript + schema validation
-- **Production-ready** — HTTP transport, session management
+### Production-Ready
+- **Authentication**: Auth0, Supabase, Cognito, Firebase out of the box
+- **Multi-tenancy**: User-level API keys and permission management
+- **Payment Integration**: Stripe integration, subscription checks, usage-based billing
+- **Monitoring & Audit**: Logging, monitoring, production-grade observability
 
-## Building MCPs is Easy. Production MCPs are Hard.
+### Developer Experience First  
+- **Decorator Pattern**: Type-safe decorators with auto-discovery
+- **Convention over Configuration**: Sensible defaults
+- **TypeScript First**: Complete type safety + schema validation
+- **Hot Reload**: Automatic restart during development
 
-Building a basic MCP that connects tools to an AI agent is straightforward — define your tools, add descriptions, done. But the make-or-break features that separate a toy from production are much harder:
-
-- **Authentication** — OAuth integration, token validation, scope management
-- **Elicitation** — User input collection with validation
-- **Payments** — Stripe integration, subscription checks, usage-based billing
-- **MCP Apps & UI** — Rendering UI components inside ChatGPT, Claude, and other clients
-
-These features require deep MCP protocol knowledge and weeks of implementation. LeanMCP handles them out of the box with `@leanmcp/auth`, `@leanmcp/elicitation`, and built-in UI support.
+### ChatGPT Apps Support
+- **UI Components**: Render UI components inside ChatGPT, Claude
+- **User Interaction**: Handle user input during tool execution
+- **Real-time Updates**: Support for streaming responses and live data
 
 ## Table of Contents
 
@@ -811,16 +853,83 @@ npm run lint
 npm run build
 ```
 
+---
+
+## Call to Action
+
+<div align="center">
+
+### If LeanMCP is useful to you, please give us a star!
+
+<p>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk/stargazers">
+    <img src="https://img.shields.io/github/stars/LeanMCP/leanmcp-sdk?style=social" alt="GitHub stars" />
+  </a>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk/network/members">
+    <img src="https://img.shields.io/github/forks/LeanMCP/leanmcp-sdk?style=social" alt="GitHub forks" />
+  </a>
+</p>
+
+### Get Involved
+
+<table>
+<tr>
+<td align="center" width="33%">
+
+**Fork & Contribute**
+
+Fork the repo and contribute via PR
+
+[Fork Now →](https://github.com/LeanMCP/leanmcp-sdk/fork)
+
+</td>
+<td align="center" width="33%">
+
+**Report Issues**
+
+Found a bug or have a feature request?
+
+[Open Issue →](https://github.com/LeanMCP/leanmcp-sdk/issues/new)
+
+</td>
+<td align="center" width="33%">
+
+**Join Community**
+
+Chat with other developers on Discord
+
+[Join Discord →](https://discord.com/invite/DsRcA3GwPy)
+
+</td>
+</tr>
+</table>
+
+### Spread the Word
+
+Help more developers discover LeanMCP:
+
+- [Share on Twitter](https://twitter.com/intent/tweet?text=🚀%20LeanMCP%20-%20Production-Ready%20MCP%20Servers%20in%20Minutes!%20Skip%20weeks%20of%20auth,%20payments%20%26%20UI%20work.%20%23MCP%20%23AI%20%23TypeScript&url=https://github.com/LeanMCP/leanmcp-sdk)
+- Write a blog post about your experience with LeanMCP
+- Recommend to your colleagues and friends
+- Star the project to help others discover it
+
+</div>
+
+---
+
 ## License
 
-MIT
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## Links
 
 - [MCP Specification](https://modelcontextprotocol.io/)
 - [GitHub Repository](https://github.com/leanmcp/leanmcp-sdk)
+- [Official Website](https://leanmcp.com/)
+- [Discord Community](https://discord.com/invite/DsRcA3GwPy)
 
 ## Acknowledgments
 
 - Built on top of [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 - Uses [reflect-metadata](https://www.npmjs.com/package/reflect-metadata) for decorator support
+- Inspired by the amazing MCP community
