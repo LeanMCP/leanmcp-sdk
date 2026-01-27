@@ -3,12 +3,16 @@ export const getExampleServiceTemplate = (
 ): string => `import { Tool, Resource, Prompt, SchemaConstraint, Optional } from "@leanmcp/core";
 
     /**
-     * Example service demonstrating LeanMCP SDK decorators
+     * ${projectName} - Production-ready MCP server example
      * 
-     * This is a simple example to get you started. Add your own tools, resources, and prompts here!
+     * This example demonstrates LeanMCP's core features:
+     * - Schema validation with decorators
+     * - Type-safe tool definitions
+     * - Resource and prompt capabilities
+     * - Production-ready structure
      */
 
-    // Input schema with validation decorators
+    // Input schemas with validation decorators
     class CalculateInput {
       @SchemaConstraint({ description: "First number" })
       a!: number;
@@ -33,13 +37,13 @@ export const getExampleServiceTemplate = (
       message!: string;
     }
 
-    export class ExampleService {
+    export class ${projectName}Service {
+      // 🧮 CALCULATION TOOL - Shows schema validation
       @Tool({
         description: "Perform arithmetic operations with automatic schema validation",
         inputClass: CalculateInput
       })
       async calculate(input: CalculateInput) {
-        // Ensure numerical operations by explicitly converting to numbers
         const a = Number(input.a);
         const b = Number(input.b);
         let result: number;
@@ -68,14 +72,17 @@ export const getExampleServiceTemplate = (
             text: JSON.stringify({
               operation: input.operation || "add",
               operands: { a: input.a, b: input.b },
-              result
+              result,
+              timestamp: new Date().toISOString(),
+              server: "${projectName}"
             }, null, 2)
           }]
         };
       }
 
+      // 💬 ECHO TOOL - Shows basic functionality
       @Tool({
-        description: "Echo a message back",
+        description: "Echo a message back with timestamp",
         inputClass: EchoInput
       })
       async echo(input: EchoInput) {
@@ -84,13 +91,15 @@ export const getExampleServiceTemplate = (
             type: "text" as const,
             text: JSON.stringify({
               echoed: input.message,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              server: "${projectName}"
             }, null, 2)
           }]
         };
       }
 
-      @Resource({ description: "Get server information" })
+      // 📊 SERVER INFO RESOURCE - Shows resource capabilities
+      @Resource({ description: "Get server information and health status" })
       async serverInfo() {
         return {
           contents: [{
@@ -99,23 +108,43 @@ export const getExampleServiceTemplate = (
             text: JSON.stringify({
               name: "${projectName}",
               version: "1.0.0",
-              uptime: process.uptime()
+              status: "healthy",
+              uptime: Math.floor(process.uptime()),
+              memory: {
+                used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+                total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+              },
+              features: [
+                "Schema validation with decorators",
+                "Type-safe tool definitions", 
+                "Resource endpoints",
+                "Prompt templates"
+              ],
+              timestamp: new Date().toISOString()
             }, null, 2)
           }]
         };
       }
 
-      @Prompt({ description: "Generate a greeting prompt" })
-      async greeting(args: { name?: string }) {
+      // 🎯 WELCOME PROMPT - Shows prompt capabilities
+      @Prompt({ description: "Generate a welcome prompt for the server" })
+      async welcome(args: { name?: string }) {
         return {
           messages: [{
             role: "user" as const,
             content: {
               type: "text" as const,
-              text: \`Hello \${args.name || 'there'}! Welcome to ${projectName}.\`
-        }
-      }]
-    };
-  }
-}
+              text: \`Welcome \${args.name || 'there'} to ${projectName}! 
+
+🎉 Your MCP server is running with these tools:
+- calculate: Perform arithmetic operations
+- echo: Echo messages back
+- serverInfo: Get server status and information
+
+Try calling these tools to see LeanMCP in action!\`
+            }
+          }]
+        };
+      }
+    }
 `;
