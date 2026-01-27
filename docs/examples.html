@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeanMCP Examples - Production MCP Server Examples</title>
+    <meta name="description" content="Complete examples of production-ready MCP servers built with LeanMCP SDK. Weather services, auth integration, ChatGPT apps, and more.">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>LeanMCP Examples</h1>
+            <p class="subtitle">Production-ready MCP server examples</p>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="examples.html">Examples</a>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="examples-grid">
+            <div class="example-card">
+                <h3>🌤️ Weather Service</h3>
+                <p>Complete weather API integration with authentication and validation.</p>
+                <div class="code-preview">
+                    <pre><code>@Tool({ description: 'Get weather for city' })
+async getWeather(args: WeatherInput) {
+  return await weatherAPI.get(args.city);
+}</code></pre>
+                </div>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk/tree/main/examples/weather" class="btn">View Example</a>
+            </div>
+
+            <div class="example-card">
+                <h3>🔐 Authenticated Service</h3>
+                <p>AWS Cognito integration with user-level permissions.</p>
+                <div class="code-preview">
+                    <pre><code>@Authenticated(cognitoProvider)
+export class SecureService {
+  @Tool({ description: 'Protected operation' })
+  async secureOperation(args: SecureInput) {
+    // Auto-validated JWT token
+    return { success: true };
+  }
+}</code></pre>
+                </div>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk/tree/main/examples/auth-cognito" class="btn">View Example</a>
+            </div>
+
+            <div class="example-card">
+                <h3>🎨 ChatGPT App</h3>
+                <p>Interactive UI components rendered inside ChatGPT.</p>
+                <div class="code-preview">
+                    <pre><code>@Tool({ description: 'Show interactive form' })
+async showForm(args: FormInput) {
+  return {
+    ui: {
+      type: 'form',
+      fields: [...]
+    }
+  };
+}</code></pre>
+                </div>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk/tree/main/examples/chatgpt-app" class="btn">View Example</a>
+            </div>
+
+            <div class="example-card">
+                <h3>🤝 Human-in-the-loop</h3>
+                <p>Collect user input during tool execution with validation.</p>
+                <div class="code-preview">
+                    <pre><code>@Elicitation({
+  strategy: 'form',
+  fields: [{ name: 'approval', type: 'boolean' }]
+})
+async processWithApproval(args: ProcessInput) {
+  // User approval collected automatically
+  return { processed: true };
+}</code></pre>
+                </div>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk/tree/main/examples/human-in-loop" class="btn">View Example</a>
+            </div>
+        </section>
+
+        <section class="getting-started">
+            <h2>Try These Examples</h2>
+            <div class="code-block">
+                <pre><code># Clone and run any example
+npx @leanmcp/cli create my-server --template=weather
+cd my-server
+npm run dev
+
+# Or start from scratch
+npx @leanmcp/cli create my-custom-server
+cd my-custom-server
+npm run dev</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 LeanMCP. MIT License.</p>
+        </div>
+    </footer>
+</body>
+</html>

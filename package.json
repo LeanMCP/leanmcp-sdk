@@ -2,7 +2,7 @@
   "name": "leanmcp",
   "private": true,
   "version": "0.1.0",
-  "description": "LeanMCP monorepo — base for @leanmcp SDK packages",
+  "description": "LeanMCP SDK: Efficient, modular TypeScript toolkit for production MCP servers，with built-in auth, multi-tenancy, and human-in-the-loop.",
   "packageManager": "npm@9.0.0",
   "files": [
     "README.md",
@@ -40,5 +40,29 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript",
+    "sdk",
+    "ai",
+    "chatgpt",
+    "claude",
+    "auth",
+    "production",
+    "lightweight",
+    "opensource",
+    "server",
+    "api",
+    "framework"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LeanMCP/leanmcp-sdk.git"
+  },
+  "homepage": "https://leanmcp.com",
+  "bugs": {
+    "url": "https://github.com/LeanMCP/leanmcp-sdk/issues"
   }
 }

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeanMCP - Production-ready MCP Server SDK for TypeScript</title>
+    <meta name="description" content="LeanMCP SDK: Efficient, modular TypeScript toolkit for production MCP servers. Built-in auth, multi-tenancy, and human-in-the-loop capabilities.">
+    <meta name="keywords" content="MCP, Model Context Protocol, TypeScript, SDK, AI, ChatGPT, Claude, Auth, Production, Lightweight">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 60px 0; text-align: center; }
+        h1 { font-size: 3rem; margin-bottom: 1rem; font-weight: 700; }
+        .subtitle { font-size: 1.2rem; opacity: 0.9; margin-bottom: 2rem; }
+        .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; transition: transform 0.2s; }
+        .btn-primary { background: #fff; color: #667eea; }
+        .btn-secondary { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
+        .btn:hover { transform: translateY(-2px); }
+        .features { padding: 80px 0; background: #f8f9fa; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .feature { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .feature h3 { color: #667eea; margin-bottom: 1rem; }
+        .quickstart { padding: 80px 0; }
+        .code-block { background: #1a1a1a; color: #f8f8f2; padding: 2rem; border-radius: 8px; margin: 2rem 0; overflow-x: auto; }
+        .comparison { padding: 80px 0; background: #f8f9fa; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #667eea; color: white; }
+        .checkmark { color: #28a745; font-weight: bold; }
+        .cross { color: #dc3545; font-weight: bold; }
+        footer { background: #333; color: white; padding: 40px 0; text-align: center; }
+        @media (max-width: 768px) { h1 { font-size: 2rem; } .cta-buttons { flex-direction: column; align-items: center; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>LeanMCP</h1>
+            <p class="subtitle">Production-ready MCP Server SDK for TypeScript</p>
+            <p class="subtitle">Auth, Multi-tenancy, Human-in-the-loop - Built-in</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/LeanMCP/leanmcp-sdk" class="btn btn-primary">Get Started</a>
+                <a href="https://discord.com/invite/DsRcA3GwPy" class="btn btn-secondary">Join Discord</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="quickstart">
+        <div class="container">
+            <h2>60-Second Quickstart</h2>
+            <div class="code-block">
+<pre><code># Create new project
+npx @leanmcp/cli create my-server
+cd my-server
+npm run dev
+
+# Your MCP server is now running with production features!</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem;">Why Choose LeanMCP?</h2>
+            <div class="features-grid">
+                <div class="feature">
+                    <h3>🔐 Production-Ready Auth</h3>
+                    <p>Built-in support for Auth0, Supabase, Cognito, Firebase. No weeks of integration work.</p>
+                </div>
+                <div class="feature">
+                    <h3>🏢 Multi-tenancy</h3>
+                    <p>User-level API keys and permission management out of the box.</p>
+                </div>
+                <div class="feature">
+                    <h3>🤝 Human-in-the-loop</h3>
+                    <p>Collect user input during tool execution with built-in validation.</p>
+                </div>
+                <div class="feature">
+                    <h3>🎨 ChatGPT Apps</h3>
+                    <p>Render UI components inside ChatGPT, Claude, and other AI clients.</p>
+                </div>
+                <div class="feature">
+                    <h3>⚡ Developer Experience</h3>
+                    <p>TypeScript-first with decorators, hot reload, and automatic schema generation.</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Production Monitoring</h3>
+                    <p>Logging, monitoring, and observability features included.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="comparison">
+        <div class="container">
+            <h2 style="text-align: center; margin-bottom: 3rem;">LeanMCP vs Other MCP SDKs</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Basic MCP</th>
+                        <th>mcp-use</th>
+                        <th>LeanMCP</th>
+                        <th>Time Saved</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Basic Tools</td>
+                        <td class="checkmark">✅</td>
+                        <td class="checkmark">✅</td>
+                        <td class="checkmark">✅</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Authentication</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="checkmark">✅</td>
+                        <td>2-3 weeks</td>
+                    </tr>
+                    <tr>
+                        <td>Multi-tenancy</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="checkmark">✅</td>
+                        <td>1-2 weeks</td>
+                    </tr>
+                    <tr>
+                        <td>Human-in-the-loop</td>
+                        <td class="cross">❌</td>
+                        <td class="cross">❌</td>
+                        <td class="checkmark">✅</td>
+                        <td>1-2 weeks</td>
+                    </tr>
+                    <tr>
+                        <td>UI Components</td>
+                        <td class="cross">❌</td>
+                        <td class="checkmark">✅</td>
+                        <td class="checkmark">✅</td>
+                        <td>1 week</td>
+                    </tr>
+                    <tr>
+                        <td>Production Deploy</td>
+                        <td class="cross">❌</td>
+                        <td class="checkmark">✅</td>
+                        <td class="checkmark">✅</td>
+                        <td>1 week</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 LeanMCP. MIT License. Built for the MCP community.</p>
+            <p>
+                <a href="https://github.com/LeanMCP/leanmcp-sdk" style="color: #667eea;">GitHub</a> | 
+                <a href="https://discord.com/invite/DsRcA3GwPy" style="color: #667eea;">Discord</a> | 
+                <a href="https://leanmcp.com" style="color: #667eea;">Website</a>
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -9,8 +9,8 @@
 <h1 align="center">Production-ready MCP server SDK for TypeScript</h1>
 
 <p align="center">
-  <strong>TypeScript SDK for building MCP servers</strong><br/>
-  with built-in Auth, Multi-tenancy, Human-in-the-loop, and MCP-Apps (including ChatGPT Apps).
+  <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for production MCP servers</strong><br/>
+  Built-in Auth, Multi-tenancy, Human-in-the-loop, and MCP-Apps. 
 </p>
 
 <p align="center">
