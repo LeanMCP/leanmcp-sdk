@@ -6,10 +6,10 @@
   />
 </p>
 
-<h1 align="center">Production-ready MCP server SDK for TypeScript</h1>
+<h1 align="center">Enterprise-ready MCP server SDK for TypeScript</h1>
 
 <p align="center">
-  <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for production MCP servers</strong><br/>
+  <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for enterprise MCP servers</strong><br/>
   Built-in Auth, Multi-tenancy, Human-in-the-loop, and MCP-Apps. 
 </p>
 
@@ -58,7 +58,7 @@ Your MCP server is now running with schema validation, resources, and prompt cap
 
 <table>
 <tr>
-<td width="20%" align="center">
+<td width="25%" align="center">
 
 ### Build a Secure MCP Server
 
@@ -67,7 +67,7 @@ Start with basic tools and add authentication
 [Get Started →](#installation)
 
 </td>
-<td width="20%" align="center">
+<td width="25%" align="center">
 
 ### Add Auth & Multi-tenancy
 
@@ -76,16 +76,7 @@ User-level API keys and permissions
 [Learn More →](#authenticated-service-with-aws-cognito)
 
 </td>
-<td width="20%" align="center">
-
-### Human-in-the-loop Tools
-
-Collect user input during execution
-
-[See Examples →](#core-concepts)
-
-</td>
-<td width="20%" align="center">
+<td width="25%" align="center">
 
 ### MCP UI / Apps
 
@@ -94,9 +85,9 @@ Build ChatGPT Apps with UI components
 [Build Apps →](#examples)
 
 </td>
-<td width="20%" align="center">
+<td width="25%" align="center">
 
-### Deploy to Production
+### Deploy MCP Server to Enterprise-Level
 
 HTTP transport, monitoring, observability
 
@@ -108,22 +99,22 @@ HTTP transport, monitoring, observability
 
 ## Why LeanMCP?
 
-**Other MCP SDKs**: Just connect tools to AI agents - **LeanMCP**: Production features out of the box
+**Other MCP SDKs**: Just connect tools to AI agents - **LeanMCP**: Enterprise features out of the box
 
 | Feature | Basic MCP | LeanMCP | Time Saved |
 |---------|-----------|---------|------------|
-| Basic Tools | Yes | Yes | - |
-| Authentication | No | Yes | 2-3 weeks |
-| Payment Integration | No | Yes | 1-2 weeks |
-| UI Components | No | Yes | 1-2 weeks |
-| Production Deploy | No | Yes | 1 week |
-| Monitoring & Logs | No | Yes | 1 week |
+| Basic Tools | ✅ | ✅ | - |
+| Authentication | ❌ | ✅ | 2-3 weeks |
+| Payment Integration | ❌ | ✅ | 1-2 weeks |
+| UI Components | ❌ | ✅ | 1-2 weeks |
+| Enterprise Deploy | ❌ | ✅ | 1 week |
+| Monitoring & Logs | ❌ | ✅ | 1 week |
 
-### Production-Ready Features
+### Enterprise-Level Features
 - **Authentication**: Auth0, Supabase, Cognito, Firebase out of the box
 - **Multi-tenancy**: User-level API keys and permission management
 - **Payment Integration**: Stripe integration, subscription checks, usage-based billing
-- **Monitoring & Audit**: Logging, monitoring, production-grade observability
+- **Monitoring & Audit**: Logging, monitoring, enterprise-grade observability
 
 ### Developer Experience
 - **Decorator Pattern**: Type-safe decorators with auto-discovery
