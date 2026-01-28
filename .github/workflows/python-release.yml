@@ -1,0 +1,76 @@
+name: Python Release
+
+on:
+  push:
+    tags:
+      - 'python-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Python version to release (e.g., 1.6.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="python-v${VERSION}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#python-v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+      
+      - name: Get PyPI package info
+        id: pypi
+        run: |
+          PYPI_URL="https://pypi.org/project/modelcontextprotocol/${{ steps.version.outputs.version }}/"
+          STATS_URL="https://pypistats.org/packages/modelcontextprotocol"
+          echo "pypi_url=${PYPI_URL}" >> $GITHUB_OUTPUT
+          echo "stats_url=${STATS_URL}" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Python v${{ steps.version.outputs.version }}
+          body: |
+            # Python ModelContextProtocol v${{ steps.version.outputs.version }}
+            
+            🐍 **Python package release for the Model Context Protocol**
+            
+            ## 📦 Installation
+            ```bash
+            pip install modelcontextprotocol==${{ steps.version.outputs.version }}
+            ```
+            
+            ## 🔗 Links
+            - 📦 **PyPI Package**: ${{ steps.pypi.outputs.pypi_url }}
+            - 📊 **Download Stats**: ${{ steps.pypi.outputs.stats_url }}
+            - 📚 **Python Docs**: https://modelcontextprotocol.io/docs/python
+            - 🐍 **Python Repository**: https://github.com/leanmcp/modelcontextprotocol#readme
+            
+            ## 🚀 What's New
+            Check the [Python repository changelog](https://github.com/leanmcp/modelcontextprotocol#readme) for detailed changes in this release.
+            
+            ---
+            
+            *This release was automatically created from the Python package version.*
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
