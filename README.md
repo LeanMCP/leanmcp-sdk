@@ -1,12 +1,10 @@
 <p align="center">
   <img
-    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.svg"
+    src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/Logo-trans.png"
     alt="LeanMCP Logo"
     width="500"
   />
 </p>
-
-<h1 align="center">Enterprise-ready MCP server SDK for TypeScript</h1>
 
 <p align="center">
   <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for enterprise MCP servers</strong><br/>
