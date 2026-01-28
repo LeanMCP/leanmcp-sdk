@@ -68,7 +68,9 @@ Your MCP server is now running with schema validation, resources, and prompt cap
 <tr>
 <td width="25%" align="center">
 
-### 🛠️ Build a Secure MCP Server
+🛠️
+
+### Build a Secure MCP Server
 
 Start with basic tools and add authentication
 
@@ -77,7 +79,9 @@ Start with basic tools and add authentication
 </td>
 <td width="25%" align="center">
 
-### 🔐 Add Auth & Multi-tenancy
+🔐
+
+### Add Auth & Multi-tenancy
 
 User-level API keys and permissions
 
@@ -86,7 +90,9 @@ User-level API keys and permissions
 </td>
 <td width="25%" align="center">
 
-### 🚀 Deploy MCP Server to Enterprise-Level
+🚀
+
+### Deploy MCP Server to Enterprise-Level
 
 HTTP transport, monitoring, observability
 
@@ -95,7 +101,9 @@ HTTP transport, monitoring, observability
 </td>
 <td width="25%" align="center">
 
-### 🎨 MCP UI / Apps
+🎨
+
+### MCP UI / Apps
 
 Build ChatGPT Apps with UI components
 
