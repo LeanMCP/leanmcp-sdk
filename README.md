@@ -68,7 +68,9 @@ Your MCP server is now running with schema validation, resources, and prompt cap
 <tr>
 <td width="25%" align="center">
 
-🛠️
+<br/>
+
+<div style="font-size: 3em;">🛠️</div>
 
 ### Build a Secure MCP Server
 
@@ -79,7 +81,9 @@ Start with basic tools and add authentication
 </td>
 <td width="25%" align="center">
 
-🔐
+<br/>
+
+<div style="font-size: 3em;">🔐</div>
 
 ### Add Auth & Multi-tenancy
 
@@ -90,7 +94,9 @@ User-level API keys and permissions
 </td>
 <td width="25%" align="center">
 
-🚀
+<br/>
+
+<div style="font-size: 3em;">🚀</div>
 
 ### Deploy MCP Server to Enterprise-Level
 
@@ -101,7 +107,9 @@ HTTP transport, monitoring, observability
 </td>
 <td width="25%" align="center">
 
-🎨
+<br/>
+
+<div style="font-size: 3em;">🎨</div>
 
 ### MCP UI / Apps
 
