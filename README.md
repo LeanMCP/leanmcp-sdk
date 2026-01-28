@@ -68,52 +68,44 @@ Your MCP server is now running with schema validation, resources, and prompt cap
 <tr>
 <td width="25%" align="center">
 
-<br/>
-
-<div style="font-size: 3em;">🛠️</div>
-
 ### Build a Secure MCP Server
 
-Start with basic tools and add authentication
+• Start with basic tools
+• Add authentication
+• Schema validation
 
 [Get Started →](#installation)
 
 </td>
 <td width="25%" align="center">
 
-<br/>
-
-<div style="font-size: 3em;">🔐</div>
-
 ### Add Auth & Multi-tenancy
 
-User-level API keys and permissions
+• User-level API keys
+• Permission management
+• Session handling
 
 [Learn More →](#authenticated-service-with-aws-cognito)
 
 </td>
 <td width="25%" align="center">
 
-<br/>
-
-<div style="font-size: 3em;">🚀</div>
-
 ### Deploy MCP Server to Enterprise-Level
 
-HTTP transport, monitoring, observability
+• HTTP transport
+• Monitoring & observability
+• Production scaling
 
 [Deploy Now →](#api-reference)
 
 </td>
 <td width="25%" align="center">
 
-<br/>
-
-<div style="font-size: 3em;">🎨</div>
-
 ### MCP UI / Apps
 
-Build ChatGPT Apps with UI components
+• Build ChatGPT Apps
+• UI components library
+• Interactive interfaces
 
 [Build Apps →](#examples)
 
