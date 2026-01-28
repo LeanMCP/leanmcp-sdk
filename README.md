@@ -14,33 +14,43 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@leanmcp/core">
-    <img src="https://img.shields.io/npm/v/@leanmcp/core?style=flat-square&logo=npm&logoColor=white&label=Version&color=CB3837" alt="npm version" />
-  </a>
-  <a href="https://www.npmjs.com/package/@leanmcp/cli">
-    <img src="https://img.shields.io/npm/dm/@leanmcp/cli?style=flat-square&logo=npm&logoColor=white&label=Downloads&color=CB3837" alt="npm downloads" />
-  </a>
-  <a href="https://pypi.org/project/modelcontextprotocol/">
-    <img src="https://img.shields.io/pypi/dm/modelcontextprotocol?style=flat-square&logo=python&logoColor=white&label=Python%20Downloads&color=3776ab" alt="PyPI downloads" />
-  </a>
   <a href="https://github.com/LeanMCP/leanmcp-sdk/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square&logo=opensourceinitiative&logoColor=white" alt="MIT License" />
   </a>
-  <a href="https://www.typescriptlang.org/">
-    <img src="https://img.shields.io/badge/TypeScript-Ready-blue?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Ready" />
+  <a href="https://docs.leanmcp.com/">
+    <img src="https://img.shields.io/badge/Docs-docs.leanmcp.com-181717?style=flat-square&logo=gitbook&logoColor=white" alt="Documentation" />
   </a>
-  <br/>
-  <a href="https://nodejs.org/">
-    <img src="https://img.shields.io/badge/Node.js-18+-green?style=flat-square&logo=node.js&logoColor=white" alt="Node.js 18+" />
+  <a href="https://hello.leanmcp.com/">
+    <img src="https://img.shields.io/badge/Website-hello.leanmcp.com-0A66C2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website" />
+  </a>
+  <a href="https://x.com/LeanMcp">
+    <img src="https://img.shields.io/badge/Follow-@LeanMCP-1DA1F2?style=flat-square&logo=x&logoColor=white" alt="Follow on X" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
     <img src="https://img.shields.io/badge/Discord-406%20members-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Community" />
   </a>
-  <a href="https://leanmcp.com/">
-    <img src="https://img.shields.io/badge/Website-leanmcp.com-0A66C2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website" />
+  <br/>
+  <a href="https://github.com/leanmcp/modelcontextprotocol#readme">
+    <img src="https://img.shields.io/badge/Python-repo-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python repo" />
   </a>
-  <a href="https://x.com/LeanMcp">
-    <img src="https://img.shields.io/badge/Follow-@LeanMCP-1DA1F2?style=flat-square&logo=x&logoColor=white" alt="Follow on X" />
+  <a href="https://pypi.org/project/modelcontextprotocol/">
+    <img src="https://img.shields.io/pypi/v/modelcontextprotocol?style=flat-square&logo=python&logoColor=white&label=PyPI&color=3776ab" alt="PyPI version" />
+  </a>
+  <a href="https://pypi.org/project/modelcontextprotocol/">
+    <img src="https://img.shields.io/pypi/dm/modelcontextprotocol?style=flat-square&logo=python&logoColor=white&label=Downloads&color=3776ab" alt="PyPI downloads" />
+  </a>
+  <a href="https://modelcontextprotocol.io/docs/python">
+    <img src="https://img.shields.io/badge/Python-docs-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python docs" />
+  </a>
+  <br/>
+  <a href="https://github.com/LeanMCP/leanmcp-sdk">
+    <img src="https://img.shields.io/badge/TypeScript-repo-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript repo" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/core">
+    <img src="https://img.shields.io/npm/v/@leanmcp/core?style=flat-square&logo=npm&logoColor=white&label=npm&color=CB3837" alt="npm version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@leanmcp/cli">
+    <img src="https://img.shields.io/npm/dm/@leanmcp/cli?style=flat-square&logo=npm&logoColor=white&label=Downloads&color=CB3837" alt="npm downloads" />
   </a>
 </p>
 
