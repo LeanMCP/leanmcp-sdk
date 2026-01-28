@@ -8,7 +8,7 @@
 
 <p align="center">
   <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for enterprise MCP servers</strong><br/>
-  Built-in Auth, Multi-tenancy, Human-in-the-loop, and MCP-Apps. 
+  Built-in Auth, Multi-tenancy, and MCP-Apps. 
 </p>
 
 <p align="center">
@@ -86,20 +86,20 @@ User-level API keys and permissions
 </td>
 <td width="25%" align="center">
 
-### MCP UI / Apps
-
-Build ChatGPT Apps with UI components
-
-[Build Apps →](#examples)
-
-</td>
-<td width="25%" align="center">
-
 ### Deploy MCP Server to Enterprise-Level
 
 HTTP transport, monitoring, observability
 
 [Deploy Now →](#api-reference)
+
+</td>
+<td width="25%" align="center">
+
+### MCP UI / Apps
+
+Build ChatGPT Apps with UI components
+
+[Build Apps →](#examples)
 
 </td>
 </tr>
