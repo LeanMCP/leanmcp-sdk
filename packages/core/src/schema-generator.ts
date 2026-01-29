@@ -153,7 +153,9 @@ export function classToJsonSchemaWithConstraints(
   const precomputedTypes = schemaMetadata?.[className];
 
   // SLOW PATH: Parse TypeScript types from source (dev mode fallback)
-  const parsedTypes = precomputedTypes ? null : parseClassTypesSync(classConstructor, sourceFilePath);
+  const parsedTypes = precomputedTypes
+    ? null
+    : parseClassTypesSync(classConstructor, sourceFilePath);
 
   const propertyNames = Object.keys(instance);
 

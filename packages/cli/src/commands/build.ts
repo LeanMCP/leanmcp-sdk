@@ -8,7 +8,7 @@ import { spawn } from 'child_process';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
-import { logger, chalk } from '../logger';
+import { logger } from '../logger';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
 import { generateSchemaMetadata } from '../schema-extractor';
 
@@ -39,10 +39,10 @@ export async function buildCommand() {
     string,
     | string
     | {
-      htmlPath: string;
-      isGPTApp?: boolean;
-      gptMeta?: any;
-    }
+        htmlPath: string;
+        isGPTApp?: boolean;
+        gptMeta?: any;
+      }
   > = {};
 
   if (uiApps.length > 0) {
@@ -120,4 +120,3 @@ export async function buildCommand() {
   logger.gray('\nTo start the server:');
   logger.info('  npm run start:node\n');
 }
-
