@@ -54,11 +54,11 @@ export interface MCPServerConstructorOptions {
   // HTTP Server options (used when passing to createHTTPServer directly)
   port?: number;
   cors?:
-  | boolean
-  | {
-    origin?: string | string[];
-    credentials?: boolean;
-  };
+    | boolean
+    | {
+        origin?: string | string[];
+        credentials?: boolean;
+      };
   sessionTimeout?: number;
   stateless?: boolean; // Stateless mode for Lambda/serverless (default: true)
   dashboard?: boolean; // Serve dashboard UI (default: true)
@@ -677,10 +677,10 @@ export class MCPServer {
 
       const promptArgs = inputSchema?.properties
         ? Object.keys(inputSchema.properties).map((key) => ({
-          name: key,
-          description: inputSchema?.properties?.[key]?.description || '',
-          required: inputSchema?.required?.includes(key) || false,
-        }))
+            name: key,
+            description: inputSchema?.properties?.[key]?.description || '',
+            required: inputSchema?.required?.includes(key) || false,
+          }))
         : [];
 
       this.prompts.set(methodMeta.promptName!, {
@@ -1322,10 +1322,10 @@ export class MCPServerRuntime {
               const methodMeta = getMethodMetadata(method);
               const promptArgs = methodMeta.inputSchema?.properties
                 ? Object.keys(methodMeta.inputSchema.properties).map((key) => ({
-                  name: key,
-                  description: methodMeta.inputSchema?.properties?.[key]?.description || '',
-                  required: methodMeta.inputSchema?.required?.includes(key) || false,
-                }))
+                    name: key,
+                    description: methodMeta.inputSchema?.properties?.[key]?.description || '',
+                    required: methodMeta.inputSchema?.required?.includes(key) || false,
+                  }))
                 : [];
 
               this.prompts.set(methodMeta.promptName!, {
