@@ -1,4 +1,7 @@
 import 'reflect-metadata';
+import { parseClassTypesSync, registerClassSource } from './type-parser';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * Converts a TypeScript class to JSON Schema
@@ -84,19 +87,57 @@ export function SchemaConstraint(constraints: {
   enum?: any[];
   description?: string;
   default?: any;
+  type?: string;
 }): PropertyDecorator {
   return (target, propertyKey) => {
     Reflect.defineMetadata('schema:constraints', constraints, target, propertyKey);
+
+    // Capture source file location for later type parsing
+    // Uses stack trace to find where the decorator is being applied
+    const originalPrepareStackTrace = Error.prepareStackTrace;
+    try {
+      Error.prepareStackTrace = (_, stack) => stack;
+      const err = new Error();
+      const stack = err.stack as unknown as NodeJS.CallSite[];
+
+      for (const site of stack) {
+        const fileName = site.getFileName();
+        if (
+          fileName &&
+          !fileName.includes('node_modules') &&
+          !fileName.includes('schema-generator') &&
+          (fileName.endsWith('.ts') || fileName.endsWith('.js'))
+        ) {
+          // Get the class name from the target
+          const className = target.constructor.name;
+          if (className && className !== 'Object') {
+            registerClassSource(className, fileName);
+          }
+          break;
+        }
+      }
+    } finally {
+      Error.prepareStackTrace = originalPrepareStackTrace;
+    }
   };
 }
 
 /**
- * Enhanced schema generator that includes constraints
+ * Enhanced schema generator that includes constraints.
+ * Now integrates with type-parser to extract actual TypeScript types
+ * (including array element types like `string[]`).
  */
-export function classToJsonSchemaWithConstraints(classConstructor: new () => any): any {
+export function classToJsonSchemaWithConstraints(
+  classConstructor: new () => any,
+  sourceFilePath?: string
+): any {
   const instance = new classConstructor();
   const properties: Record<string, any> = {};
   const required: string[] = [];
+
+  // Try to parse actual TypeScript types from source file
+  // This gives us array element types that reflect-metadata doesn't provide
+  const parsedTypes = parseClassTypesSync(classConstructor, sourceFilePath);
 
   const propertyNames = Object.keys(instance);
 
@@ -105,9 +146,17 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
     const constraints = Reflect.getMetadata('schema:constraints', instance, propertyName);
     const isOptional = Reflect.getMetadata('optional', instance, propertyName);
 
-    let jsonSchemaType = 'string'; // Default to string when metadata is unavailable (tsx/ts-node limitation)
+    // Get parsed type from source (includes proper array items)
+    const parsedType = parsedTypes.get(propertyName);
 
-    if (propertyType) {
+    let propertySchema: any;
+
+    if (parsedType && parsedType.type) {
+      // Use parsed type (has accurate array item types)
+      propertySchema = { ...parsedType };
+    } else if (propertyType) {
+      // Fallback to reflect-metadata
+      let jsonSchemaType = 'string';
       switch (propertyType.name) {
         case 'String':
           jsonSchemaType = 'string';
@@ -127,9 +176,15 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
         default:
           jsonSchemaType = 'object';
       }
+      propertySchema = { type: jsonSchemaType };
     } else if (constraints) {
       // Infer type from constraints when design:type metadata is unavailable
-      if (
+      let jsonSchemaType = 'string';
+      if (constraints.type) {
+        jsonSchemaType = constraints.type;
+      } else if (constraints.items) {
+        jsonSchemaType = 'array';
+      } else if (
         constraints.minLength !== undefined ||
         constraints.maxLength !== undefined ||
         constraints.pattern
@@ -138,7 +193,6 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
       } else if (constraints.minimum !== undefined || constraints.maximum !== undefined) {
         jsonSchemaType = 'number';
       } else if (constraints.enum && constraints.enum.length > 0) {
-        // Infer from enum values
         const firstValue = constraints.enum[0];
         if (typeof firstValue === 'number') {
           jsonSchemaType = 'number';
@@ -148,12 +202,30 @@ export function classToJsonSchemaWithConstraints(classConstructor: new () => any
           jsonSchemaType = 'string';
         }
       }
+      propertySchema = { type: jsonSchemaType };
+    } else {
+      // Default to string when no type info available
+      propertySchema = { type: 'string' };
     }
 
-    properties[propertyName] = {
-      type: jsonSchemaType,
-      ...(constraints || {}),
-    };
+    // Merge constraints (description, enum, min/max, etc.)
+    if (constraints) {
+      // Keep the parsed items if present, don't override with constraints
+      const parsedItems = propertySchema.items;
+      propertySchema = { ...propertySchema, ...constraints };
+
+      // Restore parsed items if constraints didn't have items
+      if (parsedItems && !constraints.items) {
+        propertySchema.items = parsedItems;
+      }
+    }
+
+    // Ensure arrays always have items (required by OpenAI)
+    if (propertySchema.type === 'array' && !propertySchema.items) {
+      propertySchema.items = { type: 'string' };
+    }
+
+    properties[propertyName] = propertySchema;
 
     if (!isOptional) {
       required.push(propertyName);
