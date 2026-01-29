@@ -10,6 +10,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { logger, chalk } from '../logger';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
+import { generateSchemaMetadata } from '../schema-extractor';
 
 export async function buildCommand() {
   const cwd = process.cwd();
@@ -38,10 +39,10 @@ export async function buildCommand() {
     string,
     | string
     | {
-        htmlPath: string;
-        isGPTApp?: boolean;
-        gptMeta?: any;
-      }
+      htmlPath: string;
+      isGPTApp?: boolean;
+      gptMeta?: any;
+    }
   > = {};
 
   if (uiApps.length > 0) {
@@ -105,7 +106,18 @@ export async function buildCommand() {
     process.exit(1);
   }
 
+  // Step 4: Generate schema metadata (for fast runtime schema generation)
+  const schemaSpinner = ora('Generating schema metadata...').start();
+  try {
+    await generateSchemaMetadata(cwd);
+    schemaSpinner.succeed('Schema metadata generated');
+  } catch (error) {
+    schemaSpinner.warn('Schema metadata generation failed (runtime fallback will be used)');
+    logger.gray(`   ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   logger.success('\nBuild complete!');
   logger.gray('\nTo start the server:');
   logger.info('  npm run start:node\n');
 }
+
