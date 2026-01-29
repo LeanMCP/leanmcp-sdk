@@ -7,8 +7,8 @@
 </p>
 
 <p align="center">
-  <strong>LeanMCP SDK: Efficient, modular TypeScript toolkit for enterprise MCP servers</strong><br/>
-  Built-in Auth, Multi-tenancy, and MCP-Apps. 
+  
+  
 </p>
 
 <p align="center">
@@ -52,6 +52,25 @@
   </a>
 </p>
 
+---
+
+# LeanMCP Core (SDK + CLI)
+
+LeanMCP is a TypeScript toolkit for building and operating **Model Context Protocol (MCP) servers** with production-minded defaults (schema validation, developer workflow, and optional infra modules).
+
+## What this repository provides
+
+This repository contains the core building blocks for LeanMCP:
+
+- `@leanmcp/cli` — project scaffolding and local development workflow
+- `@leanmcp/core` — MCP server framework (tools, resources, prompts)
+- TypeScript-first APIs with schema validation and conventions
+
+This repo focuses on **building MCP servers**.
+Operational and enterprise features are optional and layered on top.
+
+
+
 ## Quick Start
 
 ```bash
@@ -62,50 +81,66 @@ npm run dev
 
 Your MCP server is now running with schema validation, resources, and prompt capabilities.
 
-## Choose Your Path
+
+## Progressive capabilities
+
+LeanMCP is designed to be adopted incrementally.
+
+- **Start simple**: define tools, resources, and prompts
+- **Add security**: authentication and access control (optional)
+- **Operate reliably**: logging, metrics, and observability (optional)
+- **Extend interfaces**: UI components and interactive apps (advanced)
+
+
+## Choose your adoption path
+
+LeanMCP is designed to support different stages of MCP server adoption.
+Most teams progress through these stages over time — not all at once.
+
 
 <table>
 <tr>
 <td width="25%" align="left">
 
-### Build a Secure MCP Server
+### 1. Core MCP server (start here)
 
-• Start with basic tools  
-• Add authentication  
-• Schema validation
+- Define tools, resources, and prompts
+- Type-safe schema validation
+- Local development with hot reload
 
 [Get Started →](#installation)
 
 </td>
 <td width="25%" align="left">
 
-### Add Auth & Multi-tenancy
+### 2. Secure & multi-user server
 
-• User-level API keys  
-• Permission management  
-• Session handling
+- Authentication and access control
+- User-level API keys and permissions
+- Session-aware execution
 
 [Learn More →](#authenticated-service-with-aws-cognito)
 
 </td>
 <td width="25%" align="left">
 
-### Deploy MCP Server to Enterprise-Level
+### 3. Deploy MCP Server to Enterprise-Level
 
-• HTTP transport  
-• Monitoring & observability  
-• Production scaling
+- HTTP transport and deployment patterns
+- Logging, metrics, and observability
+- Operational stability and scaling
 
 [Deploy Now →](#api-reference)
 
 </td>
 <td width="25%" align="left">
 
-### MCP UI / Apps
+### 4. MCP UI / Apps (Advanced)
 
-• Build ChatGPT Apps  
-• UI components library  
-• Interactive interfaces
+- UI components for MCP-based apps
+- Interactive tool execution
+- Streaming and real-time updates
+
 
 [Build Apps →](#examples)
 
@@ -113,35 +148,17 @@ Your MCP server is now running with schema validation, resources, and prompt cap
 </tr>
 </table>
 
-## Why LeanMCP?
+## Optional modules and integrations
 
-**Other MCP SDKs**: Just connect tools to AI agents - **LeanMCP**: Enterprise features out of the box
+LeanMCP provides optional modules that teams may adopt
+as their MCP servers move toward production.
 
-| Feature | Basic MCP | LeanMCP | Time Saved |
-|---------|-----------|---------|------------|
-| Basic Tools | ✅ | ✅ | - |
-| Authentication | ❌ | ✅ | 2-3 weeks |
-| Payment Integration | ❌ | ✅ | 1-2 weeks |
-| UI Components | ❌ | ✅ | 1-2 weeks |
-| Enterprise Deploy | ❌ | ✅ | 1 week |
-| Monitoring & Logs | ❌ | ✅ | 1 week |
+- **Authentication & tenancy**: Auth0, Supabase, Cognito, Firebase
+- **Payments**: Stripe-based subscription checks and usage-based billing
+- **Observability**: logging, metrics, and audit trails
+- **Developer experience**: decorators, conventions, hot reload
+- **UI & interactive apps (advanced)**: UI components, streaming updates
 
-### Enterprise-Level Features
-- **Authentication**: Auth0, Supabase, Cognito, Firebase out of the box
-- **Multi-tenancy**: User-level API keys and permission management
-- **Payment Integration**: Stripe integration, subscription checks, usage-based billing
-- **Monitoring & Audit**: Logging, monitoring, enterprise-grade observability
-
-### Developer Experience
-- **Decorator Pattern**: Type-safe decorators with auto-discovery
-- **Convention over Configuration**: Sensible defaults
-- **TypeScript First**: Complete type safety + schema validation
-- **Hot Reload**: Automatic restart during development
-
-### ChatGPT Apps Support
-- **UI Components**: Render UI components inside ChatGPT, Claude
-- **User Interaction**: Handle user input during tool execution
-- **Real-time Updates**: Support for streaming responses and live data
 
 ## Table of Contents
 
