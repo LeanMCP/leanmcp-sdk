@@ -19,7 +19,7 @@
     <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy?style=flat&theme=default-inverted&compact=true" alt="Discord Community" />
+    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy?style=flat" alt="Discord" />
   </a>
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
