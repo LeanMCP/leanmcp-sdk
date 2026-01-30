@@ -19,7 +19,7 @@
     <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy" alt="Discord" />
+    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy?style=flat" alt="Discord" />
   </a>
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
@@ -34,7 +34,12 @@
 {
   "package": "@leanmcp/core",
   "purpose": "Core TypeScript framework for building MCP servers with decorators",
-  "useCases": ["MCP server development", "Type-safe tool definitions", "HTTP transport", "Schema validation"],
+  "useCases": [
+    "MCP server development",
+    "Type-safe tool definitions",
+    "HTTP transport",
+    "Schema validation"
+  ],
   "dependencies": ["@modelcontextprotocol/sdk"],
   "exports": ["@Tool", "@Prompt", "@Resource", "@SchemaConstraint", "createHTTPServer", "MCPServer"]
 }
@@ -44,7 +49,7 @@
 
 - **What it is**: Core TypeScript framework for building Model Context Protocol (MCP) servers using decorators and automatic schema validation
 - **Purpose**: Provides type-safe decorators (`@Tool`, `@Prompt`, `@Resource`) with HTTP transport and zero-config service discovery
-- **Key benefits**: 
+- **Key benefits**:
   - Type-safe decorators with full TypeScript support
   - Automatic JSON Schema generation from TypeScript classes
   - Production-ready HTTP server with session management
@@ -53,7 +58,8 @@
 
 ## When to Use It
 
-**Use @leanmcp/core when:**
+**Use `@leanmcp/core` when:**
+
 - Building any MCP server (this is the foundation package)
 - You want type safety and decorator-based development
 - Need HTTP transport for production deployment
@@ -61,6 +67,7 @@
 - Want zero-config service discovery
 
 **You probably do NOT need this if:**
+
 - Building MCP clients (use `@modelcontextprotocol/sdk` directly)
 - Creating simple scripts without HTTP servers
 - Working in non-TypeScript environments
@@ -397,7 +404,6 @@ server.registerService(instance);  // Manual registration
 server.getServer();                // Get underlying MCP SDK server
 ```
 
-
 ---
 
 ## Integration with Other LeanMCP Packages
@@ -405,7 +411,7 @@ server.getServer();                // Get underlying MCP SDK server
 **@leanmcp/core** is the foundation package that all other LeanMCP packages build upon:
 
 - **[@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth)** — Add authentication decorators to protect tools
-- **[@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui)** — Build interactive MCP apps with React components  
+- **[@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui)** — Build interactive MCP apps with React components
 - **[@leanmcp/elicitation](https://www.npmjs.com/package/@leanmcp/elicitation)** — Collect structured user input during tool execution
 - **[@leanmcp/env-injection](https://www.npmjs.com/package/@leanmcp/env-injection)** — Request-scoped environment variables for user secrets
 - **[@leanmcp/utils](https://www.npmjs.com/package/@leanmcp/utils)** — Utility functions for response formatting and retry logic
