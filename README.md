@@ -156,6 +156,8 @@ Optional capabilities layer on top of the core:
 * Install: `@leanmcp/cli`, `@leanmcp/core` 
 * Use when: building tools, resources, and prompts locally
 
+[Get Started →](#installation)
+
 </td>
 <td width="33%" align="left" valign="top">
 
@@ -164,6 +166,8 @@ Optional capabilities layer on top of the core:
 * Add: `@leanmcp/auth` 
 * Use when: MCP server has real users and access control
 
+[Learn More →](#authenticated-service-with-aws-cognito)
+
 </td>
 <td width="33%" align="left" valign="top">
 
@@ -171,6 +175,8 @@ Optional capabilities layer on top of the core:
 
 * Add: `@leanmcp/elicitation` 
 * Use when: tools need structured or multi-step user input
+
+[See Examples →](#elicitation-examples)
 
 </td>
 </tr>
@@ -182,6 +188,8 @@ Optional capabilities layer on top of the core:
 * Add: `@leanmcp/ui` 
 * Use when: building interactive MCP interfaces, not just JSON output
 
+[Build Apps →](#ui-components)
+
 </td>
 <td width="33%" align="left" valign="top">
 
@@ -189,6 +197,8 @@ Optional capabilities layer on top of the core:
 
 * Add: `@leanmcp/env-injection` 
 * Use when: secrets vary per user or per request
+
+[Configure →](#environment-injection)
 
 </td>
 <td width="33%" align="left" valign="top">
