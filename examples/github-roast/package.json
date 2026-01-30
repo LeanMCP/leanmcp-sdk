@@ -10,14 +10,14 @@
         "start:node": "node dist/main.js"
     },
     "dependencies": {
-        "@leanmcp/auth": "^0.4.0",
-        "@leanmcp/core": "^0.3.16",
-        "@leanmcp/ui": "*",
+        "@leanmcp/auth": "^0.4.5",
+        "@leanmcp/core": "^0.4.7",
+        "@leanmcp/ui": "^0.3.8",
         "dotenv": "^17.2.3",
         "openai": "^4.20.0"
     },
     "devDependencies": {
-        "@leanmcp/cli": "^0.4.0",
+        "@leanmcp/cli": "^0.5.5",
         "@types/node": "^20.0.0",
         "@types/react": "^18.0.0",
         "tsx": "^4.20.3",
