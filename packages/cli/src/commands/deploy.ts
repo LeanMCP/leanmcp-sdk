@@ -48,23 +48,23 @@ async function debugFetch(url: string, options: RequestInit = {}): Promise<Respo
 /**
  * Retry wrapper for fetch operations with exponential backoff
  * Shows in-place retry counter updates without filling the terminal
- * 
+ *
  * @param fetchFn - Function that performs the fetch operation
  * @param options - Configuration options
- * @param options.maxRetries - Maximum number of retry attempts (default: 15). Does not include the initial attempt.
+ * @param options.maxRetries - Maximum number of retry attempts after initial failure (default: 15). Total attempts = maxRetries + 1
  * @param options.initialDelay - Initial delay in ms before first retry (default: 1000)
  * @param options.maxDelay - Maximum delay in ms between retries (default: 10000)
  * @param options.operation - Name of the operation for display purposes (default: 'Fetch')
  * @param options.spinner - Optional ora spinner instance for UI updates
- * @param options.retryOnHttpErrors - Whether to retry on HTTP error responses (4xx, 5xx). Default: false
- * 
+ * @param options.retryOnHttpErrors - Whether to retry on HTTP 5xx server errors. Default: false
+ *
  * @throws Error if all retry attempts are exhausted
- * 
+ *
  * @remarks
  * - Only retries on network errors by default (connection failures, timeouts, etc.)
- * - Set retryOnHttpErrors=true to also retry HTTP 5xx server errors
+ * - Set retryOnHttpErrors=true to also retry HTTP 5xx server errors (not 4xx client errors)
  * - Uses exponential backoff: 1s, 2s, 4s, 8s, 10s (max), 10s, ...
- * - Total time with defaults: ~5 minutes for 15 retries
+ * - With maxRetries=15: 1 initial attempt + 15 retries = 16 total attempts
  */
 async function fetchWithRetry(
   fetchFn: () => Promise<Response>,
@@ -86,8 +86,8 @@ async function fetchWithRetry(
 
   let lastError: Error | null = null;
 
-  // Initial attempt + retries
-  for (let attempt = 0; attempt < maxRetries; attempt++) {
+  // Initial attempt (0) + retries (1 to maxRetries)
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetchFn();
 
@@ -100,19 +100,19 @@ async function fetchWithRetry(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
 
-      if (attempt < maxRetries - 1) {
+      if (attempt < maxRetries) {
         // Calculate delay with exponential backoff
         const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
 
         // Show retry message - either via spinner or stdout
-        const message = `${operation} failed. Retrying... (${attempt + 1}/${maxRetries - 1})`;
+        const message = `${operation} failed. Retrying... (${attempt + 1}/${maxRetries})`;
         if (spinner) {
           spinner.text = message;
         } else {
           process.stdout.write('\r' + chalk.yellow(message));
         }
 
-        debug(`Retry ${attempt + 1}/${maxRetries - 1}: ${lastError.message}, waiting ${delay}ms`);
+        debug(`Retry ${attempt + 1}/${maxRetries}: ${lastError.message}, waiting ${delay}ms`);
 
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
@@ -125,7 +125,7 @@ async function fetchWithRetry(
   }
 
   throw new Error(
-    `${operation} failed after ${maxRetries} attempts: ${lastError?.message || 'Unknown error'}`
+    `${operation} failed after ${maxRetries + 1} attempts (1 initial + ${maxRetries} retries): ${lastError?.message || 'Unknown error'}`
   );
 }
 
