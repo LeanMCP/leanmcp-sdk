@@ -1,6 +1,6 @@
 {
   "name": "@leanmcp/core",
-  "version": "0.4.4",
+  "version": "0.4.7",
   "description": "Core library implementing decorators, reflection, and MCP runtime server",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -31,6 +31,9 @@
     "chokidar": "^4.0.0",
     "dotenv": "^16.3.1",
     "reflect-metadata": "^0.2.1"
+  },
+  "optionalDependencies": {
+    "ts-morph": "^24.0.0"
   },
   "peerDependencies": {
     "cors": "^2.8.5",

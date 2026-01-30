@@ -16,6 +16,7 @@ import Ajv from 'ajv';
 
 export * from './decorators';
 export * from './schema-generator';
+export { parseClassTypesSync, registerClassSource, clearTypeCache } from './type-parser';
 export * from './http-server';
 export * from './logger';
 export * from './validation';

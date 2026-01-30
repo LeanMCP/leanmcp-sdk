@@ -8,8 +8,9 @@ import { spawn } from 'child_process';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
-import { logger, chalk } from '../logger';
+import { logger } from '../logger';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
+import { generateSchemaMetadata } from '../schema-extractor';
 
 export async function buildCommand() {
   const cwd = process.cwd();
@@ -103,6 +104,16 @@ export async function buildCommand() {
     tscSpinner.fail('TypeScript compilation failed');
     logger.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
+  }
+
+  // Step 4: Generate schema metadata (for fast runtime schema generation)
+  const schemaSpinner = ora('Generating schema metadata...').start();
+  try {
+    await generateSchemaMetadata(cwd);
+    schemaSpinner.succeed('Schema metadata generated');
+  } catch (error) {
+    schemaSpinner.warn('Schema metadata generation failed (runtime fallback will be used)');
+    logger.gray(`   ${error instanceof Error ? error.message : String(error)}`);
   }
 
   logger.success('\nBuild complete!');
