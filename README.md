@@ -153,30 +153,24 @@ Optional capabilities layer on top of the core:
 
 ### 1. Minimal MCP server (local development)
 
-* Install: `@leanmcp/cli`, `@leanmcp/core` 
+* Install: [`@leanmcp/cli`](https://www.npmjs.com/package/@leanmcp/cli), [`@leanmcp/core`](https://www.npmjs.com/package/@leanmcp/core) 
 * Use when: building tools, resources, and prompts locally
-
-[Get Started →](#installation)
 
 </td>
 <td width="33%" align="left" valign="top">
 
 ### 2. Authenticated MCP server
 
-* Add: `@leanmcp/auth` 
+* Add: [`@leanmcp/auth`](https://www.npmjs.com/package/@leanmcp/auth) 
 * Use when: MCP server has real users and access control
-
-[Learn More →](#authenticated-service-with-aws-cognito)
 
 </td>
 <td width="33%" align="left" valign="top">
 
 ### 3. Interactive tool execution
 
-* Add: `@leanmcp/elicitation` 
+* Add: [`@leanmcp/elicitation`](https://www.npmjs.com/package/@leanmcp/elicitation) 
 * Use when: tools need structured or multi-step user input
-
-[See Examples →](#elicitation-examples)
 
 </td>
 </tr>
@@ -185,20 +179,16 @@ Optional capabilities layer on top of the core:
 
 ### 4. MCP Apps / UI (advanced)
 
-* Add: `@leanmcp/ui` 
+* Add: [`@leanmcp/ui`](https://www.npmjs.com/package/@leanmcp/ui) 
 * Use when: building interactive MCP interfaces, not just JSON output
-
-[Build Apps →](#ui-components)
 
 </td>
 <td width="33%" align="left" valign="top">
 
 ### 5. Multi-tenant secrets (advanced)
 
-* Add: `@leanmcp/env-injection` 
+* Add: [`@leanmcp/env-injection`](https://www.npmjs.com/package/@leanmcp/env-injection) 
 * Use when: secrets vary per user or per request
-
-[Configure →](#environment-injection)
 
 </td>
 <td width="33%" align="left" valign="top">
@@ -243,15 +233,6 @@ These snippets show common patterns only.
 Full API details live in the documentation.
 
 ---
-
-## Links
-
-* Documentation: [https://docs.leanmcp.com](https://docs.leanmcp.com)
-* Build & Deploy MCP servers: [https://ship.leanmcp.com](https://ship.leanmcp.com)
-* Observability & AI Gateway: [https://app.leanmcp.com](https://app.leanmcp.com)
-* npm packages: [https://www.npmjs.com/search?q=%40leanmcp](https://www.npmjs.com/search?q=%40leanmcp)
-* GitHub org: [https://github.com/LeanMCP](https://github.com/LeanMCP)
-
 
 ## Table of Contents
 
