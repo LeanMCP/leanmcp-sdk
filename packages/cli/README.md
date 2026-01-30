@@ -36,14 +36,20 @@
   "purpose": "Command-line interface for scaffolding LeanMCP projects",
   "useCases": [
     "Project scaffolding",
-    "Local development with hot-reload", 
+    "Local development with hot-reload",
     "Cloud deployment",
     "Project management"
   ],
-  "dependencies": ["Node.js", "@inquirer/prompts", "commander", "chalk", "vite"],
+  "dependencies": ["@inquirer/prompts", "commander", "chalk", "vite", "archiver", "fs-extra"],
+  "bin": {
+    "leanmcp": "bin/leanmcp.js"
+  },
+  "main": "dist/index.js",
   "exports": {
-    "bin": "leanmcp",
-    "main": "./dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   }
 }
 ```
@@ -97,6 +103,7 @@ npx @leanmcp/cli create my-mcp-server
 ```
 
 **Requirements:**
+
 - Node.js >= 18.0.0
 - npm >= 9.0.0
 
@@ -323,20 +330,26 @@ leanmcp projects delete <project-id> --force  # Skip confirmation
 
 ### Command Reference
 
-| Command | Description | Usage |
-|---------|-------------|-------|
-| `create <name>` | Create new MCP server project | `leanmcp create my-server` |
-| `add <service>` | Add service to existing project | `leanmcp add weather` |
-| `dev` | Start development server with hot-reload | `leanmcp dev` |
-| `build` | Build for production | `leanmcp build` |
-| `start` | Start production server | `leanmcp start` |
-| `login` | Authenticate with LeanMCP Cloud | `leanmcp login` |
-| `logout` | Remove API key | `leanmcp logout` |
-| `whoami` | Show login status | `leanmcp whoami` |
-| `deploy <folder>` | Deploy to LeanMCP Cloud | `leanmcp deploy .` |
-| `projects list` | List cloud projects | `leanmcp projects list` |
-| `projects get <id>` | Get project details | `leanmcp projects get <id>` |
-| `projects delete <id>` | Delete project | `leanmcp projects delete <id>` |
+| Command                | Description                              | Usage                          |
+| ---------------------- | ---------------------------------------- | ------------------------------ |
+| `create <name>`        | Create new MCP server project            | `leanmcp create my-server`     |
+| `add <service>`        | Add service to existing project          | `leanmcp add weather`          |
+| `dev`                  | Start development server with hot-reload | `leanmcp dev`                  |
+| `build`                | Build for production                     | `leanmcp build`                |
+| `start`                | Start production server                  | `leanmcp start`                |
+| `login`                | Authenticate with LeanMCP Cloud          | `leanmcp login`                |
+| `logout`               | Remove API key                           | `leanmcp logout`               |
+| `whoami`               | Show login status                        | `leanmcp whoami`               |
+| `deploy [folder]`      | Deploy to LeanMCP Cloud                  | `leanmcp deploy .`             |
+| `projects list`        | List cloud projects                      | `leanmcp projects list`        |
+| `projects get <id>`    | Get project details                      | `leanmcp projects get <id>`    |
+| `projects delete <id>` | Delete project                           | `leanmcp projects delete <id>` |
+| `env list [folder]`    | List environment variables               | `leanmcp env list`             |
+| `env set <keyValue>`   | Set environment variable                 | `leanmcp env set KEY=VALUE`    |
+| `env get <key>`        | Get environment variable value           | `leanmcp env get KEY`          |
+| `env remove <key>`     | Remove environment variable              | `leanmcp env remove KEY`       |
+| `env pull [folder]`    | Download env vars to local file         | `leanmcp env pull`             |
+| `env push [folder]`    | Upload env vars from local file         | `leanmcp env push`             |
 
 ---
 
