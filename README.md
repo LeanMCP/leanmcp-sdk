@@ -149,7 +149,7 @@ Optional capabilities layer on top of the core:
 
 <table>
 <tr>
-<td width="20%" align="left">
+<td width="33%" align="left" valign="top">
 
 ### Minimal MCP server (local development)
 
@@ -157,7 +157,7 @@ Optional capabilities layer on top of the core:
 * Use when: building tools, resources, and prompts locally
 
 </td>
-<td width="20%" align="left">
+<td width="33%" align="left" valign="top">
 
 ### Authenticated MCP server
 
@@ -165,7 +165,7 @@ Optional capabilities layer on top of the core:
 * Use when: MCP server has real users and access control
 
 </td>
-<td width="20%" align="left">
+<td width="33%" align="left" valign="top">
 
 ### Interactive tool execution
 
@@ -173,7 +173,9 @@ Optional capabilities layer on top of the core:
 * Use when: tools need structured or multi-step user input
 
 </td>
-<td width="20%" align="left">
+</tr>
+<tr>
+<td width="33%" align="left" valign="top">
 
 ### MCP Apps / UI (advanced)
 
@@ -181,12 +183,15 @@ Optional capabilities layer on top of the core:
 * Use when: building interactive MCP interfaces, not just JSON output
 
 </td>
-<td width="20%" align="left">
+<td width="33%" align="left" valign="top">
 
 ### Multi-tenant secrets (advanced)
 
 * Add: `@leanmcp/env-injection` 
 * Use when: secrets vary per user or per request
+
+</td>
+<td width="33%" align="left" valign="top">
 
 </td>
 </tr>
