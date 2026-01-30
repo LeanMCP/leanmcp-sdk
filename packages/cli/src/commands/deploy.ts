@@ -45,6 +45,90 @@ async function debugFetch(url: string, options: RequestInit = {}): Promise<Respo
   return response;
 }
 
+/**
+ * Retry wrapper for fetch operations with exponential backoff
+ * Shows in-place retry counter updates without filling the terminal
+ *
+ * @param fetchFn - Function that performs the fetch operation
+ * @param options - Configuration options
+ * @param options.maxRetries - Maximum number of retry attempts after initial failure (default: 15). Total attempts = maxRetries + 1
+ * @param options.initialDelay - Initial delay in ms before first retry (default: 1000)
+ * @param options.maxDelay - Maximum delay in ms between retries (default: 10000)
+ * @param options.operation - Name of the operation for display purposes (default: 'Fetch')
+ * @param options.spinner - Optional ora spinner instance for UI updates
+ * @param options.retryOnHttpErrors - Whether to retry on HTTP 5xx server errors. Default: false
+ *
+ * @throws Error if all retry attempts are exhausted
+ *
+ * @remarks
+ * - Only retries on network errors by default (connection failures, timeouts, etc.)
+ * - Set retryOnHttpErrors=true to also retry HTTP 5xx server errors (not 4xx client errors)
+ * - Uses exponential backoff: 1s, 2s, 4s, 8s, 10s (max), 10s, ...
+ * - With maxRetries=15: 1 initial attempt + 15 retries = 16 total attempts
+ */
+async function fetchWithRetry(
+  fetchFn: () => Promise<Response>,
+  options: {
+    maxRetries?: number;
+    initialDelay?: number;
+    maxDelay?: number;
+    operation?: string;
+    spinner?: ReturnType<typeof ora>;
+    retryOnHttpErrors?: boolean;
+  } = {}
+): Promise<Response> {
+  const maxRetries = options.maxRetries ?? 15;
+  const initialDelay = options.initialDelay ?? 1000;
+  const maxDelay = options.maxDelay ?? 10000;
+  const operation = options.operation ?? 'Fetch';
+  const spinner = options.spinner;
+  const retryOnHttpErrors = options.retryOnHttpErrors ?? false;
+
+  let lastError: Error | null = null;
+
+  // Initial attempt (0) + retries (1 to maxRetries)
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetchFn();
+
+      // Check if we should retry on HTTP errors
+      if (retryOnHttpErrors && !response.ok && response.status >= 500) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      if (attempt < maxRetries) {
+        // Calculate delay with exponential backoff
+        const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
+
+        // Show retry message - either via spinner or stdout
+        const message = `${operation} failed. Retrying... (${attempt + 1}/${maxRetries})`;
+        if (spinner) {
+          spinner.text = message;
+        } else {
+          process.stdout.write('\r' + chalk.yellow(message));
+        }
+
+        debug(`Retry ${attempt + 1}/${maxRetries}: ${lastError.message}, waiting ${delay}ms`);
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  // Clear the retry message if not using spinner
+  if (!spinner) {
+    process.stdout.write('\x1b[2K\r'); // ANSI escape to clear entire line
+  }
+
+  throw new Error(
+    `${operation} failed after ${maxRetries + 1} attempts (1 initial + ${maxRetries} retries): ${lastError?.message || 'Unknown error'}`
+  );
+}
+
 // API endpoints (relative to base URL)
 const API_ENDPOINTS = {
   // Projects
@@ -171,9 +255,13 @@ async function waitForBuild(
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const response = await fetchWithRetry(
+      () =>
+        debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }),
+      { operation: 'Build status check', spinner, maxRetries: 3 }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to get build status: ${response.statusText}`);
@@ -215,9 +303,13 @@ async function waitForDeployment(
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const response = await debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const response = await fetchWithRetry(
+      () =>
+        debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }),
+      { operation: 'Deployment status check', spinner, maxRetries: 3 }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to get deployment status: ${response.statusText}`);
