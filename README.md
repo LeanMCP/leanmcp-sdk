@@ -130,18 +130,18 @@ install **@leanmcp/cli** and **@leanmcp/core** only.
 
 ## How the pieces fit
 
-* **`npm install -g @leanmcp/cli` or `npx @leanmcp/cli`**
+* `npm install -g @leanmcp/cli` or `npx @leanmcp/cli`
   Scaffolds projects and runs local development and deployment workflows.
 
-* **`npm install @leanmcp/core`**
+* `npm install @leanmcp/core`
   The MCP server runtime: decorators, schema validation, and conventions.
 
 Optional capabilities layer on top of the core:
 
-* **`npm install @leanmcp/auth`** for identity and permissions
-* **`npm install @leanmcp/elicitation`** for structured user input
-* **`npm install @leanmcp/ui`** for MCP-native UI surfaces
-* **`npm install @leanmcp/env-injection`** for request-scoped secrets
+* `npm install @leanmcp/auth` for identity and permissions
+* `npm install @leanmcp/elicitation` for structured user input
+* `npm install @leanmcp/ui` for MCP-native UI surfaces
+* `npm install @leanmcp/env-injection` for request-scoped secrets
 
 ---
 
@@ -151,7 +151,7 @@ Optional capabilities layer on top of the core:
 <tr>
 <td width="33%" align="left" valign="top">
 
-### Minimal MCP server (local development)
+### 1. Minimal MCP server (local development)
 
 * Install: `@leanmcp/cli`, `@leanmcp/core` 
 * Use when: building tools, resources, and prompts locally
@@ -159,7 +159,7 @@ Optional capabilities layer on top of the core:
 </td>
 <td width="33%" align="left" valign="top">
 
-### Authenticated MCP server
+### 2. Authenticated MCP server
 
 * Add: `@leanmcp/auth` 
 * Use when: MCP server has real users and access control
@@ -167,7 +167,7 @@ Optional capabilities layer on top of the core:
 </td>
 <td width="33%" align="left" valign="top">
 
-### Interactive tool execution
+### 3. Interactive tool execution
 
 * Add: `@leanmcp/elicitation` 
 * Use when: tools need structured or multi-step user input
@@ -177,7 +177,7 @@ Optional capabilities layer on top of the core:
 <tr>
 <td width="33%" align="left" valign="top">
 
-### MCP Apps / UI (advanced)
+### 4. MCP Apps / UI (advanced)
 
 * Add: `@leanmcp/ui` 
 * Use when: building interactive MCP interfaces, not just JSON output
@@ -185,7 +185,7 @@ Optional capabilities layer on top of the core:
 </td>
 <td width="33%" align="left" valign="top">
 
-### Multi-tenant secrets (advanced)
+### 5. Multi-tenant secrets (advanced)
 
 * Add: `@leanmcp/env-injection` 
 * Use when: secrets vary per user or per request
