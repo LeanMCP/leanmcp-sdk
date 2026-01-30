@@ -1,14 +1,11 @@
+# @leanmcp/cli
+
 <p align="center">
   <img
     src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
     alt="LeanMCP Logo"
     width="400"
   />
-</p>
-
-<p align="center">
-  <strong>@leanmcp/cli</strong><br/>
-  Command-line tool for creating, developing, and deploying LeanMCP projects.
 </p>
 
 <p align="center">
@@ -22,7 +19,7 @@
     <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy?style=flat" alt="Discord" />
   </a>
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
@@ -32,6 +29,52 @@
   </a>
   <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
+
+```json
+{
+  "package": "@leanmcp/cli",
+  "purpose": "Command-line interface for scaffolding LeanMCP projects",
+  "useCases": [
+    "Project scaffolding",
+    "Local development with hot-reload", 
+    "Cloud deployment",
+    "Project management"
+  ],
+  "dependencies": ["Node.js", "@inquirer/prompts", "commander", "chalk", "vite"],
+  "exports": {
+    "bin": "leanmcp",
+    "main": "./dist/index.js"
+  }
+}
+```
+
+## Overview
+
+- **What it is**: Command-line interface for scaffolding LeanMCP projects with hot-reload development and cloud deployment
+- **Purpose**: Streamlines the entire MCP server development workflow from project creation to production deployment
+- **Key benefits**:
+  - Quick project scaffolding with production-ready templates
+  - Hot-reload development server with UI component building
+  - One-command cloud deployment to LeanMCP platform
+  - Interactive setup with guided prompts
+  - Project management and monitoring tools
+
+## When to Use It
+
+**Use `@leanmcp/cli` when:**
+
+- Starting any new MCP server project (highly recommended)
+- Need local development with hot-reload and UI building
+- Want to deploy to LeanMCP Cloud with custom subdomains
+- Managing multiple MCP projects
+- Need guided setup for dependencies and configuration
+
+**You probably do NOT need this if:**
+
+- Using custom build systems or deployment pipelines
+- Only working with existing projects without scaffolding needs
+- Building MCP clients (not servers)
+- Working in environments where global CLI tools aren't allowed
 
 ## Features
 
@@ -53,7 +96,13 @@ Or run without installing:
 npx @leanmcp/cli create my-mcp-server
 ```
 
-## Commands Overview
+**Requirements:**
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+
+## Usage / Examples
+
+### Commands Overview
 
 ```bash
 # Local development
@@ -270,7 +319,54 @@ leanmcp projects delete <project-id> --force  # Skip confirmation
 
 ---
 
-## NPM Scripts
+## API Reference
+
+### Command Reference
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `create <name>` | Create new MCP server project | `leanmcp create my-server` |
+| `add <service>` | Add service to existing project | `leanmcp add weather` |
+| `dev` | Start development server with hot-reload | `leanmcp dev` |
+| `build` | Build for production | `leanmcp build` |
+| `start` | Start production server | `leanmcp start` |
+| `login` | Authenticate with LeanMCP Cloud | `leanmcp login` |
+| `logout` | Remove API key | `leanmcp logout` |
+| `whoami` | Show login status | `leanmcp whoami` |
+| `deploy <folder>` | Deploy to LeanMCP Cloud | `leanmcp deploy .` |
+| `projects list` | List cloud projects | `leanmcp projects list` |
+| `projects get <id>` | Get project details | `leanmcp projects get <id>` |
+| `projects delete <id>` | Delete project | `leanmcp projects delete <id>` |
+
+---
+
+## Integration with Other LeanMCP Packages
+
+**@leanmcp/cli** works seamlessly with all LeanMCP packages:
+
+- **[@leanmcp/core](https://www.npmjs.com/package/@leanmcp/core)** — Generated projects use `@leanmcp/core` as the foundation
+- **[@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth)** — CLI can scaffold projects with authentication setup
+- **[@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui)** — `leanmcp dev` automatically builds UI components with hot-reload
+- **[@leanmcp/elicitation](https://www.npmjs.com/package/@leanmcp/elicitation)** — Generated services include elicitation examples
+- **[@leanmcp/env-injection](https://www.npmjs.com/package/@leanmcp/env-injection)** — Deploy command handles user secrets configuration
+
+**Generated project structure:**
+
+```
+my-mcp-server/
+├── main.ts              # Entry point with HTTP server
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+└── mcp/                 # Services directory (auto-discovered)
+    └── example/
+        └── index.ts     # Example service with @Tool, @Prompt, @Resource
+```
+
+---
+
+## Best Practices / Troubleshooting
+
+### NPM Scripts
 
 Generated projects include:
 
@@ -357,12 +453,12 @@ Choose a different subdomain when prompted.
 - [@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth) — Authentication decorators
 - [@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui) — MCP App UI components
 
+---
+
 ## Links
 
-- [GitHub Repository](https://github.com/LeanMCP/leanmcp-sdk)
-- [NPM Package](https://www.npmjs.com/package/@leanmcp/cli)
-- [LeanMCP Dashboard](https://ship.leanmcp.com)
-
-## License
-
-MIT
+- **Documentation**: [https://docs.leanmcp.com/sdk/cli](https://docs.leanmcp.com/sdk/cli)
+- **GitHub**: [https://github.com/LeanMCP/leanmcp-sdk/tree/main/packages/cli](https://github.com/LeanMCP/leanmcp-sdk/tree/main/packages/cli)
+- **npm**: [https://www.npmjs.com/package/@leanmcp/cli](https://www.npmjs.com/package/@leanmcp/cli)
+- **LeanMCP Dashboard**: [https://ship.leanmcp.com](https://ship.leanmcp.com)
+- **License**: MIT
