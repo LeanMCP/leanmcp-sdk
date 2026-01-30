@@ -348,8 +348,8 @@ leanmcp projects delete <project-id> --force  # Skip confirmation
 | `env set <keyValue>`   | Set environment variable                 | `leanmcp env set KEY=VALUE`    |
 | `env get <key>`        | Get environment variable value           | `leanmcp env get KEY`          |
 | `env remove <key>`     | Remove environment variable              | `leanmcp env remove KEY`       |
-| `env pull [folder]`    | Download env vars to local file         | `leanmcp env pull`             |
-| `env push [folder]`    | Upload env vars from local file         | `leanmcp env push`             |
+| `env pull [folder]`    | Download env vars to local file          | `leanmcp env pull`             |
+| `env push [folder]`    | Upload env vars from local file          | `leanmcp env push`             |
 
 ---
 

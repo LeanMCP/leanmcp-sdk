@@ -33,14 +33,14 @@
 ```json
 {
   "package": "@leanmcp/core",
-  "purpose": "Core TypeScript framework for building MCP servers with decorators",
+  "purpose": "Core library implementing decorators, reflection, and MCP runtime server",
   "useCases": [
     "MCP server development",
     "Type-safe tool definitions",
     "HTTP transport",
     "Schema validation"
   ],
-  "dependencies": ["@modelcontextprotocol/sdk"],
+  "dependencies": ["@modelcontextprotocol/sdk", "ajv", "reflect-metadata", "dotenv", "chokidar"],
   "exports": ["@Tool", "@Prompt", "@Resource", "@SchemaConstraint", "createHTTPServer", "MCPServer"]
 }
 ```
