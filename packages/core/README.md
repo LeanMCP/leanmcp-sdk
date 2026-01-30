@@ -1,14 +1,11 @@
+# @leanmcp/core
+
 <p align="center">
   <img
     src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/logo.png"
     alt="LeanMCP Logo"
     width="400"
   />
-</p>
-
-<p align="center">
-  <strong>@leanmcp/core</strong><br/>
-  Core library for building MCP servers with TypeScript decorators and declarative schema definition.
 </p>
 
 <p align="center">
@@ -22,7 +19,7 @@
     <img src="https://img.shields.io/badge/Docs-leanmcp-0A66C2?" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" />
+    <img src="https://dcbadge.limes.pink/api/server/DsRcA3GwPy" alt="Discord" />
   </a>
   <a href="https://x.com/LeanMcp">
     <img src="https://img.shields.io/badge/@LeanMCP-f5f5f5?logo=x&logoColor=000000" />
@@ -33,15 +30,41 @@
   <a href="https://deepwiki.com/LeanMCP/leanmcp-sdk"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
 
-## Features
+```json
+{
+  "package": "@leanmcp/core",
+  "purpose": "Core TypeScript framework for building MCP servers with decorators",
+  "useCases": ["MCP server development", "Type-safe tool definitions", "HTTP transport", "Schema validation"],
+  "dependencies": ["@modelcontextprotocol/sdk"],
+  "exports": ["@Tool", "@Prompt", "@Resource", "@SchemaConstraint", "createHTTPServer", "MCPServer"]
+}
+```
 
-- **Type-Safe Decorators** — `@Tool`, `@Prompt`, `@Resource` with full TypeScript support
-- **Auto-Discovery** — Zero-config service discovery from `./mcp` directory
-- **Schema Generation** — Declarative JSON Schema with `@SchemaConstraint` decorators
-- **HTTP Transport** — Production-ready HTTP server with session management
-- **Input Validation** — Built-in AJV validation for all inputs
-- **Structured Content** — Automatic `structuredContent` for ChatGPT Apps SDK compatibility
-- **MCP Compliant** — Built on official `@modelcontextprotocol/sdk`
+## Overview
+
+- **What it is**: Core TypeScript framework for building Model Context Protocol (MCP) servers using decorators and automatic schema validation
+- **Purpose**: Provides type-safe decorators (`@Tool`, `@Prompt`, `@Resource`) with HTTP transport and zero-config service discovery
+- **Key benefits**: 
+  - Type-safe decorators with full TypeScript support
+  - Automatic JSON Schema generation from TypeScript classes
+  - Production-ready HTTP server with session management
+  - Zero-config auto-discovery from `./mcp` directory
+  - Built-in input validation with AJV
+
+## When to Use It
+
+**Use @leanmcp/core when:**
+- Building any MCP server (this is the foundation package)
+- You want type safety and decorator-based development
+- Need HTTP transport for production deployment
+- Require automatic schema validation and generation
+- Want zero-config service discovery
+
+**You probably do NOT need this if:**
+- Building MCP clients (use `@modelcontextprotocol/sdk` directly)
+- Creating simple scripts without HTTP servers
+- Working in non-TypeScript environments
+- Only need basic MCP protocol without decorators
 
 ## Installation
 
@@ -55,7 +78,59 @@ For HTTP server support:
 npm install express cors
 ```
 
+**Required TypeScript configuration:**
+
+```json
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}
+```
+
 ## Quick Start
+
+```typescript
+import { createHTTPServer, Tool, SchemaConstraint } from '@leanmcp/core';
+
+class GreetInput {
+  @SchemaConstraint({
+    description: 'Name to greet',
+    minLength: 1,
+  })
+  name!: string;
+}
+
+export class GreetingService {
+  @Tool({
+    description: 'Greet someone',
+    inputClass: GreetInput,
+  })
+  async greet(input: GreetInput) {
+    return { message: `Hello, ${input.name}!` };
+  }
+}
+
+// Auto-discovers services from ./mcp directory
+await createHTTPServer({
+  name: 'my-mcp-server',
+  version: '1.0.0',
+  port: 3001,
+});
+```
+
+## Key Features
+
+- **Type-Safe Decorators** — `@Tool`, `@Prompt`, `@Resource` with full TypeScript support
+- **Auto-Discovery** — Zero-config service discovery from `./mcp` directory
+- **Schema Generation** — Declarative JSON Schema with `@SchemaConstraint` decorators
+- **HTTP Transport** — Production-ready HTTP server with session management
+- **Input Validation** — Built-in AJV validation for all inputs
+- **Structured Content** — Automatic `structuredContent` for ChatGPT Apps SDK compatibility
+- **MCP Compliant** — Built on official `@modelcontextprotocol/sdk`
+
+## Usage / Examples
 
 ### Zero-Config (Recommended)
 
@@ -126,7 +201,9 @@ export class SentimentService {
 
 ---
 
-## Decorators
+## API Reference
+
+### Core Decorators
 
 ### @Tool
 
@@ -320,9 +397,41 @@ server.registerService(instance);  // Manual registration
 server.getServer();                // Get underlying MCP SDK server
 ```
 
+
 ---
 
-## Auto-Discovery
+## Integration with Other LeanMCP Packages
+
+**@leanmcp/core** is the foundation package that all other LeanMCP packages build upon:
+
+- **[@leanmcp/auth](https://www.npmjs.com/package/@leanmcp/auth)** — Add authentication decorators to protect tools
+- **[@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui)** — Build interactive MCP apps with React components  
+- **[@leanmcp/elicitation](https://www.npmjs.com/package/@leanmcp/elicitation)** — Collect structured user input during tool execution
+- **[@leanmcp/env-injection](https://www.npmjs.com/package/@leanmcp/env-injection)** — Request-scoped environment variables for user secrets
+- **[@leanmcp/utils](https://www.npmjs.com/package/@leanmcp/utils)** — Utility functions for response formatting and retry logic
+
+**Example integration:**
+
+```typescript
+import { Tool } from '@leanmcp/core';
+import { Authenticated } from '@leanmcp/auth';
+import { Elicitation } from '@leanmcp/elicitation';
+
+@Authenticated(authProvider)
+export class SecureService {
+  @Tool({ description: 'Protected tool with user input' })
+  @Elicitation({ fields: [{ name: 'data', type: 'text', required: true }] })
+  async protectedTool(input: { data: string }) {
+    return { result: input.data };
+  }
+}
+```
+
+---
+
+## Best Practices / Troubleshooting
+
+### Auto-Discovery
 
 Services are automatically discovered from the `./mcp` directory:
 
@@ -474,12 +583,12 @@ async myTool(input: MyInput): Promise<{ result: string }> {
 - [@leanmcp/ui](https://www.npmjs.com/package/@leanmcp/ui) — MCP App UI components
 - [@leanmcp/elicitation](https://www.npmjs.com/package/@leanmcp/elicitation) — Structured user input
 
+---
+
 ## Links
 
-- [GitHub Repository](https://github.com/LeanMCP/leanmcp-sdk)
-- [NPM Package](https://www.npmjs.com/package/@leanmcp/core)
-- [MCP Specification](https://spec.modelcontextprotocol.io/)
-
-## License
-
-MIT
+- **Documentation**: [https://docs.leanmcp.com/sdk/core](https://docs.leanmcp.com/sdk/core)
+- **GitHub**: [https://github.com/LeanMCP/leanmcp-sdk/tree/main/packages/core](https://github.com/LeanMCP/leanmcp-sdk/tree/main/packages/core)
+- **npm**: [https://www.npmjs.com/package/@leanmcp/core](https://www.npmjs.com/package/@leanmcp/core)
+- **MCP Specification**: [https://spec.modelcontextprotocol.io/](https://spec.modelcontextprotocol.io/)
+- **License**: MIT
