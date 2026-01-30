@@ -56,47 +56,52 @@ async function fetchWithRetry(
     initialDelay?: number;
     maxDelay?: number;
     operation?: string;
+    spinner?: ReturnType<typeof ora>;
   } = {}
 ): Promise<Response> {
   const maxRetries = options.maxRetries ?? 15;
   const initialDelay = options.initialDelay ?? 1000;
   const maxDelay = options.maxDelay ?? 10000;
   const operation = options.operation ?? 'Fetch';
+  const spinner = options.spinner;
 
   let lastError: Error | null = null;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await fetchFn();
-      
-      // Clear the retry message if any was shown
-      if (attempt > 0) {
-        process.stdout.write('\r' + ' '.repeat(80) + '\r');
-      }
-      
+
       return response;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (attempt < maxRetries) {
         // Calculate delay with exponential backoff
         const delay = Math.min(initialDelay * Math.pow(2, attempt), maxDelay);
-        
-        // Show retry message with in-place update
+
+        // Show retry message - either via spinner or stdout
         const message = `${operation} failed. Retrying... (${attempt + 1}/${maxRetries})`;
-        process.stdout.write('\r' + chalk.yellow(message));
-        
+        if (spinner) {
+          spinner.text = message;
+        } else {
+          process.stdout.write('\r' + chalk.yellow(message));
+        }
+
         debug(`Retry ${attempt + 1}/${maxRetries}: ${lastError.message}, waiting ${delay}ms`);
-        
+
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
   }
-  
-  // Clear the retry message
-  process.stdout.write('\r' + ' '.repeat(80) + '\r');
-  
-  throw new Error(`${operation} failed after ${maxRetries} retries: ${lastError?.message || 'Unknown error'}`);
+
+  // Clear the retry message if not using spinner
+  if (!spinner) {
+    process.stdout.write('\r' + ' '.repeat(80) + '\r');
+  }
+
+  throw new Error(
+    `${operation} failed after ${maxRetries} retries: ${lastError?.message || 'Unknown error'}`
+  );
 }
 
 // API endpoints (relative to base URL)
@@ -226,10 +231,11 @@ async function waitForBuild(
 
   while (attempts < maxAttempts) {
     const response = await fetchWithRetry(
-      () => debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      }),
-      { operation: 'Build status check' }
+      () =>
+        debugFetch(`${apiUrl}${API_ENDPOINTS.getBuild}/${buildId}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }),
+      { operation: 'Build status check', spinner }
     );
 
     if (!response.ok) {
@@ -273,10 +279,11 @@ async function waitForDeployment(
 
   while (attempts < maxAttempts) {
     const response = await fetchWithRetry(
-      () => debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      }),
-      { operation: 'Deployment status check' }
+      () =>
+        debugFetch(`${apiUrl}${API_ENDPOINTS.getDeployment}/${deploymentId}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        }),
+      { operation: 'Deployment status check', spinner }
     );
 
     if (!response.ok) {
