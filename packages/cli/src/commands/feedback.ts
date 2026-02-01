@@ -34,18 +34,20 @@ interface FeedbackAttachment {
 /**
  * Read and encode a file as base64
  */
-async function readFileAsBase64(filePath: string): Promise<{ content: string; size: number; type: string }> {
+async function readFileAsBase64(
+  filePath: string
+): Promise<{ content: string; size: number; type: string }> {
   try {
     const absolutePath = path.resolve(filePath);
     const stats = await fs.stat(absolutePath);
-    
+
     if (!stats.isFile()) {
       throw new Error(`${filePath} is not a file`);
     }
 
     const content = await fs.readFile(absolutePath, 'base64');
     const ext = path.extname(absolutePath).toLowerCase();
-    
+
     // Simple MIME type detection
     let mimeType = 'application/octet-stream';
     switch (ext) {
@@ -73,7 +75,9 @@ async function readFileAsBase64(filePath: string): Promise<{ content: string; si
       type: mimeType,
     };
   } catch (error) {
-    throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
@@ -92,7 +96,7 @@ async function collectLogFiles(): Promise<FeedbackAttachment[]> {
     try {
       if (await fs.pathExists(logDir)) {
         const files = await fs.readdir(logDir);
-        
+
         for (const file of files) {
           const filePath = path.join(logDir, file);
           try {
@@ -117,7 +121,7 @@ async function collectLogFiles(): Promise<FeedbackAttachment[]> {
     if (await fs.pathExists(npmDebugLog)) {
       const logFiles = await fs.readdir(npmDebugLog);
       const latestLog = logFiles
-        .filter(file => file.endsWith('.log'))
+        .filter((file) => file.endsWith('.log'))
         .sort()
         .pop(); // Get the latest log file
 
@@ -147,7 +151,7 @@ async function collectLogFiles(): Promise<FeedbackAttachment[]> {
 async function sendFeedbackToApi(
   message: string,
   attachments: FeedbackAttachment[] = [],
-  isAnonymous = false,
+  isAnonymous = false
 ): Promise<any> {
   const apiUrl = await getApiUrl();
   const endpoint = isAnonymous ? '/feedback/anonymous' : '/feedback';
@@ -173,7 +177,7 @@ async function sendFeedbackToApi(
 
   const payload = {
     message,
-    attachments: attachments.map(att => ({
+    attachments: attachments.map((att) => ({
       name: att.name,
       content: att.content,
       size: att.size,
@@ -213,7 +217,7 @@ async function sendFeedbackToApi(
  */
 export async function sendFeedbackCommand(
   message: string | undefined,
-  options: { anon?: boolean; includeLogs?: boolean },
+  options: { anon?: boolean; includeLogs?: boolean }
 ): Promise<void> {
   logger.info('\nLeanMCP Feedback\n');
 
@@ -263,7 +267,9 @@ export async function sendFeedbackCommand(
     const apiKey = await getApiKey();
     if (!apiKey) {
       logger.error('need to login');
-      logger.info('Please run `leanmcp login` to authenticate, or use `--anon` for anonymous feedback.');
+      logger.info(
+        'Please run `leanmcp login` to authenticate, or use `--anon` for anonymous feedback.'
+      );
       process.exit(1);
     }
   }
@@ -273,14 +279,14 @@ export async function sendFeedbackCommand(
   // 3. Collect log files if requested
   if (includeLogs) {
     const spinner = ora('Collecting log files...').start();
-    
+
     try {
       attachments = await collectLogFiles();
       spinner.succeed(`Collected ${attachments.length} log file(s)`);
-      
+
       if (attachments.length > 0) {
         logger.log('Log files:', chalk.gray);
-        attachments.forEach(att => {
+        attachments.forEach((att) => {
           logger.log(`  - ${att.name} (${(att.size / 1024).toFixed(1)} KB)`, chalk.gray);
         });
         logger.log('');
@@ -304,31 +310,31 @@ export async function sendFeedbackCommand(
 
     logger.success('\nThank you for your feedback!');
     logger.log(`Feedback ID: ${result.id}`, chalk.gray);
-    
+
     if (isAnonymous) {
       logger.log('Type: Anonymous', chalk.gray);
     } else {
       logger.log('Type: Authenticated', chalk.gray);
     }
-    
+
     if (attachments.length > 0) {
       logger.log(`Attachments: ${attachments.length}`, chalk.gray);
     }
-    
+
     logger.log('\nWe appreciate your input and will review it soon.', chalk.cyan);
   } catch (error) {
     spinner.fail('Failed to send feedback');
-    
+
     if (error instanceof Error) {
       logger.error(`\n${error.message}`);
     } else {
       logger.error('\nAn unknown error occurred.');
     }
-    
+
     if (DEBUG_MODE) {
       debug('Full error:', error);
     }
-    
+
     process.exit(1);
   }
 }
