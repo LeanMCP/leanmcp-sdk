@@ -112,16 +112,14 @@ async function collectLogFiles(): Promise<FeedbackAttachment[]> {
         }
 
         // Sort by modification time (newest first) and take top 3
-        const recentLogs = logFiles
-          .sort((a, b) => b.mtime - a.mtime)
-          .slice(0, 3);
+        const recentLogs = logFiles.sort((a, b) => b.mtime - a.mtime).slice(0, 3);
 
         for (const log of recentLogs) {
           try {
             const fileData = await readFileAsBase64(log.filePath);
 
             // Check if we already have this file (avoid duplicates from multiple paths)
-            if (!attachments.some(a => a.name === log.file)) {
+            if (!attachments.some((a) => a.name === log.file)) {
               attachments.push({
                 name: log.file,
                 ...fileData,
