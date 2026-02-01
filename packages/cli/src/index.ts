@@ -15,6 +15,7 @@ import {
   setDebugMode as setLoginDebugMode,
 } from './commands/login';
 import { deployCommand, setDeployDebugMode } from './commands/deploy';
+import { sendFeedbackCommand } from './commands/feedback';
 import {
   projectsListCommand,
   projectsGetCommand,
@@ -363,7 +364,19 @@ program
       logger.log('To deploy to LeanMCP cloud:', chalk.cyan);
       logger.log(`  cd ${projectName}`, chalk.gray);
       logger.log(`  leanmcp deploy .`, chalk.gray);
+      logger.log('\nSend us feedback:', chalk.cyan);
+      logger.log('  leanmcp send-feedback "Great tool!"\n', chalk.gray);
     }
+  });
+
+program
+  .command('send-feedback [message]')
+  .description('Send feedback to the LeanMCP team')
+  .option('--anon', 'Send feedback anonymously')
+  .option('--include-logs', 'Include local log files with feedback')
+  .action(async (message, options) => {
+    trackCommand('send-feedback', { hasMessage: !!message, ...options });
+    await sendFeedbackCommand(message, options);
   });
 
 program
