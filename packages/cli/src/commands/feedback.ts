@@ -97,16 +97,38 @@ async function collectLogFiles(): Promise<FeedbackAttachment[]> {
       if (await fs.pathExists(logDir)) {
         const files = await fs.readdir(logDir);
 
+        // Filter for .log files and get stats
+        const logFiles = [];
         for (const file of files) {
-          const filePath = path.join(logDir, file);
+          if (!file.endsWith('.log')) continue;
+
           try {
-            const fileData = await readFileAsBase64(filePath);
-            attachments.push({
-              name: file,
-              ...fileData,
-            });
+            const filePath = path.join(logDir, file);
+            const stats = await fs.stat(filePath);
+            logFiles.push({ file, filePath, mtime: stats.mtimeMs });
+          } catch (e) {
+            // Ignore stat errors
+          }
+        }
+
+        // Sort by modification time (newest first) and take top 3
+        const recentLogs = logFiles
+          .sort((a, b) => b.mtime - a.mtime)
+          .slice(0, 3);
+
+        for (const log of recentLogs) {
+          try {
+            const fileData = await readFileAsBase64(log.filePath);
+
+            // Check if we already have this file (avoid duplicates from multiple paths)
+            if (!attachments.some(a => a.name === log.file)) {
+              attachments.push({
+                name: log.file,
+                ...fileData,
+              });
+            }
           } catch (error) {
-            debug(`Failed to read log file ${filePath}: ${error}`);
+            debug(`Failed to read log file ${log.filePath}: ${error}`);
           }
         }
       }
