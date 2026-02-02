@@ -127,6 +127,7 @@ leanmcp deploy <folder>   # Deploy to LeanMCP Cloud
 leanmcp projects list     # List your cloud projects
 leanmcp projects get <id> # Get project details
 leanmcp projects delete <id>  # Delete a project
+leanmcp send-feedback [msg]   # Send feedback or bug reports
 ```
 
 ---
@@ -324,6 +325,27 @@ leanmcp projects delete <project-id>
 leanmcp projects delete <project-id> --force  # Skip confirmation
 ```
 
+### send-feedback
+
+Send feedback, bug reports, or feature requests to the LeanMCP team:
+
+```bash
+leanmcp send-feedback "I love this tool!"
+```
+
+**Options:**
+
+- `--anon`: Send anonymously
+- `--include-logs`: Attach local logs for debugging
+
+```bash
+# Interactive mode (multiline)
+leanmcp send-feedback
+
+# With logs (great for bug reports)
+leanmcp send-feedback "Deploy failed" --include-logs
+```
+
 ---
 
 ## API Reference
@@ -344,6 +366,7 @@ leanmcp projects delete <project-id> --force  # Skip confirmation
 | `projects list`        | List cloud projects                      | `leanmcp projects list`        |
 | `projects get <id>`    | Get project details                      | `leanmcp projects get <id>`    |
 | `projects delete <id>` | Delete project                           | `leanmcp projects delete <id>` |
+| `send-feedback [msg]`  | Send feedback to the team                | `leanmcp send-feedback`        |
 | `env list [folder]`    | List environment variables               | `leanmcp env list`             |
 | `env set <keyValue>`   | Set environment variable                 | `leanmcp env set KEY=VALUE`    |
 | `env get <key>`        | Get environment variable value           | `leanmcp env get KEY`          |
