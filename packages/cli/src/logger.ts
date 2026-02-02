@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import os from 'os';
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs-extra';
 import { execSync } from 'child_process';
 
 // PostHog configuration
@@ -137,6 +139,9 @@ const sendToPostHog = (eventName: string, properties: Record<string, any> = {}):
   });
 };
 
+// Export chalk for convenience
+export { chalk };
+
 // Type for chalk style functions
 type ChalkFunction =
   | typeof chalk.cyan
@@ -148,13 +153,55 @@ type ChalkFunction =
   | typeof chalk.white
   | typeof chalk.bold;
 
+// Ensure log directory exists
+const LOG_DIR = path.join(os.homedir(), '.leanmcp', 'logs');
+try {
+  fs.ensureDirSync(LOG_DIR);
+} catch (err) {
+  // Fail silently if we can't create the log dir
+}
+
+/**
+ * Format date for log timestamp
+ */
+function getTimestamp(): string {
+  return new Date().toISOString();
+}
+
+/**
+ * Get current log file path (cli-YYYY-MM-DD.log)
+ */
+function getLogFilePath(): string {
+  const date = new Date().toISOString().split('T')[0];
+  return path.join(LOG_DIR, `cli-${date}.log`);
+}
+
+/**
+ * Redact sensitive info from logs
+ */
+function redactSensitive(text: string): string {
+  if (!text) return text;
+  // Redact API keys (leanmcp_... or airtain_...)
+  return text.replace(/(leanmcp_|airtain_)[a-zA-Z0-9]{20,}/g, '$1********************');
+}
+
 /**
  * Logger class with log, warn, error methods
- * All methods send telemetry to PostHog with appropriate event names
+ * All methods send telemetry to PostHog and write to local log file
  */
 class LoggerClass {
+  private writeToFile(level: string, message: string): void {
+    try {
+      const timestamp = getTimestamp();
+      const logLine = `[${timestamp}] [${level.toUpperCase()}] ${redactSensitive(message)}\n`;
+      fs.appendFileSync(getLogFilePath(), logLine);
+    } catch (err) {
+      // Fail silently on file write errors to avoid crashing CLI
+    }
+  }
+
   /**
-   * Log a message to console and send cli_log event to PostHog
+   * Log a message to console, file, and send cli_log event to PostHog
    * @param text - The text to log
    * @param styleFn - Optional chalk style function (e.g., chalk.cyan, chalk.green)
    */
@@ -164,6 +211,7 @@ class LoggerClass {
     } else {
       console.log(text);
     }
+    this.writeToFile('log', text);
     sendToPostHog('cli_log', {
       message: text,
       level: 'log',
@@ -171,13 +219,14 @@ class LoggerClass {
   }
 
   /**
-   * Log a warning to console and send cli_warn event to PostHog
+   * Log a warning to console, file, and send cli_warn event to PostHog
    * @param text - The warning text
    * @param styleFn - Optional chalk style function (defaults to chalk.yellow)
    */
   warn(text: string, styleFn?: ChalkFunction): void {
     const style = styleFn || chalk.yellow;
     console.log(style(text));
+    this.writeToFile('warn', text);
     sendToPostHog('cli_warn', {
       message: text,
       level: 'warn',
@@ -185,13 +234,14 @@ class LoggerClass {
   }
 
   /**
-   * Log an error to console and send cli_error event to PostHog
+   * Log an error to console, file, and send cli_error event to PostHog
    * @param text - The error text
    * @param styleFn - Optional chalk style function (defaults to chalk.red)
    */
   error(text: string, styleFn?: ChalkFunction): void {
     const style = styleFn || chalk.red;
     console.error(style(text));
+    this.writeToFile('error', text);
     sendToPostHog('cli_error', {
       message: text,
       level: 'error',
@@ -204,6 +254,7 @@ class LoggerClass {
    */
   info(text: string): void {
     console.log(chalk.cyan(text));
+    this.writeToFile('info', text);
     sendToPostHog('cli_log', {
       message: text,
       level: 'info',
@@ -216,6 +267,7 @@ class LoggerClass {
    */
   success(text: string): void {
     console.log(chalk.green(text));
+    this.writeToFile('success', text);
     sendToPostHog('cli_log', {
       message: text,
       level: 'success',
@@ -228,6 +280,7 @@ class LoggerClass {
    */
   gray(text: string): void {
     console.log(chalk.gray(text));
+    this.writeToFile('debug', text); // Gray usually indicates debug/verbose info
     sendToPostHog('cli_log', {
       message: text,
       level: 'gray',
@@ -250,6 +303,8 @@ export const log = (text: string, styleFn?: ChalkFunction): void => {
  */
 export const trackEvent = (eventName: string, properties: Record<string, any> = {}): void => {
   sendToPostHog(eventName, properties);
+  // We don't necessarily log all telemetry events to file, but we could if verbose logging was enabled.
+  // For now, let's keep the log file focused on user-visible output and errors.
 };
 
 /**
@@ -263,6 +318,3 @@ export const trackCommand = (command: string, options: Record<string, any> = {})
     options,
   });
 };
-
-// Export chalk for convenience
-export { chalk };
