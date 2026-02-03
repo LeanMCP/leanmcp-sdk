@@ -76,6 +76,13 @@ export class AuthProvider extends AuthProviderBase {
         break;
       }
 
+      case 'firebase': {
+        const { AuthFirebase } = await import('./providers/firebase');
+        this.providerInstance = new AuthFirebase();
+        await this.providerInstance.init(finalConfig);
+        break;
+      }
+
       case 'leanmcp': {
         const { AuthLeanmcp } = await import('./providers/leanmcp');
         this.providerInstance = new AuthLeanmcp();
@@ -85,7 +92,7 @@ export class AuthProvider extends AuthProviderBase {
 
       default:
         throw new Error(
-          `Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, leanmcp`
+          `Unsupported auth provider: ${this.providerType}. Supported providers: cognito, auth0, clerk, firebase, leanmcp`
         );
     }
   }
