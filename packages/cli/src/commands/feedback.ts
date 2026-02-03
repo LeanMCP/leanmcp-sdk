@@ -4,6 +4,7 @@
  * Sends feedback to the LeanMCP API with support for authenticated and anonymous feedback.
  * Supports multi-line messages and optional log file attachments.
  */
+import { editor } from '@inquirer/prompts';
 import ora from 'ora';
 import fs from 'fs-extra';
 import path from 'path';
@@ -265,16 +266,29 @@ export async function sendFeedbackCommand(
 
   // Validate message
   if (!feedbackMessage || feedbackMessage.trim().length === 0) {
-    logger.error('Feedback message cannot be empty.');
-    logger.info('Usage examples:');
-    logger.info('  leanmcp send-feedback "Your message"');
-    logger.gray('  leanmcp send-feedback << EOF');
-    logger.gray('    multi-line');
-    logger.gray('    message');
-    logger.gray('  EOF');
-    logger.info('  leanmcp send-feedback --anon "Anonymous feedback"');
-    logger.info('  leanmcp send-feedback "Issue with deploy" --include-logs');
-    process.exit(1);
+    // If running in a TTY, prompt the user for input using an editor
+    if (process.stdin.isTTY) {
+      try {
+        feedbackMessage = await editor({
+          message: 'Enter your feedback message (closes on save):',
+        });
+      } catch (error) {
+        // Handle cancellation (Ctrl+C)
+        logger.warn('\nFeedback cancelled.');
+        process.exit(0);
+      }
+    }
+
+    // If still empty (e.g. non-TTY with no input, or user saved empty file), show error
+    if (!feedbackMessage || feedbackMessage.trim().length === 0) {
+      logger.error('Feedback message cannot be empty.');
+      logger.info('Usage examples:');
+      logger.info('  leanmcp send-feedback "Your message"');
+      logger.info('  leanmcp send-feedback       (interactive editor mode)');
+      logger.info('  leanmcp send-feedback --anon "Anonymous feedback"');
+      logger.info('  leanmcp send-feedback "Issue with deploy" --include-logs');
+      process.exit(1);
+    }
   }
 
   if (feedbackMessage.length > 5000) {
