@@ -397,14 +397,22 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     logger.gray(`  URL: ${existingConfig.url}`);
     logger.gray(`  Last deployed: ${existingConfig.lastDeployedAt}\n`);
 
-    const choice = await select({
-      message: 'What would you like to do?',
-      choices: [
-        { value: 'update', name: `Update existing deployment '${existingConfig.projectName}'` },
-        { value: 'new', name: 'Create a new project with a random name' },
-        { value: 'cancel', name: 'Cancel deployment' },
-      ],
-    });
+    let choice: 'update' | 'new' | 'cancel';
+
+    if (options.skipConfirm) {
+      // Non-interactive: auto-update
+      choice = 'update';
+      logger.info('Auto-updating existing deployment (--yes flag)\n');
+    } else {
+      choice = await select({
+        message: 'What would you like to do?',
+        choices: [
+          { value: 'update', name: `Update existing deployment '${existingConfig.projectName}'` },
+          { value: 'new', name: 'Create a new project with a random name' },
+          { value: 'cancel', name: 'Cancel deployment' },
+        ],
+      });
+    }
 
     if (choice === 'cancel') {
       logger.gray('\nDeployment cancelled.\n');
@@ -416,8 +424,10 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
       projectName = existingConfig.projectName;
       subdomain = existingConfig.subdomain;
       isUpdate = true;
-      logger.warn('\nUpdating existing deployment...');
-      logger.gray('The previous version will be replaced.\n');
+      if (!options.skipConfirm) {
+        logger.warn('\nUpdating existing deployment...');
+        logger.gray('The previous version will be replaced.\n');
+      }
     } else {
       // Generate new random name
       projectName = generateProjectName();
@@ -456,14 +466,22 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
     if (matchingProject) {
       logger.warn(`Project '${folderName}' already exists.\n`);
 
-      const choice = await select({
-        message: 'What would you like to do?',
-        choices: [
-          { value: 'update', name: `Update existing project '${folderName}'` },
-          { value: 'new', name: 'Create a new project with a random name' },
-          { value: 'cancel', name: 'Cancel deployment' },
-        ],
-      });
+      let choice: 'update' | 'new' | 'cancel';
+
+      if (options.skipConfirm) {
+        // Non-interactive: auto-update
+        choice = 'update';
+        logger.info('Auto-updating existing project (--yes flag)\n');
+      } else {
+        choice = await select({
+          message: 'What would you like to do?',
+          choices: [
+            { value: 'update', name: `Update existing project '${folderName}'` },
+            { value: 'new', name: 'Create a new project with a random name' },
+            { value: 'cancel', name: 'Cancel deployment' },
+          ],
+        });
+      }
 
       if (choice === 'cancel') {
         logger.gray('\nDeployment cancelled.\n');
@@ -474,8 +492,10 @@ export async function deployCommand(folderPath: string, options: DeployOptions =
         existingProject = matchingProject;
         projectName = matchingProject.name;
         isUpdate = true;
-        logger.warn('\nWARNING: This will replace the existing deployment.');
-        logger.gray('The previous version will be overwritten.\n');
+        if (!options.skipConfirm) {
+          logger.warn('\nWARNING: This will replace the existing deployment.');
+          logger.gray('The previous version will be overwritten.\n');
+        }
       } else {
         // Generate new random name
         projectName = generateProjectName();
