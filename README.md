@@ -48,20 +48,26 @@
 </p>
 
 # LeanMCP SDK: Production-Ready Infra for MCP Servers.
-Build and Deploy Production-ready MCP Servers with Full Backend Capabilities
+ **Build and Deploy Scalable MCP Servers with Full Backend Capabilities**
+
+---
 
 **Production-grade support:**
 
 ✅ Authentication 
 ✅ Multi-tenant isolation 
 ✅ Request logging
-✅ Observability 
+✅ Observability & Monitoring
 ✅ Private Cloud deployment
+
+---
 
 **Ideal for teams building:**
 - Agent platforms
 - Customer-facing intelligent workflows
 - Multi-tenant SaaS AI systems
+
+---
 
 **Links**
 
@@ -73,11 +79,17 @@ Build and Deploy Production-ready MCP Servers with Full Backend Capabilities
 
 ---
 
-**Interested in Using or Partnering?**
+## Thanks for your Interest !
 
-We support companies and teams deploying scalable MCP-based AI Agent products.
-Business inquiries: **founders@leanmcp.com**
-Found this helpful? Give us a GitHub star 🌟！
+If you're:
+
+- An Infra / AI / DevTool developer — you're warmly welcome to contribute ideas or code.
+- Building your own Agent platform — reach out for enterprise-grade deployment support.
+
+For partnerships & business inquiries: **founders@leanmcp.com**
+
+If you find this project valuable, please consider giving us a GitHub star 🌟 !
+
 ---
 
 ## Table of Contents
