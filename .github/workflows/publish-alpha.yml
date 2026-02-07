@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   publish-alpha:
+    # Run on main push OR PRs from KushagraAgarwal525
+    if: |
+      github.event_name == 'push' || 
+      github.event.pull_request.user.login == 'KushagraAgarwal525'
     runs-on: ubuntu-latest
     
     steps:
@@ -135,3 +142,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           SHORT_SHA: ${{ steps.sha.outputs.short }}
+
+  call-e2e:
+    needs: publish-alpha
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets: inherit
