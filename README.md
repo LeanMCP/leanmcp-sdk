@@ -378,7 +378,7 @@ Your MCP server starts on `http://localhost:8080` with:
 ## Core Concepts
 
 <details>
-<summary>Click to expand Core Concepts</summary>
+<summary>Click to expand</summary>
 
 ### Tools
 
@@ -998,9 +998,6 @@ npm link ../../packages/cli
 # Run the test project
 npm start
 ```
-
-</details>
-
 ## Type Safety Benefits
 
 - **Compile-time validation** - Catch errors before runtime
@@ -1009,28 +1006,8 @@ npm start
 - **No duplication** - Define schemas once using TypeScript types
 - **Type inference** - Automatic schema generation from decorators
 
-## Contributing
+</details>
 
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Workflow
-
-```bash
-# Run tests
-npm test
-
-# Run linter
-npm run lint
-
-# Build all packages
-npm run build
-```
 
 ---
 
