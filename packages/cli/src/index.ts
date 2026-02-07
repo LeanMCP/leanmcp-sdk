@@ -99,6 +99,14 @@ Global Options:
 `
   );
 
+// Helper to convert project-name to ProjectName for valid class names
+function toPascalCase(str: string): string {
+  return str
+    .split(/[-_\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join('');
+}
+
 program
   .command('create <projectName>')
   .description('Create a new LeanMCP project with Streamable HTTP transport')
@@ -206,7 +214,8 @@ program
       await fs.writeFile(path.join(targetDir, 'main.ts'), mainTs);
 
       // Create an example service file
-      const exampleServiceTs = getExampleServiceTemplate(projectName);
+      const className = toPascalCase(projectName);
+      const exampleServiceTs = getExampleServiceTemplate(className);
       await fs.writeFile(path.join(targetDir, 'mcp', 'example', 'index.ts'), exampleServiceTs);
 
       const gitignore = gitignoreTemplate;
