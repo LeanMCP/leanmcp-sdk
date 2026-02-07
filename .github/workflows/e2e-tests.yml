@@ -40,6 +40,7 @@ jobs:
       
       # 5. Deploy
       - name: Deploy
+        id: deploy
         working-directory: test-mcp-app
         run: npx @leanmcp/cli@alpha deploy . --yes --subdomain ci-test-${{ github.event.workflow_run.id }}
       
@@ -76,10 +77,19 @@ jobs:
           URL=$(cat .leanmcp/config.json | jq -r '.url')
           curl -f "$URL/health" --retry 3 --retry-delay 5
       
-      # 11. Cleanup
+      # 11. Cleanup (only if project was deployed)
       - name: Delete
         if: always()
         working-directory: test-mcp-app
         run: |
-          PROJECT_ID=$(cat .leanmcp/config.json | jq -r '.projectId')
-          npx @leanmcp/cli@alpha projects delete "$PROJECT_ID" --force
+          if [ -f .leanmcp/config.json ]; then
+            PROJECT_ID=$(cat .leanmcp/config.json | jq -r '.projectId // empty')
+            if [ -n "$PROJECT_ID" ]; then
+              echo "Deleting project: $PROJECT_ID"
+              npx @leanmcp/cli@alpha projects delete "$PROJECT_ID" --force
+            else
+              echo "No project ID found, skipping delete"
+            fi
+          else
+            echo "No config file found, skipping delete"
+          fi
