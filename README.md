@@ -87,7 +87,6 @@ Interested in working with us? Contact: **founders@leanmcp.com**
   - [API Reference](#api-reference)
   - [Examples](#examples)
   - [Development](#development)
-- [Type Safety Benefits](#type-safety-benefits)
 - [Contributing](#contributing)
 - [Business Collaboration](#business-collaboration-what-can-we-do-for-you)
 
