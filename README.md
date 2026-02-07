@@ -440,7 +440,7 @@ getStats() {
 ## CLI Commands
 
 <details>
-<summary>Click to expand CLI Commands</summary>
+<summary>Click to expand</summary>
 
 The LeanMCP CLI provides an interactive experience for creating and managing MCP projects.
 
@@ -493,7 +493,7 @@ For complete CLI documentation including all commands, options, and advanced usa
 ## Decorators
 
 <details>
-<summary>Click to expand Decorators</summary>
+<summary>Click to expand</summary>
 
 ### Core Decorators
 
@@ -547,7 +547,7 @@ class UserInput {
 ## Project Structure
 
 <details>
-<summary>Click to expand Project Structure</summary>
+<summary>Click to expand</summary>
 
 ### Main Entry Point (`main.ts`)
 
@@ -631,7 +631,7 @@ export class ServiceName {
 ## API Reference
 
 <details>
-<summary>Click to expand API Reference</summary>
+<summary>Click to expand</summary>
 
 ### `createHTTPServer(options | serverFactory, options?)`
 
@@ -727,7 +727,7 @@ server.registerService(new PaymentService());
 ## Examples
 
 <details>
-<summary>Click to expand Examples</summary>
+<summary>Click to expand</summary>
 
 ### Complete Weather Service
 
@@ -942,7 +942,7 @@ See [examples/slack-with-auth](./examples/slack-with-auth) for a complete workin
 ## Development
 
 <details>
-<summary>Click to expand Development</summary>
+<summary>Click to expand</summary>
 
 ### Setting Up the Monorepo
 
