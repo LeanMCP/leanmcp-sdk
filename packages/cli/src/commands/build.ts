@@ -86,14 +86,21 @@ export async function buildCommand() {
         shell: true,
       });
 
+      let stdout = '';
       let stderr = '';
+
+      tsc.stdout?.on('data', (data) => {
+        stdout += data;
+      });
+
       tsc.stderr?.on('data', (data) => {
         stderr += data;
       });
 
       tsc.on('close', (code) => {
         if (code === 0) resolve();
-        else reject(new Error(stderr || `tsc exited with code ${code}`));
+        // TypeScript outputs compilation errors to stdout, not stderr
+        else reject(new Error(stdout || stderr || `tsc exited with code ${code}`));
       });
 
       tsc.on('error', reject);

@@ -10,7 +10,10 @@
   ],
   "workspaces": [
     "packages/*",
-    "examples/*"
+    "examples/*",
+    "!examples/github-roast",
+    "!examples/gpt-slack",
+    "!examples/my-app"
   ],
   "scripts": {
     "build": "turbo run build",
