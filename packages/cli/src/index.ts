@@ -184,7 +184,7 @@ program
         compilerOptions: {
           module: 'ESNext',
           target: 'ES2022',
-          moduleResolution: 'Node',
+          moduleResolution: 'Bundler',
           esModuleInterop: true,
           strict: true,
           skipLibCheck: true,
