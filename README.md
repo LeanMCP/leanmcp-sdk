@@ -911,7 +911,7 @@ We Actively Welcome Contributors!
 
 <table>
 <tr>
-<td align="left" width="33%">
+<td align="left" valign="top" width="33%">
 
 **Fork & Contribute**
 
@@ -923,7 +923,7 @@ We Actively Welcome Contributors!
 [Fork Now →](https://github.com/LeanMCP/leanmcp-sdk/fork)
 
 </td>
-<td align="left" width="33%">
+<td align="left" valign="top" width="33%">
 
 **Good First Issues**
 
@@ -935,7 +935,7 @@ We Actively Welcome Contributors!
 [Browse Issues →](https://github.com/LeanMCP/leanmcp-sdk/labels/good%20first%20issue)
 
 </td>
-<td align="left" width="33%">
+<td align="left" valign="top" width="33%">
 
 **Join Community**
 
