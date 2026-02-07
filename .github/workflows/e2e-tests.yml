@@ -1,17 +1,10 @@
 name: E2E CLI Tests
 
 on:
-  workflow_run:
-    workflows: ["Publish Alpha"]
-    types:
-      - completed
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   e2e-test:
-    # Only run if publish-alpha succeeded
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v4
@@ -47,7 +40,7 @@ jobs:
       - name: Deploy
         id: deploy
         working-directory: test-mcp-app
-        run: leanmcp deploy . --yes --subdomain ci-test-${{ github.event.workflow_run.id }}
+        run: leanmcp deploy . --yes --subdomain ci-test-${{ github.run_id }}
       
       # 6. Verify URL
       - name: Verify URL
@@ -68,12 +61,12 @@ jobs:
         working-directory: test-mcp-app
         run: leanmcp deploy . --yes
       
-      # 9. Verify URL after update
+      # 9. Verify URL after update (with delay for propagation)
       - name: Verify URL After Update
         working-directory: test-mcp-app
         run: |
           URL=$(cat .leanmcp/config.json | jq -r '.url')
-          curl -f "$URL" --retry 3 --retry-delay 5
+          curl -f "$URL" --retry 5 --retry-delay 5 --retry-all-errors
       
       # 10. Health Check after update
       - name: Health Check After Update
