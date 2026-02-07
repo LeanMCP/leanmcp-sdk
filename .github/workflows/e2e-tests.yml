@@ -1,0 +1,85 @@
+name: E2E CLI Tests
+
+on:
+  workflow_run:
+    workflows: ["Publish Alpha"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  e2e-test:
+    # Only run if publish-alpha succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      # 1. Create project using just-published alpha CLI
+      - name: Create MCP Project
+        run: npx @leanmcp/cli@alpha create test-mcp-app -i
+      
+      # 2. Security Audit
+      - name: Security Audit
+        working-directory: test-mcp-app
+        run: npm audit --audit-level=high
+      
+      # 3. Build Project
+      - name: Build
+        working-directory: test-mcp-app
+        run: npm run build
+      
+      # 4. Setup Auth
+      - name: Setup Auth
+        run: |
+          mkdir -p ~/.leanmcp
+          echo '{"apiKey": "${{ secrets.E2E_TEST_API_KEY }}"}' > ~/.leanmcp/config.json
+      
+      # 5. Deploy
+      - name: Deploy
+        working-directory: test-mcp-app
+        run: npx @leanmcp/cli@alpha deploy . --yes --subdomain ci-test-${{ github.event.workflow_run.id }}
+      
+      # 6. Verify URL
+      - name: Verify URL
+        working-directory: test-mcp-app
+        run: |
+          URL=$(cat .leanmcp/config.json | jq -r '.url')
+          curl -f "$URL" --retry 3 --retry-delay 5
+      
+      # 7. Health Check
+      - name: Health Check
+        working-directory: test-mcp-app
+        run: |
+          URL=$(cat .leanmcp/config.json | jq -r '.url')
+          curl -f "$URL/health" --retry 3 --retry-delay 5
+      
+      # 8. Update (re-deploy)
+      - name: Update
+        working-directory: test-mcp-app
+        run: npx @leanmcp/cli@alpha deploy . --yes
+      
+      # 9. Verify URL after update
+      - name: Verify URL After Update
+        working-directory: test-mcp-app
+        run: |
+          URL=$(cat .leanmcp/config.json | jq -r '.url')
+          curl -f "$URL" --retry 3 --retry-delay 5
+      
+      # 10. Health Check after update
+      - name: Health Check After Update
+        working-directory: test-mcp-app
+        run: |
+          URL=$(cat .leanmcp/config.json | jq -r '.url')
+          curl -f "$URL/health" --retry 3 --retry-delay 5
+      
+      # 11. Cleanup
+      - name: Delete
+        if: always()
+        working-directory: test-mcp-app
+        run: |
+          PROJECT_ID=$(cat .leanmcp/config.json | jq -r '.projectId')
+          npx @leanmcp/cli@alpha projects delete "$PROJECT_ID" --force
