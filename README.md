@@ -52,10 +52,17 @@
   </a>
 </p>
 
-# LeanMCP Core (SDK + CLI)
+# LeanMCP SDK – The Runtime for Serious MCP Servers
 
-TypeScript toolkit for building **Model Context Protocol (MCP) servers**
-with production-minded defaults.
+LeanMCP is an MCP Server SDK built for running in production — not for demos.
+Production-grade support ✅ Authentication ✅ Multi-tenant isolation ✅ Request logging ✅ Observability ✅ Private deployment
+
+Ideal for teams building:
+- Agent platforms
+- Customer-facing intelligent workflows
+- Multi-tenant SaaS AI systems
+
+Interested in working with us? Contact: **founder@leanmcp.com**
 
 **Links**
 
@@ -67,17 +74,16 @@ with production-minded defaults.
 
 ---
 
-## What is LeanMCP Core?
+## What is LeanMCP SDK?
 
-LeanMCP Core is a **TypeScript SDK + CLI** for building
-**Model Context Protocol (MCP) servers** that are intended to run in production.
+### 1. Production-Ready MCP Runtime  
+Built-in token authentication, RBAC, and multi-user isolation — so you don’t have to reinvent the painful parts of running MCP servers in production.
 
-It focuses on the server side of MCP:
-tools, resources, prompts, schemas, and runtime behavior.
+### 2. Auditing & Governance  
+Automatic request tracing and tool usage logging, designed for compliance, accountability, and operational clarity.
 
-LeanMCP does not replace the MCP specification.
-It provides infrastructure and conventions MCP servers need
-once they move beyond local demos.
+### 3. Deploy Anywhere & Private Hosting  
+Deploy to any environment (Vercel, AWS, on‑premise), with an optional observability platform for monitoring MCP runtime behavior.
 
 
 
