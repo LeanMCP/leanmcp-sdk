@@ -1074,9 +1074,10 @@ See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
 ### Business Collaboration: What Can We Do for You?
 The LeanMCP founding team provides enterprise service support:
 
-MCP Agent deployment support (SDK + CLI + deployment environment configuration)
-Observability runtime platform (view agent call traces / usage behavior)
-Private deployment solutions (on-demand integration with your private cloud / intranet)
+- MCP Agent deployment support (SDK + CLI + deployment environment configuration)
+- Observability runtime platform (view agent call traces / usage behavior)
+- Private deployment solutions (on-demand integration with your private cloud / intranet)
+
 
 Contact us: **founders@leanmcp.com**
 
