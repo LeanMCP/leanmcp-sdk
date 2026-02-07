@@ -52,12 +52,18 @@
   </a>
 </p>
 
-# LeanMCP SDK – The Runtime for Serious MCP Servers
+# LeanMCP SDK: MCP Server Toolkit Built for Production.
 
-LeanMCP is an MCP Server SDK built for running in production — not for demos.
-Production-grade support ✅ Authentication ✅ Multi-tenant isolation ✅ Request logging ✅ Observability ✅ Private deployment
 
-Ideal for teams building:
+**Production-grade support:**
+
+✅ Authentication 
+✅ Multi-tenant isolation 
+✅ Request logging
+✅ Observability 
+✅ Private deployment
+
+**Ideal for teams building:**
 - Agent platforms
 - Customer-facing intelligent workflows
 - Multi-tenant SaaS AI systems
