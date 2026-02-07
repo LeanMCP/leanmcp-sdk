@@ -23,24 +23,4 @@ await createHTTPServer({
   cors: true,
   logging: true${dashboardLine}
 });
-
-console.log("\\n${projectName} MCP Server is running!");
-console.log("\\nTry these commands to test your server:");
-console.log("");
-console.log("# Test calculation tool (schema validation)");
-console.log('curl -X POST http://localhost:3001/mcp \\\\');
-console.log('  -H "Content-Type: application/json" \\\\');
-console.log('  -d \'{"method": "tools/call", "params": {"name": "calculate", "arguments": {"a": 10, "b": 5, "operation": "add"}}}\'');
-console.log("");
-console.log("# Test echo tool");
-console.log('curl -X POST http://localhost:3001/mcp \\\\');
-console.log('  -H "Content-Type: application/json" \\\\');
-console.log('  -d \'{"method": "tools/call", "params": {"name": "echo", "arguments": {"message": "Hello LeanMCP!"}}}\'');
-console.log("");
-console.log("# Get server information (resource)");
-console.log('curl -X POST http://localhost:3001/mcp \\\\');
-console.log('  -H "Content-Type: application/json" \\\\');
-console.log('  -d \'{"method": "resources/read", "params": {"uri": "server://info"}}\'');
-console.log("");
-console.log("Ready to customize - add your own tools, resources, and prompts!");
 `;
