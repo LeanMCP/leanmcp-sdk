@@ -20,10 +20,13 @@ async function runTypeScriptCompiler(cwd: string): Promise<void> {
     await execa('npx', ['tsc'], {
       cwd,
       preferLocal: true,
-      all: true, // Combine stdout + stderr into error.all
+      // Must use 'pipe' to capture output (default 'inherit' doesn't capture)
+      stdout: 'pipe',
+      stderr: 'pipe',
+      all: true, // Combine stdout + stderr into result.all
     });
   } catch (error: any) {
-    // execa includes full output in error.all
+    // execa includes full output in error.all when piped
     const output = error.all || error.stdout || error.stderr || error.message;
     throw new Error(output || `tsc exited with code ${error.exitCode}`);
   }
