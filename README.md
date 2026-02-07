@@ -47,7 +47,8 @@
   </a>
 </p>
 
-# LeanMCP SDK: MCP Server Toolkit Built for Production.
+# LeanMCP SDK: Production-Ready Infra for MCP Servers.
+Build and Deploy Production-ready MCP Servers with Full Backend Capabilities
 
 **Production-grade support:**
 
@@ -55,14 +56,12 @@
 ✅ Multi-tenant isolation 
 ✅ Request logging
 ✅ Observability 
-✅ Private deployment
+✅ Private Cloud deployment
 
 **Ideal for teams building:**
 - Agent platforms
 - Customer-facing intelligent workflows
 - Multi-tenant SaaS AI systems
-
-Interested in working with us? Contact: **founders@leanmcp.com**
 
 **Links**
 
@@ -70,8 +69,15 @@ Interested in working with us? Contact: **founders@leanmcp.com**
 - Build & Deploy: https://ship.leanmcp.com  
 - Observability Platform: https://app.leanmcp.com  
 - npm packages: https://www.npmjs.com/search?q=%40leanmcp  
-- GitHub org: https://github.com/LeanMCP  
+- GitHub org: https://github.com/LeanMCP
 
+---
+
+**Interested in Using or Partnering?**
+
+We support companies and teams deploying scalable MCP-based AI Agent products.
+Business inquiries: **founders@leanmcp.com**
+Found this helpful? Give us a GitHub star 🌟！
 ---
 
 ## Table of Contents
