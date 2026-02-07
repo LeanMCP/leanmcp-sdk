@@ -165,13 +165,13 @@ program
         author: '',
         license: 'MIT',
         dependencies: {
-          '@leanmcp/core': '^0.3.14',
-          '@leanmcp/ui': '^0.2.1',
-          '@leanmcp/auth': '^0.4.0',
+          '@leanmcp/core': 'latest',
+          '@leanmcp/ui': 'latest',
+          '@leanmcp/auth': 'latest',
           dotenv: '^16.5.0',
         },
         devDependencies: {
-          '@leanmcp/cli': '^0.4.0',
+          '@leanmcp/cli': 'latest',
           '@types/node': '^20.0.0',
           tsx: '^4.20.3',
           typescript: '^5.6.3',
@@ -354,6 +354,7 @@ program
         logger.log('\nYou can install dependencies manually:', chalk.cyan);
         logger.log(`  cd ${projectName}`, chalk.gray);
         logger.log(`  npm install`, chalk.gray);
+        process.exit(1);
       }
     } else {
       logger.log('\nTo get started:', chalk.cyan);
