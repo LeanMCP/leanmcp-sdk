@@ -68,7 +68,7 @@
 - Customer-facing intelligent workflows
 - Multi-tenant SaaS AI systems
 
-Interested in working with us? Contact: **founder@leanmcp.com**
+Interested in working with us? Contact: **founders@leanmcp.com**
 
 **Links**
 
@@ -1068,6 +1068,17 @@ Chat with maintainers and contributors
 - **Features**: Propose and implement new capabilities
 
 See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
+
+---
+
+### Business Collaboration: What Can We Do for You?
+The LeanMCP founding team provides enterprise service support:
+
+MCP Agent deployment support (SDK + CLI + deployment environment configuration)
+Observability runtime platform (view agent call traces / usage behavior)
+Private deployment solutions (on-demand integration with your private cloud / intranet)
+
+Contact us: **founders@leanmcp.com**
 
 ---
 
