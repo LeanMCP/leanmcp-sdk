@@ -18,9 +18,14 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Install Latest CLI
+        run: |
+          npm install -g @leanmcp/cli@alpha
+          leanmcp --version
+
       # 1. Create project using just-published alpha CLI
       - name: Create MCP Project
-        run: npx @leanmcp/cli@alpha create test-mcp-app -i
+        run: leanmcp create test-mcp-app -i
       
       # 2. Security Audit
       - name: Security Audit
@@ -42,7 +47,7 @@ jobs:
       - name: Deploy
         id: deploy
         working-directory: test-mcp-app
-        run: npx @leanmcp/cli@alpha deploy . --yes --subdomain ci-test-${{ github.event.workflow_run.id }}
+        run: leanmcp deploy . --yes --subdomain ci-test-${{ github.event.workflow_run.id }}
       
       # 6. Verify URL
       - name: Verify URL
@@ -61,7 +66,7 @@ jobs:
       # 8. Update (re-deploy)
       - name: Update
         working-directory: test-mcp-app
-        run: npx @leanmcp/cli@alpha deploy . --yes
+        run: leanmcp deploy . --yes
       
       # 9. Verify URL after update
       - name: Verify URL After Update
@@ -86,7 +91,7 @@ jobs:
             PROJECT_ID=$(cat .leanmcp/config.json | jq -r '.projectId // empty')
             if [ -n "$PROJECT_ID" ]; then
               echo "Deleting project: $PROJECT_ID"
-              npx @leanmcp/cli@alpha projects delete "$PROJECT_ID" --force
+              leanmcp projects delete "$PROJECT_ID" --force
             else
               echo "No project ID found, skipping delete"
             fi
