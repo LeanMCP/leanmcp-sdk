@@ -90,7 +90,6 @@ Interested in working with us? Contact: **founders@leanmcp.com**
 - [Type Safety Benefits](#type-safety-benefits)
 - [Contributing](#contributing)
 - [Business Collaboration](#business-collaboration-what-can-we-do-for-you)
-- [License](#license)
 
 ---
 
@@ -925,10 +924,10 @@ We Actively Welcome Contributors!
 
 **Good First Issues**
 
-- 📖 Documentation improvements
-- 🔧 Example additions
-- 🔐 Auth provider integrations
-- 🧪 Test coverage
+- Documentation improvements
+- Example additions
+- Auth provider integrations
+- Test coverage
 
 [Browse Issues →](https://github.com/LeanMCP/leanmcp-sdk/labels/good%20first%20issue)
 
