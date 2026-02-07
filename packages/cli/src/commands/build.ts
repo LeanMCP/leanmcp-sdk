@@ -20,15 +20,14 @@ async function runTypeScriptCompiler(cwd: string): Promise<void> {
     await execa('npx', ['tsc'], {
       cwd,
       preferLocal: true,
-      // Must use 'pipe' to capture output (default 'inherit' doesn't capture)
-      stdout: 'pipe',
-      stderr: 'pipe',
-      all: true, // Combine stdout + stderr into result.all
+      // Use inherit so tsc output displays live in terminal
+      stdout: 'inherit',
+      stderr: 'inherit',
     });
   } catch (error: any) {
-    // execa includes full output in error.all when piped
-    const output = error.all || error.stdout || error.stderr || error.message;
-    throw new Error(output || `tsc exited with code ${error.exitCode}`);
+    // When using inherit, output is already shown in terminal
+    // Just throw with exit code info
+    throw new Error(`tsc exited with code ${error.exitCode ?? 1}`);
   }
 }
 
@@ -103,20 +102,7 @@ export async function buildCommand() {
     tscSpinner.succeed('TypeScript compiled');
   } catch (error) {
     tscSpinner.fail('TypeScript compilation failed');
-
-    // Display the full error output with proper formatting
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Log each line for proper formatting
-    const lines = errorMessage.split('\n');
-    for (const line of lines) {
-      if (line.includes('error TS')) {
-        logger.error(line);
-      } else if (line.trim()) {
-        logger.log(line);
-      }
-    }
-
+    // Output already shown via stderr: 'inherit', just exit
     process.exit(1);
   }
 
