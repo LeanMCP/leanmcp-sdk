@@ -138,7 +138,6 @@ Start with the core packages, then add capabilities as needed.
 If you are unsure where to start,
 install **@leanmcp/cli** and **@leanmcp/core** only.
 
----
 
 ## How the pieces fit
 
