@@ -253,7 +253,9 @@ export class AuthFirebase extends AuthProviderBase {
       const refreshedKey = refreshedJwks.find((k) => k.kid === decoded.header.kid);
 
       if (!refreshedKey) {
-        throw new Error('Signing key not found in Google JWKS - token may be invalid or keys rotated');
+        throw new Error(
+          'Signing key not found in Google JWKS - token may be invalid or keys rotated'
+        );
       }
 
       const pem = jwkToPem(refreshedKey);
