@@ -20,7 +20,7 @@
     <img src="https://img.shields.io/badge/Follow-@LeanMCP-1DA1F2?style=flat-square&logo=x&logoColor=white" alt="Follow on X" />
   </a>
   <a href="https://discord.com/invite/DsRcA3GwPy">
-    <img src="https://img.shields.io/badge/Discord-406%20members-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord Community" />
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Fv9%2Finvites%2FDsRcA3GwPy%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&style=flat-square&label=Discord&suffix=%20members&color=5865F2" alt="Discord Community" />
   </a>
   <br/>
   <a href="https://github.com/leanmcp/modelcontextprotocol#readme">
@@ -231,7 +231,7 @@ npm install --save-dev @leanmcp/cli
 
 ---
 
-## Core Concepts
+<details><summary><b>Core Concepts</b> (Click to expand)</summary>
 
 ### Tools
 
@@ -288,9 +288,11 @@ getStats() {
 // Resource URI: "servicename://getStats" (auto-generated)
 ```
 
+</details>
+
 ---
 
-## Common Patterns
+<details><summary><b>Common Patterns</b> (Click to expand)</summary>
 
 ### Define a tool
 
@@ -321,6 +323,8 @@ const input = await elicit({
 ```
 
 These snippets show common patterns only. Full API details live in the documentation.
+
+</details>
 
 ---
 
@@ -870,15 +874,15 @@ npm link ../../packages/cli
 npm start
 ```
 
-</details>
-
-## Type Safety Benefits
+### Type Safety Benefits
 
 - **Compile-time validation** - Catch errors before runtime
 - **Autocomplete** - Full IntelliSense support in VS Code
 - **Refactoring** - Safe renames and changes across your codebase
 - **No duplication** - Define schemas once using TypeScript types
 - **Type inference** - Automatic schema generation from decorators
+
+</details>
 
 ---
 
