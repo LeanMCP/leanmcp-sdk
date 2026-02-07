@@ -4,13 +4,30 @@
  * Builds UI components and compiles TypeScript for production deployment.
  * Does NOT start the server - use 'leanmcp start' or 'node dist/main.js' after building.
  */
-import { spawn } from 'child_process';
+import { execa } from 'execa';
 import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
 import { logger } from '../logger';
 import { scanUIApp, buildUIComponent, writeUIManifest } from '../vite';
 import { generateSchemaMetadata } from '../schema-extractor';
+
+/**
+ * Run TypeScript compiler with reliable cross-platform output capture
+ */
+async function runTypeScriptCompiler(cwd: string): Promise<void> {
+  try {
+    await execa('npx', ['tsc'], {
+      cwd,
+      preferLocal: true,
+      all: true, // Combine stdout + stderr into error.all
+    });
+  } catch (error: any) {
+    // execa includes full output in error.all
+    const output = error.all || error.stdout || error.stderr || error.message;
+    throw new Error(output || `tsc exited with code ${error.exitCode}`);
+  }
+}
 
 export async function buildCommand() {
   const cwd = process.cwd();
@@ -79,37 +96,24 @@ export async function buildCommand() {
   const tscSpinner = ora('Compiling TypeScript...').start();
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      const tsc = spawn('npx', ['tsc'], {
-        cwd,
-        stdio: 'pipe',
-        shell: true,
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      tsc.stdout?.on('data', (data) => {
-        stdout += data;
-      });
-
-      tsc.stderr?.on('data', (data) => {
-        stderr += data;
-      });
-
-      tsc.on('close', (code) => {
-        if (code === 0) resolve();
-        // TypeScript outputs compilation errors to stdout, not stderr
-        else reject(new Error(stdout || stderr || `tsc exited with code ${code}`));
-      });
-
-      tsc.on('error', reject);
-    });
-
+    await runTypeScriptCompiler(cwd);
     tscSpinner.succeed('TypeScript compiled');
   } catch (error) {
     tscSpinner.fail('TypeScript compilation failed');
-    logger.error(error instanceof Error ? error.message : String(error));
+
+    // Display the full error output with proper formatting
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Log each line for proper formatting
+    const lines = errorMessage.split('\n');
+    for (const line of lines) {
+      if (line.includes('error TS')) {
+        logger.error(line);
+      } else if (line.trim()) {
+        logger.log(line);
+      }
+    }
+
     process.exit(1);
   }
 
