@@ -257,6 +257,7 @@ Full API details live in the documentation.
 - [Examples](#examples)
 - [Development](#development)
 - [Contributing](#contributing)
+- [Business Corporation](#business-corporation)
 
 ## Installation
 
@@ -376,6 +377,9 @@ Your MCP server starts on `http://localhost:8080` with:
 
 ## Core Concepts
 
+<details>
+<summary>Click to expand Core Concepts</summary>
+
 ### Tools
 
 Callable functions that perform actions (like API endpoints).
@@ -431,7 +435,12 @@ getStats() {
 // Resource URI: "servicename://getStats" (auto-generated)
 ```
 
+</details>
+
 ## CLI Commands
+
+<details>
+<summary>Click to expand CLI Commands</summary>
 
 The LeanMCP CLI provides an interactive experience for creating and managing MCP projects.
 
@@ -479,7 +488,12 @@ leanmcp add weather
 
 For complete CLI documentation including all commands, options, and advanced usage, see [@leanmcp/cli README](./packages/cli/README.md).
 
+</details>
+
 ## Decorators
+
+<details>
+<summary>Click to expand Decorators</summary>
 
 ### Core Decorators
 
@@ -528,7 +542,12 @@ class UserInput {
 }
 ```
 
+</details>
+
 ## Project Structure
+
+<details>
+<summary>Click to expand Project Structure</summary>
 
 ### Main Entry Point (`main.ts`)
 
@@ -607,7 +626,12 @@ export class ServiceName {
 }
 ```
 
+</details>
+
 ## API Reference
+
+<details>
+<summary>Click to expand API Reference</summary>
 
 ### `createHTTPServer(options | serverFactory, options?)`
 
@@ -698,7 +722,12 @@ server.registerService(new WeatherService());
 server.registerService(new PaymentService());
 ```
 
+</details>
+
 ## Examples
+
+<details>
+<summary>Click to expand Examples</summary>
 
 ### Complete Weather Service
 
@@ -908,7 +937,12 @@ await mcpClient.callTool({
 
 See [examples/slack-with-auth](./examples/slack-with-auth) for a complete working example.
 
+</details>
+
 ## Development
+
+<details>
+<summary>Click to expand Development</summary>
 
 ### Setting Up the Monorepo
 
@@ -964,6 +998,8 @@ npm link ../../packages/cli
 # Run the test project
 npm start
 ```
+
+</details>
 
 ## Type Safety Benefits
 
