@@ -897,6 +897,25 @@ await mcpClient.callTool({
 
 See [examples/slack-with-auth](./examples/slack-with-auth) for a complete working example.
 
+### E-commerce Product Search
+
+A self-contained example with a mock product database (20 products, 5 categories).
+
+**What it demonstrates:**
+- `@Tool` — search with filters, pagination, sorting, product details, recommendations
+- `@Resource` — full product catalog as a JSON data endpoint
+- `@Prompt` — AI shopping assistant template
+
+```bash
+cd examples/ecommerce-search
+npm install
+npm start
+# Dashboard: http://localhost:8080
+# MCP endpoint: http://localhost:8080/mcp
+```
+
+See [examples/ecommerce-search](./examples/ecommerce-search) for full documentation and curl examples.
+
 ## Development
 
 ### Setting Up the Monorepo
