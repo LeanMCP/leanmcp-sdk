@@ -10,6 +10,7 @@ module.exports = {
         tsconfig: {
           experimentalDecorators: true,
           emitDecoratorMetadata: true,
+          types: ['jest', 'node', 'reflect-metadata'],
         },
       },
     ],
