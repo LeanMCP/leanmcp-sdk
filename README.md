@@ -13,7 +13,7 @@
   <a href="https://docs.leanmcp.com/">
     <img src="https://img.shields.io/badge/Docs-docs.leanmcp.com-181717?style=flat-square&logo=gitbook&logoColor=white" alt="Documentation" />
   </a>
-  <a href="https://hello.leanmcp.com/">
+  <a href="https://leanmcp.com/">
     <img src="https://img.shields.io/badge/Website-hello.leanmcp.com-0A66C2?style=flat-square&logo=googlechrome&logoColor=white" alt="Website" />
   </a>
   <a href="https://x.com/LeanMcp">
