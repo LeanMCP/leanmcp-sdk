@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/leanmcp-leanmcp-sdk-badge.png)](https://mseep.ai/app/leanmcp-leanmcp-sdk)
+
 <p align="center">
   <img
     src="https://raw.githubusercontent.com/LeanMCP/leanmcp-sdk/refs/heads/main/assets/Logo-trans.png"
